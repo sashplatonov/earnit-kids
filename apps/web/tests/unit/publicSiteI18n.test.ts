@@ -44,7 +44,7 @@ describe('static public-site i18n', () => {
         const root = resolve(process.cwd(), 'static/public');
         for (const locale of ['en', 'ru'] as const) {
             const directory = locale === 'ru' ? resolve(root, 'ru') : root;
-            for (const file of ['index.html', 'how.html', 'tasks.html', 'rewards.html', 'parents.html', 'faq.html']) {
+            for (const file of ['index.html', 'how.html', 'tasks.html', 'rewards.html', 'parents.html', 'faq.html', 'demo.html']) {
                 const html = readFileSync(resolve(directory, file), 'utf8');
                 expect(html).not.toContain('{{');
                 expect(html).toContain(`<html lang="${locale}">`);
@@ -52,7 +52,7 @@ describe('static public-site i18n', () => {
                 expect(html).toContain(`data-language="${locale}" aria-current="page"`);
                 expect(html.match(/<link rel="canonical"/g)).toHaveLength(1);
                 expect(html.match(/hreflang="(en|ru|x-default)"/g)).toHaveLength(3);
-                expect(html).toContain(locale === 'ru' ? 'Награды' : 'Rewards');
+                expect(html).toContain(locale === 'ru' ? 'Демо для родителя' : 'Parent demo');
                 expect(html).toMatch(/<title>[^<]+ - EarnIt Kids<\/title>/);
                 expect(html).toMatch(/<meta name="description" content="[^"]+">/);
                 expect(html).toMatch(/<link rel="canonical" href="https:\/\/example\.test\/(?:ru\/)?[^"]*">/);

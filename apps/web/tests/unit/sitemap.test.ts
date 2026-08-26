@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { GET } from '../../src/routes/sitemap.xml/+server';
 
-const pages = ['/', '/how.html', '/tasks.html', '/rewards.html', '/parents.html', '/faq.html'];
+const pages = ['/', '/how.html', '/tasks.html', '/rewards.html', '/parents.html', '/faq.html', '/demo.html'];
 
 async function sitemapXml(env: NodeJS.ProcessEnv): Promise<string> {
     vi.stubEnv('APP_URL', env.APP_URL ?? 'https://example.test');
@@ -10,12 +10,12 @@ async function sitemapXml(env: NodeJS.ProcessEnv): Promise<string> {
 }
 
 describe('sitemap.xml', () => {
-    it('publishes twelve canonical localized URLs with reciprocal alternates', async () => {
+    it('publishes fourteen canonical localized URLs with reciprocal alternates', async () => {
         const xml = await sitemapXml({ APP_URL: 'https://example.test///' });
 
         expect(xml).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
-        expect(xml.match(/<url>/g)).toHaveLength(12);
-        expect(xml.match(/<loc>/g)).toHaveLength(12);
+        expect(xml.match(/<url>/g)).toHaveLength(14);
+        expect(xml.match(/<loc>/g)).toHaveLength(14);
         expect(xml).not.toMatch(/\/public\/|\?lang=|\/app|\/workspace/);
 
         for (const page of pages) {

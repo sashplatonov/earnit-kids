@@ -9,6 +9,7 @@ const PUBLIC_PAGES = [
     { key: 'rewards', englishPath: '/rewards.html', artifact: 'rewards.html' },
     { key: 'parents', englishPath: '/parents.html', artifact: 'parents.html' },
     { key: 'faq', englishPath: '/faq.html', artifact: 'faq.html' },
+    { key: 'demo', englishPath: '/demo.html', artifact: 'demo.html' },
 ];
 
 function normalizeLocale(value) {

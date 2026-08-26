@@ -106,7 +106,7 @@ an authenticated session, and a reachable push provider. Telegram remains at
 
 ## Public canonical URL map and production SEO checks
 
-The public site has six canonical English/Russian pairs (twelve URLs):
+The public site has seven canonical English/Russian pairs (fourteen URLs):
 
 | English | Russian |
 | --- | --- |
@@ -116,6 +116,7 @@ The public site has six canonical English/Russian pairs (twelve URLs):
 | `/rewards.html` | `/ru/rewards.html` |
 | `/parents.html` | `/ru/parents.html` |
 | `/faq.html` | `/ru/faq.html` |
+| `/demo.html` | `/ru/demo.html` |
 
 These are the only localized marketing entries. `/public/` files are build
 artifacts, not canonical marketing URLs. A public `?lang=en` or `?lang=ru`
@@ -128,7 +129,7 @@ checks from a network that can reach the deployed edge:
 
 ```bash
 ORIGIN=https://example.test
-for path in / /how.html /tasks.html /rewards.html /parents.html /faq.html /ru/ /ru/how.html /ru/tasks.html /ru/rewards.html /ru/parents.html /ru/faq.html; do
+for path in / /how.html /tasks.html /rewards.html /parents.html /faq.html /demo.html /ru/ /ru/how.html /ru/tasks.html /ru/rewards.html /ru/parents.html /ru/faq.html /ru/demo.html; do
   curl --fail --silent --show-error --location --max-redirs 0 --head "$ORIGIN$path"
 done
 curl --fail --silent --show-error --location --max-redirs 5 -D - "$ORIGIN/?lang=ru" -o /tmp/earnit-public-ru.html
@@ -142,7 +143,7 @@ For each canonical page, confirm status `200`, the final URL is the table
 entry, the HTML contains one canonical link for that entry and reciprocal
 `hreflang="en"`, `hreflang="ru"`, and `hreflang="x-default"` links, and the
 linked CSS, JavaScript, icon, image, and `/public/config.js` requests return
-successfully. Inspect the sitemap for exactly these twelve `<loc>` entries
+successfully. Inspect the sitemap for exactly these fourteen `<loc>` entries
 and matching alternate links. Production `robots.txt` must allow crawling and
 point at the same-origin `/sitemap.xml`; preview, staging, and development
 must remain blocked. Repeat the browser checks at 320px and with keyboard
@@ -168,7 +169,7 @@ an already-installed service worker.
 ## Release and deployment checklist
 
 1. Open the canonical public pages at `/`, `/how.html`, `/tasks.html`,
-   `/rewards.html`, `/parents.html`, and `/faq.html`. Confirm that the default
+   `/rewards.html`, `/parents.html`, `/faq.html`, and `/demo.html`. Confirm that the default
    language is English in an unsupported or otherwise non-Russian browser
    context, while a browser whose preferred language is Russian receives
    Russian copy. Select EN and RU on each page, confirm the selected language

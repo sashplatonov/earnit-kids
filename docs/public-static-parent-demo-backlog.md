@@ -2,275 +2,295 @@
 
 ## Goal
 
-Let an unauthenticated visitor open a live, browser-based parent demo from the static public site. The demo must present a realistic child workspace with tasks, a rewards catalog, history, and the child's submitted requests, while rendering in the visitor's supported browser locale (`en` or `ru`) without accessing or changing family data.
+Let an unauthenticated visitor open a live, browser-based parent demo from the canonical static public site. The demo presents tasks, the rewards shop, history, and a child's submitted requests in the already-served English or Russian document locale, without accessing or changing family data.
+
+## Current route and i18n baseline
+
+- `apps/web/scripts/public-site/` is the source of public documents. `npm run generate:public` writes artifacts under `apps/web/static/public/`; the latter is an artifact namespace, not a visitor-facing URL prefix.
+- Canonical English marketing paths are rooted (`/`, `/how.html`, `/tasks.html`, `/rewards.html`, `/parents.html`, `/faq.html`) and their Russian pairs are under `/ru/`. The public edge negotiates the first English document from `Accept-Language` and `?lang=` is a compatibility redirect, not client-side state.
+- The static marketing rewards page is `/rewards.html` or `/ru/rewards.html`. The authenticated browser application is `/app` or `/{locale}/app`; its parent rewards/shop context is `/app?context=rewards` or `/{locale}/app?context=rewards`. `/workspace` is legacy and must not become a new demo or shop target.
 
 ## Architectural decisions
 
-- `apps/web/static/public/` remains the owner of the public demo. It must not bootstrap `WorkspaceRoleResolver`, call `/api/data`, or reuse the authenticated Svelte store: those paths depend on a server-authorized family session.
-- The demo's source of truth is a versioned, immutable static fixture plus a small locale resolver. It is sample data only; approve, reject, create, purchase, and delete operations must not be exposed as real mutations or API calls.
-- For an anonymous static page, choose `ru` when a normalized value in `navigator.languages`/`navigator.language` is Russian; otherwise choose `en`. A valid explicit `?lang=en|ru` takes precedence and is preserved by in-demo navigation. Do not write the authenticated-family `locale` cookie or alter `FamilyEntity.locale`.
-- Keep public-demo translations separate from the Svelte i18n payload because static HTML is intentionally outside the SvelteKit localization pipeline. Both locale dictionaries must have identical message keys and be covered by a contract test.
-- Reuse the current public-site CSP, responsive tokens, public CTA conventions, and the compact list presentation established by the parent workspace. Do not add a compatibility `/login` route or make the demo a new authenticated workspace mode.
+- Add the demo as one generated, canonical public document pair: `/demo.html` and `/ru/demo.html`. Register it in the shared `PUBLIC_PAGES` URL catalog so edge routing, canonical/hreflang metadata, sitemap generation, and language links all use the same paths.
+- The edge and the served document path own the anonymous locale. Demo JavaScript derives display language only from `<html lang>` through the existing static `resolveDocumentLocale`; it must not inspect `navigator.languages`, write a locale cookie, or retain a `?lang` query.
+- `apps/web/scripts/public-site/i18n.js` is the one static translation catalog. Add demo copy and localized fixture labels there, retain English/Russian structural parity, and copy the module into the generated artifact as the existing generator does. Do not create a parallel demo locale resolver or reuse authenticated Svelte i18n.
+- Demo data is immutable, invented, and browser-local. It may have in-page tab state in `?tab=tasks|rewards|history|requests`, but makes no API call, session change, local-storage write, or request/reward mutation. It must visibly identify itself as a demo.
+- The public demo is an informational route, not an alias for an authenticated page. Its real sign-in CTA keeps `/api/login-google/start?continue=%2Fapp`; a contextual shop CTA uses `/app?context=rewards`, not `/rewards.html`, `/workspace`, or `/public/...`.
 
 ## Recommended implementation order
 
 | Order | Task | Priority | Depends on | Reason |
 | ---: | --- | --- | --- | --- |
-| 1 | PSD-001 | P1 | - | Defines the safe fixture and locale contract used by the UI. |
-| 2 | PSD-002 | P1 | PSD-001 | Builds the isolated, usable parent-demo surface. |
-| 3 | PSD-003 | P2 | PSD-002 | Makes the demo discoverable from every static marketing page. |
-| 4 | PSD-004 | P2 | PSD-001, PSD-002, PSD-003 | Locks down locale selection, public isolation, accessibility, and mobile geometry. |
+| 1 | PSD-001 | P1 | - | Establishes the generated route, locale, metadata, and sitemap contract. |
+| 2 | PSD-002 | P1 | PSD-001 | Builds the safe, localized static demo experience. |
+| 3 | PSD-003 | P2 | PSD-001, PSD-002 | Makes the demo discoverable from all generated marketing pages. |
+| 4 | PSD-004 | P2 | PSD-001, PSD-002, PSD-003 | Proves public routing, locale, isolation, accessibility, and compact layout. |
 
-## PSD-001: Define the static demo data and guest-locale contract
+## PSD-001: Register the demo in the generated public URL and locale contract
 
-**Status:** TODO
+**Status:** DONE
+
 **Priority:** P1
 
 **Depends on:** -
 
 **Exact scope:**
 
-Create the static-only data and localization boundary for the parent demo. It supplies one fixed child profile, assigned tasks, a reward catalog, wallet/history entries, and task/reward requests in English and Russian.
+Extend the source public-site catalog with a generated English/Russian demo document and its localized metadata. Keep its delivery path inside the current canonical public-site mechanism.
 
 **Files:**
 
-- Create `apps/web/static/public/demo-data.js`.
-- Create `apps/web/static/public/demo-i18n.js`.
-- Create `apps/web/tests/unit/publicDemoI18n.test.ts`.
-- Search anchor: `normalizeLocale` in `apps/web/src/lib/i18n/config.ts` for the existing supported-language normalization rules to mirror, not import into the static runtime.
+- Modify `apps/web/scripts/public-site/urls.js` and `apps/web/scripts/public-site/urls.d.ts`.
+- Modify `apps/web/scripts/public-site/generate.mjs`.
+- Modify `apps/web/scripts/public-site/template.html` only for a page-specific external demo module hook; do not weaken the CSP.
+- Modify `apps/web/scripts/public-site/i18n.js` and `apps/web/scripts/public-site/i18n.d.ts`.
+- Create `apps/web/scripts/public-site/pages/demo.html`.
+- Modify `apps/web/src/routes/sitemap.xml/+server.ts`.
+- Modify `docs/operations/web-miniapp-access.md`.
+- Regenerate `apps/web/static/public/demo.html`, `apps/web/static/public/ru/demo.html`, and affected generated runtime/static-document artifacts.
+- Modify `apps/web/tests/unit/publicSiteUrls.test.ts` and `apps/web/tests/unit/publicSiteI18n.test.ts`.
+- Search anchors: `PUBLIC_PAGES` in `apps/web/scripts/public-site/urls.js`, `navigationFor` in `apps/web/scripts/public-site/generate.mjs`, and `PAGE_METADATA` in `apps/web/src/routes/sitemap.xml/+server.ts`.
 
 **Goal:**
 
-The static demo has a deterministic, localized data model that can be rendered without a backend request or authenticated state.
+The demo is a real localized public document rather than a hand-maintained `/public/` file or an untracked query-driven view.
 
 ### Outcome
 
-The UI can obtain a complete read-only parent scenario for `en` and `ru`, with all user-facing labels and sample entity text translated before it renders.
+The source generator emits `/demo.html` and `/ru/demo.html`; each has the same strict static document contract as the existing marketing pages and appears consistently in the sitemap and operations URL map.
 
 ### Architectural decision
 
-`demo-data.js` owns only locale-neutral identifiers, quantities, statuses, timestamps, and scenario relations. `demo-i18n.js` owns display copy, localized fixture labels, supported-locale detection, the `?lang` override, and URL construction; it must not import Svelte modules or modify application/family locale storage.
+Add `demo` to `PUBLIC_PAGES` with the English canonical path `/demo.html` and generated artifact `demo.html`. The generator owns title, description, body root, navigation, canonical URL, reciprocal EN/RU/x-default alternates, and any conditional external module tag. Reuse `publicLanguageHref` and `resolvePublicOrigin`; do not introduce a second public-path list or hard-code a deployment host.
 
 ### Required changes
 
-1. Model a single named child with balance, several active tasks, several rewards, both task-completion and reward-purchase requests, and positive and negative history entries. Include at least one pending request and one resolved request so every required state is visible.
-2. Provide complete English and Russian dictionaries for page chrome, tabs, task/reward metadata, request type/status labels, empty/error-free demo state, currency/coin labels, demo disclaimer, and return/sign-in CTAs. Keep entity IDs and status values locale-neutral.
-3. Resolve a locale from a validated `lang` query value first, then from the first supported browser language, falling back to English. Preserve only the recognized `lang` value when generating tab and return links; ignore malformed or unsupported input.
-4. Export pure helpers for locale resolution, translation lookup, locale-aware date/number formatting, and fixture projection so they can be unit-tested without a DOM. Define safe fallback text for an absent translation key rather than injecting HTML.
-5. Add unit coverage for Russian and English browser-language resolution, explicit-query precedence, unsupported-value fallback, URL preservation, matching translation keys, and the fixture's required tasks/rewards/history/requests.
+1. Add the `demo` page to the shared URL catalog and typed surface so `normalizePublicRequest`, `publicDocumentPath`, language links, edge `Accept-Language` negotiation, and generated artifacts recognize both canonical paths. Preserve existing protected `/app`, `/workspace`, `/telegram`, API, and `/public/` artifact exclusions.
+2. Add matching English and Russian static-catalog entries for the demo title, description, body-root/loading or JavaScript-required copy, demo-notice copy, and every display key consumed by PSD-002. Retain recursive message-shape parity and document-language fallback behavior.
+3. Extend the generator/template only as needed to render the demo root and load a same-origin external module on demo documents. All other pages must retain one `site.js` module, existing strict CSP, and unchanged document structure.
+4. Add sitemap metadata for `demo`, include both locale URLs and reciprocal alternates, and update the public canonical URL table plus deployment curl loop to enumerate fourteen documents. Set the demo's priority/change frequency deliberately and keep `/public/` out of canonical/alternate/sitemap URLs.
+5. Regenerate committed static output using the existing `APP_URL` build contract. Add unit coverage for path/artifact mapping, canonical language URLs, generated EN/RU metadata, dictionary parity, and sitemap entries.
 
 ### Out of scope
 
-- Persisting an anonymous visitor's language preference, adding locales beyond English and Russian, or changing `LocaleSwitcher`.
-- Copying real family data, calling any API, schema migrations, or adding sample data to the database.
+- Client-side locale switching, new languages, changing the family locale model, modifying SvelteKit authenticated i18n, or redesigning existing marketing copy.
+- Adding an authenticated `/app` subroute or any backend/API contract.
 
 ### Acceptance criteria
 
-- A Russian browser resolves the Russian demo and an English or unsupported browser resolves English unless a valid `?lang=` explicitly selects the other supported locale.
-- Every fixture entry needed by Tasks, Rewards, History, and Requests exists in both locales with stable cross-locale IDs, amounts, statuses, and timestamps.
-- The static modules do not import `$lib`, access cookies/localStorage, issue `fetch`, or contain real account/family identifiers.
-- English and Russian dictionaries expose the same keys; dates and numeric balances use the selected locale.
+- `/demo.html` is a canonical English document and `/ru/demo.html` is a canonical Russian document; a Russian-preferred first request to `/demo.html` gets the existing one-hop edge redirect to `/ru/demo.html`.
+- Each generated demo document has the correct `<html lang>`, one absolute self-canonical URL, and absolute reciprocal `en`, `ru`, and `x-default` alternates; none points to `/public/` or a locale query.
+- `/sitemap.xml` contains both demo locale URLs and the same alternate cluster as the generated document, while all existing twelve entries remain unchanged.
+- All static public copy used by the demo is available in both locales with matching catalog shape, and static dynamic copy is selected from the served document language.
 
 ### Targeted validation
 
 ```bash
-cd apps/web && npm run test -- tests/unit/publicDemoI18n.test.ts
+cd apps/web && APP_URL=https://example.test npm run generate:public && npm run test -- tests/unit/publicSiteUrls.test.ts tests/unit/publicSiteI18n.test.ts tests/unit/sitemap.test.ts
 ```
 
 ### Commit
 
 ```bash
-git add apps/web/static/public/demo-data.js apps/web/static/public/demo-i18n.js apps/web/tests/unit/publicDemoI18n.test.ts
-git commit -m "feat(web): add localized public demo fixture"
+git add apps/web/scripts/public-site/urls.js apps/web/scripts/public-site/urls.d.ts apps/web/scripts/public-site/generate.mjs apps/web/scripts/public-site/template.html apps/web/scripts/public-site/i18n.js apps/web/scripts/public-site/i18n.d.ts apps/web/scripts/public-site/pages/demo.html apps/web/src/routes/sitemap.xml/+server.ts docs/operations/web-miniapp-access.md apps/web/static/public apps/web/tests/unit/publicSiteUrls.test.ts apps/web/tests/unit/publicSiteI18n.test.ts
+git commit -m "feat(web): add localized public demo route"
 ```
 
-## PSD-002: Render the read-only parent workspace demo
+## PSD-002: Render the read-only parent demo from generated static fixtures
 
 **Status:** TODO
+
 **Priority:** P1
 
 **Depends on:** PSD-001
 
 **Exact scope:**
 
-Create a standalone static demo page that renders the supplied parent scenario and lets a visitor switch among Tasks, Rewards, History, and Requests without leaving the demo or touching real application data.
+Implement the same-origin static modules and scoped styles that turn the generated demo document into an interactive, read-only parent workspace scenario.
 
 **Files:**
 
-- Create `apps/web/static/public/demo.html`.
-- Create `apps/web/static/public/demo.js`.
-- Modify `apps/web/static/public/styles.css`.
-- Search anchor: `TelegramParentShell` in `apps/web/src/lib/components/telegram/TelegramParentShell.svelte` for the parent information architecture and tab semantics to mirror visually, without importing it.
-- Search anchor: `TelegramRequestRow` in `apps/web/src/lib/components/telegram/TelegramRequestRow.svelte` for request kind, status, and positive/negative amount presentation.
+- Create `apps/web/scripts/public-site/demo-data.js`.
+- Create `apps/web/scripts/public-site/demo.js`.
+- Modify `apps/web/scripts/public-site/generate.mjs` to copy these source modules into the public artifact directory.
+- Modify `apps/web/static/public/styles.css`, the existing static stylesheet served by all generated public documents.
+- Regenerate `apps/web/static/public/demo-data.js`, `apps/web/static/public/demo.js`, `apps/web/static/public/demo.html`, and `apps/web/static/public/ru/demo.html`.
+- Create `apps/web/tests/unit/publicParentDemo.test.ts`.
+- Search anchors: `resolveDocumentLocale` in `apps/web/scripts/public-site/i18n.js`, `TelegramParentShell` in `apps/web/src/lib/components/telegram/TelegramParentShell.svelte`, and `TelegramRequestRow` in `apps/web/src/lib/components/telegram/TelegramRequestRow.svelte`.
 
 **Goal:**
 
-Visitors can explore a credible parent web workspace in the static site and understand what they will see after registration, without mistaking it for their own account.
+Visitors can explore a credible parent workspace while unambiguously seeing sample data and without crossing the authenticated application boundary.
 
 ### Outcome
 
-`/public/demo.html` has a localized parent header, child context, balance summary, four keyboard-accessible tabs, and compact lists for tasks, rewards, history, and submitted child requests.
+The generated demo displays a named sample child, balance, assigned tasks, rewards shop, history, and child-submitted task/reward requests through four keyboard-accessible tabs.
 
 ### Architectural decision
 
-The page is a self-contained static renderer over the PSD-001 modules. Its tab state is an in-page presentation state reflected in the query string (`tab=tasks|rewards|history|requests`) and not an application route, session, or writable store. It must retain the public site's CSP-compatible external module scripts and avoid inline event handlers/styles.
+`demo-data.js` owns stable fictitious IDs, quantities, statuses, and timestamps; localized entity names and display strings are projected through the PSD-001 static catalog. `demo.js` owns DOM rendering and URL tab state, reads the locale only through `resolveDocumentLocale(document)`, and is loaded only by the demo document. It must not import `$lib`, call `fetch`, or share the authenticated app store.
 
 ### Required changes
 
-1. Build semantic static markup with a skip link, localized document language/title/description, a labelled demo notice, a parent/child summary, and links back to the public site and to the existing real parent sign-in flow.
-2. Render a tablist with `role="tab"`, `aria-selected`, `aria-controls`, and distinct `role="tabpanel"` containers. Support mouse, Enter/Space, ArrowLeft/ArrowRight, Home, and End; update `tab` in the current URL without a navigation that loses `lang`.
-3. In the Tasks tab, show assigned task title, group, repeat/availability metadata, and coin amount. In Rewards, show the catalogue title, group, price, and the selected child's available balance. In History, show time, title, and visually plus programmatically distinguish earned from spent coins. In Requests, show child name, task/reward type, submitted time, amount, and pending/approved/rejected status.
-4. Render all text through the static locale layer and use `Intl` formatting supplied by PSD-001. If data is unexpectedly absent, show a localized non-interactive empty state rather than a broken or blank panel.
-5. Add scoped public CSS that matches the compact existing family UI: no nested card stacks, lists remain readable at 320px, long entity names truncate/wrap before actions, and interactive controls have at least 44 by 44px targets. Respect reduced-motion preferences and retain a clearly visible focus indicator.
-6. Make the demo explicitly read-only: do not render approve/reject, add, edit, buy, or delete controls; do not issue `fetch`, mutate the fixture, write local state, or register a service worker from the page.
+1. Define one immutable fictional child scenario with multiple active tasks, several rewards, positive and negative history entries, and both task-completion and reward-purchase submissions. Include pending, approved, and rejected request states so each required parent view is demonstrable.
+2. Render semantic demo markup with a skip link target, clear sample-data notice, child/balance summary, and a tablist. Provide `role="tab"`, `aria-selected`, `aria-controls`, and one labelled `role="tabpanel"`; support pointer activation plus Enter/Space, ArrowLeft/ArrowRight, Home, and End.
+3. Make `tab=tasks|rewards|history|requests` the only in-demo state. Normalize invalid values to `tasks`, update the current history URL without removing its locale path, and never add `lang` to a canonical URL.
+4. Show task title/group/repeat metadata/coins; shop reward title/group/price and available balance; timestamped earn/spend history with non-colour sign/label distinction; and child request type, amount, time, and state. Format dates/numbers using `Intl` for the served `en` or `ru` document language.
+5. Provide localized empty/fallback rendering if a fixture section is absent, but expose no approve, reject, add, edit, buy, delete, retry, API, storage, or service-worker behavior. Include a real parent-sign-in link to `/api/login-google/start?continue=%2Fapp` and a contextual shop link to `/app?context=rewards`.
+6. Add compact scoped CSS consistent with the current parent reward-list reference: one list surface per panel, no nested card stacks, `min-width:0` for long content, 44px tab/link targets, visible focus, and reduced-motion support. At 320px, the page must not overflow horizontally.
+7. Add pure unit coverage for fixture completeness, tab normalization, locale-derived formatting, request/historical amount presentation, and a static-source guard against `$lib`, `fetch`, browser storage, and mutation endpoints.
 
 ### Out of scope
 
-- Making requests approvable, simulating purchases, dashboard analytics, child switching, catalog administration, or loading/error retry flows for an API.
-- Changing the authenticated `/workspace` or `/telegram` layout, stores, data contracts, or CSS.
+- Simulating approval/purchase, persisting anonymous changes, child switching, dashboard analytics, catalog administration, or an API loading/error state.
+- Altering `WorkspaceRoleResolver`, `/app`, `/telegram`, authenticated stores, API routes, family data, or permission checks.
 
 ### Acceptance criteria
 
-- Direct visits to `/public/demo.html`, `/public/demo.html?lang=ru`, and `/public/demo.html?lang=en&tab=rewards` render the chosen localized scenario without authentication or network requests to `/api/`.
-- The four required sections are all reachable through keyboard and pointer interaction; the active tab and panel semantics stay synchronized and the selected `lang` persists across tab changes.
-- The Requests panel visibly includes child-submitted task and reward requests with both pending and resolved statuses; History includes both earned and spent entries.
-- At 320px wide, no horizontal page overflow occurs; every actionable link/tab meets the 44px target and keyboard focus is visible.
-- The demo notice states that the scenario is sample data, and real parent sign-in still targets `/api/login-google/start?continue=%2Fworkspace`.
+- Both canonical demo paths render the correct language and complete four-panel sample scenario without authentication or requests to `/api/`.
+- Requests visibly distinguish task completion from shop purchase and include pending plus resolved statuses; History distinguishes positive earnings from negative reward spending without relying on colour alone.
+- Tabs work with keyboard and pointer, preserve the canonical locale path when `tab` changes, and invalid/missing `tab` resolves deterministically to Tasks.
+- The page tells visitors it is sample data, contains the real `/app` sign-in/shop destinations, and makes no mutation, API, storage, or service-worker side effect.
+- At 320px, every interactive target is at least 44px, visible focus remains, and `document.documentElement.scrollWidth <= window.innerWidth`.
 
 ### Targeted validation
 
 ```bash
-cd apps/web && npm run lint && npm run build
+cd apps/web && npm run test -- tests/unit/publicParentDemo.test.ts && npm run lint && APP_URL=https://example.test npm run build
 ```
 
 ### Commit
 
 ```bash
-git add apps/web/static/public/demo.html apps/web/static/public/demo.js apps/web/static/public/styles.css
-git commit -m "feat(web): add read-only parent workspace demo"
+git add apps/web/scripts/public-site/demo-data.js apps/web/scripts/public-site/demo.js apps/web/scripts/public-site/generate.mjs apps/web/static/public/styles.css apps/web/static/public/demo-data.js apps/web/static/public/demo.js apps/web/static/public/demo.html apps/web/static/public/ru/demo.html apps/web/tests/unit/publicParentDemo.test.ts
+git commit -m "feat(web): render read-only public parent demo"
 ```
 
-## PSD-003: Expose the demo from the static public site
+## PSD-003: Link the localized public site to the demo and shop context
 
 **Status:** TODO
+
 **Priority:** P2
 
-**Depends on:** PSD-002
+**Depends on:** PSD-001, PSD-002
 
 **Exact scope:**
 
-Add a clearly labelled demo entry to each existing static public page, without weakening the existing Telegram and real Google sign-in paths.
+Make the generated marketing pages discover the parent demo without hand-editing output files or confusing the marketing rewards page with the authenticated rewards shop.
 
 **Files:**
 
-- Modify `apps/web/static/public/index.html`.
-- Modify `apps/web/static/public/how.html`.
-- Modify `apps/web/static/public/tasks.html`.
-- Modify `apps/web/static/public/rewards.html`.
-- Modify `apps/web/static/public/parents.html`.
-- Modify `apps/web/static/public/faq.html`.
-- Modify `apps/web/static/public/site.js`.
-- Search anchor: `data-browser-workspace-link` in `apps/web/static/public/site.js` for the existing real-parent access behavior that must remain unchanged.
+- Modify `apps/web/scripts/public-site/template.html`.
+- Modify `apps/web/scripts/public-site/generate.mjs`.
+- Modify `apps/web/scripts/public-site/i18n.js` and `apps/web/scripts/public-site/i18n.d.ts`.
+- Modify `apps/web/scripts/public-site/pages/index.html` and `apps/web/scripts/public-site/pages/rewards.html` only where a page-local demo/shop CTA is needed beyond shared navigation.
+- Regenerate `apps/web/static/public/index.html`, `how.html`, `tasks.html`, `rewards.html`, `parents.html`, `faq.html`, their `ru/` counterparts, and the demo pair.
+- Modify `apps/web/tests/unit/publicSiteI18n.test.ts`.
+- Search anchors: `navigationFor` in `apps/web/scripts/public-site/generate.mjs` and `data-browser-workspace-link` in `apps/web/scripts/public-site/template.html`.
 
 **Goal:**
 
-A visitor can find and open the safe demo from every public marketing page, in the same language selected for the demo, while still having a separate route for real parent sign-in.
+Every public visitor can find the correct localized demo, while labels and destinations clearly distinguish demo, public rewards explanation, and the authenticated rewards shop.
 
 ### Outcome
 
-Every static public page offers a compact “View parent demo” / “Посмотреть демо родителя” link that resolves the browser locale and points to the localized demo URL; “Sign in as parent” keeps its existing OAuth behavior and label.
+Generated pages include a localized “View parent demo” link to the matching canonical demo path. Where a user is sent to the actual parent rewards interface, the link is explicitly labelled as sign-in/open shop and uses `/app?context=rewards` in English or `/ru/app?context=rewards` in Russian after the existing authentication boundary.
 
 ### Architectural decision
 
-`site.js` may reuse the pure locale/link helper exported by `demo-i18n.js`, but it must not duplicate locale detection or take over Google CTA handling. The demo entry remains a regular anchor for JavaScript-off navigation, with an English fallback URL; enhancement can refine it to the detected language.
+Generate all demo links from `PUBLIC_PAGES`/`publicLanguageHref` rather than writing `/public/demo.html`, a `?lang` value, or duplicated locale mapping in `site.js`. Keep Google CTA enhancement exclusively on `data-browser-workspace-link`; the demo link is an ordinary no-JavaScript anchor and does not invoke OAuth or API requests itself.
 
 ### Required changes
 
-1. Add a visible, semantically named demo link to the shared header or other equivalent consistent placement on all six static pages, with a 44px target and compact-mobile treatment. Do not replace either existing access choice.
-2. Give the link a stable data attribute and a no-JavaScript `href` to `/public/demo.html?lang=en`; on enhancement, resolve the visitor locale and replace only the demo URL while retaining any existing safe query values.
-3. Localize the link label and its accessible name using the static locale helper. Keep marketing-page content otherwise unchanged; this task does not translate the existing Russian marketing pages.
-4. Confirm the added module dependency and anchors comply with the static CSP and do not introduce inline scripts, third-party connections, or an OAuth interception regression.
+1. Add a shared, visible demo link in the generated public header or equivalent consistent page chrome. It must resolve to `/demo.html` on English pages and `/ru/demo.html` on Russian pages before JavaScript runs, and retain the current document's query/hash only where the URL helper permits it.
+2. Add matching English/Russian labels and accessible names. Preserve the existing EN/RU language switcher, Telegram CTA, and real Google sign-in CTA unchanged.
+3. On the marketing rewards page, distinguish copy/link targets: `/rewards.html` remains explanatory content, the demo link remains `/demo.html` or `/ru/demo.html`, and the contextual authenticated shop link is `/app?context=rewards` on English documents or `/ru/app?context=rewards` on Russian documents. Do not point any CTA to legacy `/workspace` or artifact `/public/` URLs.
+4. Regenerate artifacts and add focused source/output assertions that every English/Russian public document exposes the correctly localized demo target, and that the real sign-in CTA remains `/api/login-google/start?continue=%2Fapp`.
 
 ### Out of scope
 
-- Translating the whole marketing site, adding a global language switcher, changing public SEO/canonical URLs, or changing the login fallback contract.
+- Rewriting existing public-page body copy, creating a public checkout, adding login interception to the demo link, or changing OAuth continuation validation.
 
 ### Acceptance criteria
 
-- Every public page has a visible demo link and retains both Telegram and “Sign in as parent” access choices.
-- With JavaScript disabled, the link opens the English demo; with JavaScript enabled, a Russian browser opens `demo.html?lang=ru` and an English browser opens `demo.html?lang=en`.
-- Clicking the demo link does not call `/api/auth-config`, `/api/login-google/url`, or any data API; clicking the real parent sign-in link retains its current OAuth/fallback behavior.
-- The new link is reachable via keyboard, has visible focus, and does not create horizontal overflow at 320px.
+- Each generated English document has a keyboard-accessible demo link to `/demo.html`; each Russian document has the equivalent `/ru/demo.html` link, including with JavaScript disabled.
+- At 320px, the link has a 44px target, visible focus, and does not cause horizontal overflow; it coexists with language, Telegram, and real sign-in controls.
+- The marketing rewards page never labels `/rewards.html` as the actual shop, and any authentic shop CTA uses the `/app?context=rewards` contract rather than legacy or artifact paths.
+- Clicking a demo link causes neither OAuth startup nor API traffic; the existing sign-in link keeps its current same-origin OAuth/fallback behavior.
 
 ### Targeted validation
 
 ```bash
-cd apps/web && npm run test -- tests/unit/publicSiteAccess.test.ts && npm run build
+cd apps/web && APP_URL=https://example.test npm run generate:public && npm run test -- tests/unit/publicSiteI18n.test.ts tests/unit/publicSiteAccess.test.ts && npm run build
 ```
 
 ### Commit
 
 ```bash
-git add apps/web/static/public/index.html apps/web/static/public/how.html apps/web/static/public/tasks.html apps/web/static/public/rewards.html apps/web/static/public/parents.html apps/web/static/public/faq.html apps/web/static/public/site.js
-git commit -m "feat(web): link public site to parent demo"
+git add apps/web/scripts/public-site/template.html apps/web/scripts/public-site/generate.mjs apps/web/scripts/public-site/i18n.js apps/web/scripts/public-site/i18n.d.ts apps/web/scripts/public-site/pages/index.html apps/web/scripts/public-site/pages/rewards.html apps/web/static/public apps/web/tests/unit/publicSiteI18n.test.ts
+git commit -m "feat(web): link public site to localized parent demo"
 ```
 
-## PSD-004: Prove the static demo contract in browser coverage
+## PSD-004: Prove the generated demo contract in browser coverage
 
 **Status:** TODO
+
 **Priority:** P2
 
 **Depends on:** PSD-001, PSD-002, PSD-003
 
 **Exact scope:**
 
-Extend focused public-site browser coverage for the live demo and its locale/accessibility guarantees. Keep it independent of authenticated workspace fixtures.
+Extend focused unit and browser coverage for canonical public demo delivery, document-owned locale, public isolation, the authenticated shop destination, and mobile accessibility.
 
 **Files:**
 
 - Modify `apps/web/tests/e2e/workspace-entry.spec.ts`.
-- Modify `apps/web/tests/unit/publicDemoI18n.test.ts` if a focused regression case is missing after browser coverage is authored.
-- Search anchor: `public pages keep both access choices usable at the compact mobile width` in `apps/web/tests/e2e/workspace-entry.spec.ts` for the existing static-site viewport and CTA assertions to extend.
+- Modify `apps/web/tests/unit/publicSiteUrls.test.ts`.
+- Modify `apps/web/tests/unit/publicSiteI18n.test.ts`.
+- Modify `apps/web/tests/unit/publicParentDemo.test.ts` if an uncovered pure regression is found.
+- Search anchors: `publicPages` and `expectRawPublicDocument` in `apps/web/tests/e2e/workspace-entry.spec.ts`.
 
 **Goal:**
 
-Regression coverage proves that the demo remains static, localized, navigable, discoverable, and usable on a narrow screen.
+Tests make the new demo a first-class member of the public URL contract and catch regressions that would expose stale `/public/`, browser-chosen locale, API-backed demo data, or an incorrect shop path.
 
 ### Outcome
 
-Focused unit and Playwright tests verify the two guest locales, all four parent-demo sections, the direct and marketing-page entry paths, public isolation, and compact accessibility behavior.
+Focused regression coverage proves direct and discovered EN/RU demo access, edge locale negotiation, metadata/sitemap parity, tab semantics, static isolation, real-shop targeting, and 320px geometry.
 
 ### Architectural decision
 
-Use the existing preview E2E backend only to serve the production web build; do not add API routes or authenticated cookies for demo coverage. Network assertions must specifically detect accidental `/api/data`, `/api/history`, or request-mutation traffic instead of treating a successful page load as proof of isolation.
+Reuse the existing preview E2E server and its public-document helpers. Keep demo tests unauthenticated and assert that no `/api/data`, `/api/history`, request mutation, or OAuth endpoint is contacted on demo navigation; do not add an E2E fixture session merely to prove a static page.
 
 ### Required changes
 
-1. Add browser cases for direct English and Russian demo URLs, browser-language detection from the public entry, and valid `lang` precedence over browser preference.
-2. Assert each tab exposes its required localized heading/content and correct ARIA tab/panel relationship; drive the complete keyboard tab sequence including Home/End and verify URL state preserves `lang`.
-3. Assert the sample-data notice, real parent sign-in href, task and reward request distinction, and earn/spend history distinction. Fail the test if the demo requests any API data or mutation endpoint.
-4. At 320px, verify no horizontal overflow, a visible focusable demo entry, and 44px-or-larger tabs/links. Retain existing public OAuth fallback cases unchanged.
-5. Run the focused unit, browser, lint, test, and production-build gates; report browser verification separately if the local Chromium environment blocks execution.
+1. Extend the canonical public-page matrix, raw JavaScript-disabled metadata checks, Russian browser-language redirect test, sitemap assertions, and compact-link loops to include `demo.html` and its Russian pair.
+2. Add direct-demo browser cases for both document locales, localized sample copy, the demo notice, four required tabs/panels, ARIA relationships, keyboard navigation including Home/End, `tab` URL state, and invalid-tab fallback.
+3. Intercept/record network activity and fail a demo test when it requests `/api/data`, `/api/history`, `/api/requests`, `/api/shop`, or any mutation endpoint. Separately assert that the real sign-in and shop links retain `/api/login-google/start?continue=%2Fapp` and `/app?context=rewards`.
+4. At 320px, assert no horizontal overflow, at least 44px demo/tab/link targets, and visible keyboard focus for the demo entry and tablist. Keep existing OAuth and language-switching coverage intact.
+5. Run unit, E2E, lint, and production build gates. Report local browser/preview outcomes separately from CI, deployed edge, crawler/indexing, Telegram-client, and physical-device proof.
 
 ### Out of scope
 
-- End-to-end testing against production, Telegram client/device validation, or changing unrelated public-page snapshots.
+- Production SEO submission/verification, Search Console indexing proof, official Telegram-client testing, or PWA/device migration validation.
 
 ### Acceptance criteria
 
-- Automated coverage fails if either guest locale loses required content, a tab becomes unreachable by keyboard, the explicit locale is discarded, the demo becomes API-backed, or the real OAuth entry changes.
-- The focused browser run proves both demo desktop behavior and 320px geometry; `npm run build` separately proves static assets are included in the production build.
-- Existing public access tests continue to pass without requiring an authenticated session for any demo assertion.
+- Automated tests fail if a demo route leaves the canonical EN/RU URL set, has incomplete metadata/sitemap alternates, chooses copy from browser preference rather than its document path, or reintroduces `/public/` as a visitor-facing URL.
+- Automated tests fail if the demo loses any required panel/keyboard semantics, makes API or mutation traffic, or points an authenticated shop CTA at `/rewards.html` or `/workspace`.
+- The focused E2E run proves desktop interactions and 320px geometry; the production build separately proves generated assets are shipped. Neither result is reported as deployment or indexation proof.
 
 ### Targeted validation
 
 ```bash
-cd apps/web && npm run test -- tests/unit/publicDemoI18n.test.ts tests/unit/publicSiteAccess.test.ts && npm run test:e2e -- tests/e2e/workspace-entry.spec.ts && npm run lint && npm run build
+cd apps/web && APP_URL=https://example.test npm run generate:public && npm run test -- tests/unit/publicSiteUrls.test.ts tests/unit/publicSiteI18n.test.ts tests/unit/publicParentDemo.test.ts tests/unit/sitemap.test.ts && npm run test:e2e -- tests/e2e/workspace-entry.spec.ts && npm run lint && APP_URL=https://example.test npm run build
 ```
 
 ### Commit
 
 ```bash
-git add apps/web/tests/e2e/workspace-entry.spec.ts apps/web/tests/unit/publicDemoI18n.test.ts
-git commit -m "test(web): cover public parent demo"
+git add apps/web/tests/e2e/workspace-entry.spec.ts apps/web/tests/unit/publicSiteUrls.test.ts apps/web/tests/unit/publicSiteI18n.test.ts apps/web/tests/unit/publicParentDemo.test.ts
+git commit -m "test(web): cover generated public parent demo"
 ```

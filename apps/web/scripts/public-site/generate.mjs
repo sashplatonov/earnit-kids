@@ -31,7 +31,9 @@ async function generateLocale(locale) {
     await mkdir(localeDirectory, { recursive: true });
     for (const page of PUBLIC_PAGES) {
         const fragment = await readFile(path.join(pagesDirectory, `${page.key}.html`), 'utf8');
-        const localizedContent = fragment.replaceAll(`{{${page.key}.content}}`, messages[locale].pages[page.key].content);
+        const localizedContent = page.key === 'demo'
+            ? `<section class="demo-root" data-demo-root aria-labelledby="demo-title"><div class="container"><p class="demo-loading" data-demo-loading>${messages[locale].demo.required}</p><noscript>${messages[locale].demo.required}</noscript></div></section>`
+            : fragment.replaceAll(`{{${page.key}.content}}`, messages[locale].pages[page.key].content);
         const englishPath = page.englishPath;
         const output = replaceAll(template, {
             LANG: locale,
@@ -53,6 +55,7 @@ async function generateLocale(locale) {
             TELEGRAM: escapeAttribute(messages[locale].telegram),
             LOGIN: escapeAttribute(messages[locale].login),
             CONTENT: localizedContent,
+            PAGE_SCRIPT: page.key === 'demo' ? '<script type="module" src="/public/demo.js"></script>' : '',
         });
         const outputPath = path.join(localeDirectory, page.artifact);
         await writeFile(outputPath, output);

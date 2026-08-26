@@ -6,12 +6,12 @@
 <meta name="theme-color" content="#f7f8fb">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self'; style-src-attr 'none'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'">
 <meta http-equiv="Permissions-Policy" content="accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()">
-<title>Questions - EarnIt Kids</title>
-<meta name="description" content="Answers to parents’ frequently asked questions about EarnIt Kids.">
-<link rel="canonical" href="https://example.test/faq.html">
-<link rel="alternate" hreflang="en" href="https://example.test/faq.html">
-<link rel="alternate" hreflang="ru" href="https://example.test/ru/faq.html">
-<link rel="alternate" hreflang="x-default" href="https://example.test/faq.html">
+<title>Parent demo - EarnIt Kids</title>
+<meta name="description" content="Explore a read-only sample parent workspace with tasks, rewards, history, and requests.">
+<link rel="canonical" href="https://example.test/demo.html">
+<link rel="alternate" hreflang="en" href="https://example.test/demo.html">
+<link rel="alternate" hreflang="ru" href="https://example.test/ru/demo.html">
+<link rel="alternate" hreflang="x-default" href="https://example.test/demo.html">
 
 <link rel="icon" href="/public/favicon.svg" type="image/svg+xml">
 <link rel="alternate icon" href="/public/favicon-32x32.png" type="image/png">
@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="/public/styles.css">
 <script src="/public/config.js"></script>
 </head>
-<body data-page-key="faq">
+<body data-page-key="demo">
 <a class="skip-link" href="#main">Skip to content</a>
 <header class="site-header">
   <div class="container header-row">
@@ -27,10 +27,10 @@
       <img src="/public/assets/icons/app-icon.png" alt="" width="38" height="38">
       <span>EarnIt Kids</span>
     </a>
-    <nav class="tabs" data-i18n-aria-label="navLabel" aria-label="Main menu"><a class="tab" href="/">Home</a><a class="tab" href="/how.html">How it works</a><a class="tab" href="/tasks.html">Tasks</a><a class="tab" href="/rewards.html">Rewards</a><a class="tab" href="/parents.html">For parents</a><a class="tab active" href="/faq.html" aria-current="page">Questions</a><a class="tab" href="/demo.html">Parent demo</a></nav>
+    <nav class="tabs" data-i18n-aria-label="navLabel" aria-label="Main menu"><a class="tab" href="/">Home</a><a class="tab" href="/how.html">How it works</a><a class="tab" href="/tasks.html">Tasks</a><a class="tab" href="/rewards.html">Rewards</a><a class="tab" href="/parents.html">For parents</a><a class="tab" href="/faq.html">Questions</a><a class="tab active" href="/demo.html" aria-current="page">Parent demo</a></nav>
     <div class="language-switcher" role="group" data-i18n-aria-label="languageGroup" aria-label="Language">
-      <a href="https://example.test/faq.html" data-language="en" aria-current="page">EN</a>
-      <a href="https://example.test/ru/faq.html" data-language="ru">RU</a>
+      <a href="https://example.test/demo.html" data-language="en" aria-current="page">EN</a>
+      <a href="https://example.test/ru/demo.html" data-language="ru">RU</a>
     </div>
     <a class="btn btn-primary header-cta" data-miniapp-link href="#">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-7 18-3-7z"/></svg> Telegram Mini App
@@ -39,8 +39,7 @@
   </div>
 </header>
 <main id="main">
-<section class="page-hero"><div class="container"><h1>Questions parents usually ask first</h1><p>Plain answers, without marketing language.</p></div></section><section class="section"><div class="container faq"><details open><summary>Can a child add coins themselves?</summary><p>No. Done sends a request to a parent; coins appear after approval.</p></details><details><summary>Must rewards cost money?</summary><p>No. Add a board game, walk, film choice, or time together.</p></details><details><summary>What if there are several children?</summary><p>Each child has a separate balance, task list, history, and limits.</p></details><details><summary>Does a child need email?</summary><p>No. A child account is connected to Telegram. Email is only for a parent who chooses it.</p></details><details><summary>Can I invite another parent?</summary><p>Yes, by email or Telegram. You do not need to share one password.</p></details><details><summary>Does the bot replace the Mini App?</summary><p>No. The bot handles quick actions; settings and long lists are easier in the Mini App.</p></details></div></section>
-
+<section class="demo-root" data-demo-root aria-labelledby="demo-title"><div class="container"><p class="demo-loading" data-demo-loading>This demo needs JavaScript to display sample data.</p><noscript>This demo needs JavaScript to display sample data.</noscript></div></section>
 </main>
 <a class="btn btn-primary mobile-cta" data-miniapp-link href="#"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-7 18-3-7z"/></svg> Telegram Mini App</a>
 <a class="btn btn-secondary mobile-cta mobile-browser-cta" data-browser-workspace-link href="/api/login-google/start?continue=%2Fapp"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 20c.7-3.5 3-5 7-5s6.3 1.5 7 5"/></svg> Sign in</a>
@@ -51,6 +50,6 @@
   </div>
 </footer>
 <script type="module" src="/public/site.js"></script>
-
+<script type="module" src="/public/demo.js"></script>
 </body>
 </html>
