@@ -14,9 +14,9 @@ test('production entry points expose the browser security contract', async ({ pa
     expect(publicResponse?.headers()['x-frame-options']).toBe('DENY');
     expect(publicResponse?.headers()['referrer-policy']).toBe('no-referrer');
 
-    const workspaceResponse = await page.goto('/ru/workspace');
-    expect(workspaceResponse?.status()).toBe(200);
-    expect(workspaceResponse?.headers()['permissions-policy']).toContain('microphone=()');
+    const appResponse = await page.goto('/ru/app');
+    expect(appResponse?.status()).toBe(200);
+    expect(appResponse?.headers()['permissions-policy']).toContain('microphone=()');
 
     const apiResponse = await request.get('/api/page-data/session');
     expect(apiResponse.headers()['content-security-policy']).toContain("object-src 'none'");
@@ -42,53 +42,48 @@ test('public pages keep both access choices usable at the compact mobile width',
             await expect(link).toHaveCSS('min-height', /^(44px|48px)$/);
         }
         await expect(telegramLinks.first()).toHaveAttribute('href', 'https://t.me/earnit_test_bot?startapp=public-entry');
-        await expect(browserLinks.first()).toHaveAttribute('href', '/api/login-google/start?continue=%2Fworkspace');
+        await expect(browserLinks.first()).toHaveAttribute('href', '/api/login-google/start?continue=%2Fapp');
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
         await expect(page.locator('[data-language]:visible').first()).toBeVisible();
     }
 });
 
 test('public pages stay in the canonical URL set and preserve language across navigation', async ({ page }) => {
-    await page.goto('/?lang=en');
-    await expect(page).toHaveURL(/\/\?lang=en$/);
+    await page.goto('/');
+    await expect(page).toHaveURL('/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page).toHaveTitle('Home - EarnIt Kids');
     await expect(page.getByText('Tasks, coins and rewards - without notes and endless reminders.')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'EN' })).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByRole('button', { name: 'RU' })).toHaveAttribute('aria-pressed', 'false');
+    const publicOrigin = new URL(page.url()).origin;
+    await expect(page.locator('[data-language="en"]')).toHaveAttribute('href', `${publicOrigin}/`);
+    await expect(page.locator('[data-language="ru"]')).toHaveAttribute('href', `${publicOrigin}/ru/`);
 
-    await page.getByRole('link', { name: 'How it works' }).click();
-    await expect(page).toHaveURL('/how.html?lang=en');
+    await page.getByRole('link', { name: 'How it works', exact: true }).click();
+    await expect(page).toHaveURL('/how.html');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page).toHaveTitle('How it works - EarnIt Kids');
 
-    await page.getByRole('button', { name: 'RU' }).click();
-    await expect(page).toHaveURL('/how.html?lang=ru');
+    await page.locator('[data-language="ru"]').click();
+    await expect(page).toHaveURL('/ru/how.html');
     await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
     await expect(page).toHaveTitle('Как работает - EarnIt Kids');
-    await expect(page.getByText('Задания, монеты и награды - без записок и бесконечных напоминаний.')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'RU' })).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('a[href="/tasks.html?lang=ru"]')).toHaveCount(1);
+    await expect(page.getByRole('heading', { name: 'Четыре шага — и всё понятно' })).toBeVisible();
+    await expect(page.locator('[data-language="ru"]')).toHaveAttribute('href', `${publicOrigin}/ru/how.html`);
+    await expect(page.getByRole('link', { name: 'Задания', exact: true })).toHaveCount(1);
 });
 
-test('public locale resolution uses Russian preference and English fallback', async ({ page }) => {
+test('public locale paths are server-owned and ignore browser preference', async ({ page }) => {
     await page.addInitScript(() => {
         Object.defineProperty(navigator, 'languages', { configurable: true, value: ['ru-RU'] });
         Object.defineProperty(navigator, 'language', { configurable: true, value: 'ru-RU' });
     });
     await page.goto('/tasks.html');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page).toHaveTitle('Tasks - EarnIt Kids');
+
+    await page.goto('/ru/tasks.html');
     await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
     await expect(page).toHaveTitle('Задания - EarnIt Kids');
-    await expect(page.getByRole('button', { name: 'RU' })).toHaveAttribute('aria-pressed', 'true');
-
-    await page.addInitScript(() => {
-        Object.defineProperty(navigator, 'languages', { configurable: true, value: ['de-DE'] });
-        Object.defineProperty(navigator, 'language', { configurable: true, value: 'de-DE' });
-    });
-    await page.goto('/faq.html');
-    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-    await expect(page).toHaveTitle('Questions - EarnIt Kids');
-    await expect(page.getByRole('button', { name: 'EN' })).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('public Google entry uses same-origin startup and preserves the local workspace target', async ({ page }) => {
@@ -114,11 +109,11 @@ test('public Google entry uses same-origin startup and preserves the local works
     await page.goto('/');
     const publicOrigin = new URL(page.url()).origin;
     const oauthRequest = page.waitForRequest('**/api/login-google/url**');
-    await page.getByRole('link', { name: /Войти/ }).first().click();
+    await page.getByRole('link', { name: /Sign in|Войти/ }).first().click();
     const oauthRequestUrl = (await oauthRequest).url();
 
     expect(new URL(oauthRequestUrl).origin).toBe(publicOrigin);
-    expect(oauthRequestUrl).toContain('/api/login-google/url?redirect_to=%2Fworkspace');
+    expect(oauthRequestUrl).toContain('/api/login-google/url?redirect_to=%2Fapp');
     await expect(page).toHaveURL(/accounts\.google\.com\/o\/oauth2\/auth\?state=signed-test-state/);
 });
 
@@ -148,10 +143,10 @@ test('public Google entry keeps its local fallback for disabled, failed, and inv
     for (const testCase of cases) {
         currentCase = testCase;
         await page.goto('/');
-        const browserLink = page.getByRole('link', { name: /Войти/ }).first();
+        const browserLink = page.getByRole('link', { name: /Sign in|Войти/ }).first();
         await browserLink.click();
         await expect(page.getByRole('status')).toContainText('Вход через Google временно недоступен');
-        await expect(browserLink).toHaveAttribute('href', '/api/login-google/start?continue=%2Fworkspace');
+        await expect(browserLink).toHaveAttribute('href', '/api/login-google/start?continue=%2Fapp');
         await browserLink.click();
         await expect(page.getByRole('status')).toContainText('Вход через Google временно недоступен');
     }
@@ -161,14 +156,23 @@ test('public native Google entry remains a real anchor when JavaScript is unavai
     await page.goto('/');
 
     await expect(page.locator('[data-browser-workspace-link]').first())
-        .toHaveAttribute('href', '/api/login-google/start?continue=%2Fworkspace');
+        .toHaveAttribute('href', '/api/login-google/start?continue=%2Fapp');
 });
 
-test('unauthenticated localized workspace access preserves its local continuation', async ({ page }) => {
+test('unauthenticated localized app access preserves its local continuation', async ({ page }) => {
     for (const locale of ['en', 'ru']) {
-        await page.goto(`/${locale}/workspace`);
+        await page.goto(`/${locale}/app`);
 
-        await expect(page).toHaveURL(new RegExp(`\\/?continue=%2F${locale}%2Fworkspace$`));
+        await expect(page).toHaveURL(new RegExp(`\\/?continue=%2F${locale}%2Fapp$`));
+    }
+});
+
+test('legacy workspace URLs redirect once to app without rendering the application', async ({ request }) => {
+    for (const [legacyPath, appPath] of [['/workspace?tab=tasks&from=mail', '/app?tab=tasks&from=mail'], ['/ru/workspace?tab=tasks&from=mail', '/ru/app?tab=tasks&from=mail']]) {
+        const response = await request.get(legacyPath, { maxRedirects: 0 });
+        expect(response.status()).toBe(308);
+        expect(response.headers().location).toBe(appPath);
+        expect(await response.text()).not.toContain('workspace-parent');
     }
 });
 

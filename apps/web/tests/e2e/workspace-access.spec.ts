@@ -9,11 +9,11 @@ async function authenticate(page: Page, role: 'parent' | 'child') {
     ]);
 }
 
-test('normal browser workspace access preserves the detected locale in its continuation', async ({ page }) => {
-    await page.goto('/workspace');
+test('normal browser app access preserves the detected locale in its continuation', async ({ page }) => {
+    await page.goto('/app?tab=tasks');
 
-    await expect(page).toHaveURL(/\/?continue=%2F(?:en|ru)%2Fworkspace$/);
-    await expect(page.getByRole('heading', { name: /Чтобы не повторять одно и то же|without repeating/i })).toBeVisible();
+    await expect(page).toHaveURL(/\/?continue=%2F(?:en|ru)%2Fapp%3Ftab%3Dtasks$/);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 
@@ -35,7 +35,7 @@ test('Telegram-hosted workspace does not expose browser sign out', async ({ page
 
 test('an authenticated parent can sign out with one pending request', async ({ page }) => {
     await authenticate(page, 'parent');
-    await page.goto('/workspace');
+    await page.goto('/app');
     const logoutButton = page.locator('button.logout');
 
     await expect(logoutButton).toBeVisible();
@@ -63,7 +63,7 @@ test('an authenticated parent can sign out with one pending request', async ({ p
 
 test('a failed browser logout stays in place and can be retried', async ({ page }) => {
     await authenticate(page, 'parent');
-    await page.goto('/workspace');
+    await page.goto('/app');
     const logoutButton = page.locator('button.logout');
     const workspaceUrl = page.url();
     let requestCount = 0;
@@ -83,7 +83,7 @@ test('a failed browser logout stays in place and can be retried', async ({ page 
 
 test('an authenticated child sees the child workspace and browser sign out', async ({ page }) => {
     await authenticate(page, 'child');
-    await page.goto('/workspace');
+    await page.goto('/app');
 
     await expect(page.locator('.tabs-shell button.logout')).toBeVisible();
     await expect(page.locator('.child-workspace')).toBeVisible();
@@ -99,7 +99,7 @@ test('an authenticated family admin sees language only inside Family settings', 
     }));
     await page.route('**/api/base-data', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ tasks: [], products: [] }) }));
     await page.route('**/api/data/details**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
-    await page.goto('/workspace');
+    await page.goto('/app');
 
     await page.getByRole('tab', { name: /Family|Семья/ }).click();
     await expect(page.getByRole('button', { name: /Family language|Язык семьи/ })).toBeVisible();
@@ -116,7 +116,7 @@ test('editor and viewer do not see family language in Family settings', async ({
         }));
         await page.route('**/api/base-data', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ tasks: [], products: [] }) }));
         await page.route('**/api/data/details**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
-        await page.goto('/workspace');
+        await page.goto('/app');
         await page.getByRole('tab', { name: /Family|Семья/ }).click();
         await expect(page.getByRole('button', { name: /Family language|Язык семьи/ })).toHaveCount(0);
     }

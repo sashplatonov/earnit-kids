@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { authenticateE2eSession } from './helpers';
 
 test('parent invitation entry is usable on a compact browser viewport', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
@@ -12,4 +13,12 @@ test('an expired invitation is announced without exposing personal data', async 
     await page.goto('/invite/parent?error=expired');
     await expect(page.getByRole('alert')).toContainText(/expired|истекло|истёк/i);
     await expect(page.getByTestId('parent-invitation')).not.toContainText(/@|family id/i);
+});
+
+test('a signed-in parent accepting an invitation returns to the canonical app route', async ({ page }) => {
+    await authenticateE2eSession(page, 'parent');
+    await page.route('**/invite/parent/accept', (route) => route.fulfill({ status: 204 }));
+    await page.goto('/invite/parent');
+    await page.getByRole('button', { name: /accept|принять/i }).click();
+    await expect(page).toHaveURL('/app');
 });

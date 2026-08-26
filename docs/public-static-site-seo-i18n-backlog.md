@@ -803,7 +803,7 @@ git commit -m "feat(web): migrate PWA scope to app"
 
 ## PSS-APP-004: Cover browser app-route migration regressions
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** PSS-APP-001, PSS-APP-002, PSS-APP-003
 
