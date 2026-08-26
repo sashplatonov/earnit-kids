@@ -2,6 +2,7 @@ package com.sashplatonov.earnit.kids.telegram.api.resource;
 
 import com.sashplatonov.earnit.kids.config.auth.CookieBuilder;
 import com.sashplatonov.earnit.kids.dto.response.AuthPayload;
+import com.sashplatonov.earnit.kids.dto.response.AuthResponse;
 import com.sashplatonov.earnit.kids.telegram.application.connection.TelegramFeatureGate;
 import com.sashplatonov.earnit.kids.telegram.application.auth.TelegramMiniAppAuthService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
@@ -42,6 +43,7 @@ class TelegramMiniAppAuthResourceTest {
         try (Response response = resource.exchange(new TelegramMiniAppAuthResource.TelegramInitDataRequest("valid-data", null))) {
             assertThat(response.getStatus()).isEqualTo(200);
             assertThat(response.getStringHeaders().getFirst("Set-Cookie")).startsWith("app_auth=signed");
+            assertThat(response.readEntity(AuthResponse.class).permission()).isEqualTo("family_admin");
         }
     }
 }

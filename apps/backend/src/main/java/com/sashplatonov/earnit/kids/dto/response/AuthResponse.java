@@ -8,6 +8,7 @@ import java.util.List;
 public record AuthResponse(
     boolean success,
     String role,
+    String permission,
     String familyId,
     Integer childId,
     String childName,
@@ -32,8 +33,15 @@ public record AuthResponse(
         return success(role, familyId, null, false);
     }
 
-    public static AuthResponse success(String role, String familyId, FamilyLocale locale, boolean languageSetupRequired) {
-        return new AuthResponse(true, role, familyId, null, null, null, false, null, locale, languageSetupRequired);
+    public static AuthResponse success(String role, String familyId, FamilyLocale locale,
+                                       boolean languageSetupRequired) {
+        return success(role, null, familyId, locale, languageSetupRequired);
+    }
+
+    public static AuthResponse success(String role, String permission, String familyId,
+                                       FamilyLocale locale, boolean languageSetupRequired) {
+        return new AuthResponse(true, role, permission, familyId, null, null, null, false, null,
+            locale, languageSetupRequired);
     }
 
     public static AuthResponse childSuccess(String familyId, int childId, String childName) {
@@ -42,15 +50,15 @@ public record AuthResponse(
 
     public static AuthResponse childSuccess(String familyId, int childId, String childName,
                                            FamilyLocale locale, boolean languageSetupRequired) {
-        return new AuthResponse(true, null, familyId, childId, childName, null, false, null,
+        return new AuthResponse(true, null, null, familyId, childId, childName, null, false, null,
             locale, languageSetupRequired);
     }
 
     public static AuthResponse selectionRequired(List<FamilyChoice> choices) {
-        return new AuthResponse(true, null, null, null, null, null, true, choices, null, false);
+        return new AuthResponse(true, null, null, null, null, null, null, true, choices, null, false);
     }
 
     public static AuthResponse failure(String error) {
-        return new AuthResponse(false, null, null, null, null, error, false, null, null, false);
+        return new AuthResponse(false, null, null, null, null, null, error, false, null, null, false);
     }
 }
