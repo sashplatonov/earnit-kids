@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
     DEFAULT_LOCALE,
     LOCALES,
@@ -31,6 +33,30 @@ describe('static public-site i18n', () => {
         expect(Object.keys(messages.en).sort()).toEqual(Object.keys(messages.ru).sort());
         expect(getMessage('ru', 'missing-key')).toBe('missing-key');
         expect(LOCALES).toEqual(['en', 'ru']);
+    });
+
+    it('keeps localized catalogs recursively in parity', () => {
+        const shape = (value: unknown): unknown => {
+            if (Array.isArray(value)) return value.map(shape);
+            if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map((key) => [key, shape((value as Record<string, unknown>)[key])]));
+            return typeof value;
+        };
+        expect(shape(messages.en)).toEqual(shape(messages.ru));
+    });
+
+    it('renders complete language metadata and representative body copy', () => {
+        const root = resolve(process.cwd(), 'static/public');
+        for (const locale of ['en', 'ru'] as const) {
+            const directory = locale === 'ru' ? resolve(root, 'ru') : root;
+            for (const file of ['index.html', 'how.html', 'tasks.html', 'rewards.html', 'parents.html', 'faq.html']) {
+                const html = readFileSync(resolve(directory, file), 'utf8');
+                expect(html).not.toContain('{{');
+                expect(html).toContain(`<html lang="${locale}">`);
+                expect(html.match(/<link rel="canonical"/g)).toHaveLength(1);
+                expect(html.match(/hreflang="(en|ru|x-default)"/g)).toHaveLength(3);
+                expect(html).toContain(locale === 'ru' ? 'Награды' : 'Rewards');
+            }
+        }
     });
 
     it('adds language only to same-origin public links', () => {

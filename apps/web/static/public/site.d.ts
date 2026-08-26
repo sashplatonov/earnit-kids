@@ -1,4 +1,5 @@
 export const GOOGLE_WORKSPACE_FALLBACK: string;
+export const PUBLIC_SITE_STATIC_LOCALE: boolean;
 export function requestBrowserWorkspaceUrl(
     fetchImpl: typeof fetch,
     config?: { redirectTo?: string },

@@ -160,7 +160,7 @@ git commit -m "feat(web): canonicalize public locale paths"
 
 ## PSS-SEO-002: Generate complete localized public documents and page metadata
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** PSS-SEO-001
 

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{LANG}}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -8,6 +8,10 @@
 <meta http-equiv="Permissions-Policy" content="accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()">
 <title>{{TITLE}} - EarnIt Kids</title>
 <meta name="description" content="{{DESCRIPTION}}">
+<link rel="canonical" href="{{CANONICAL}}">
+<link rel="alternate" hreflang="en" href="{{EN_URL}}">
+<link rel="alternate" hreflang="ru" href="{{RU_URL}}">
+<link rel="alternate" hreflang="x-default" href="{{EN_URL}}">
 
 <link rel="icon" href="/public/favicon.svg" type="image/svg+xml">
 <link rel="alternate icon" href="/public/favicon-32x32.png" type="image/png">
@@ -16,33 +20,33 @@
 <script src="/public/config.js"></script>
 </head>
 <body data-page-key="{{PAGE_KEY}}">
-<a class="skip-link" href="#main" data-i18n="skipLink">Skip to content</a>
+<a class="skip-link" href="#main">{{SKIP_LINK}}</a>
 <header class="site-header">
   <div class="container header-row">
-    <a class="brand" href="/" data-i18n-aria-label="brandLabel" aria-label="EarnIt Kids - home">
+    <a class="brand" href="{{HOME_URL}}" data-i18n-aria-label="brandLabel" aria-label="{{BRAND_LABEL}}">
       <img src="/public/assets/icons/app-icon.png" alt="" width="38" height="38">
       <span>EarnIt Kids</span>
     </a>
-    <nav class="tabs" data-i18n-aria-label="navLabel" aria-label="Main menu">{{NAV}}</nav>
-    <div class="language-switcher" role="group" data-i18n-aria-label="languageGroup" aria-label="Language">
-      <a href="/" data-language="en" aria-current="page">EN</a>
-      <a href="/ru/" data-language="ru">RU</a>
+    <nav class="tabs" data-i18n-aria-label="navLabel" aria-label="{{NAV_LABEL}}">{{NAV}}</nav>
+    <div class="language-switcher" role="group" data-i18n-aria-label="languageGroup" aria-label="{{LANGUAGE_GROUP}}">
+      <a href="{{EN_URL}}" data-language="en">EN</a>
+      <a href="{{RU_URL}}" data-language="ru">RU</a>
     </div>
     <a class="btn btn-primary header-cta" data-miniapp-link href="#">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-7 18-3-7z"/></svg> Telegram Mini App
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-7 18-3-7z"/></svg> {{TELEGRAM}}
     </a>
-    <a class="btn btn-secondary header-cta browser-cta" data-browser-workspace-link href="/api/login-google/start?continue=%2Fapp"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 20c.7-3.5 3-5 7-5s6.3 1.5 7 5"/></svg> Sign in</a>
+    <a class="btn btn-secondary header-cta browser-cta" data-browser-workspace-link href="/api/login-google/start?continue=%2Fapp"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 20c.7-3.5 3-5 7-5s6.3 1.5 7 5"/></svg> {{LOGIN}}</a>
   </div>
 </header>
 <main id="main">
 {{CONTENT}}
 </main>
-<a class="btn btn-primary mobile-cta" data-miniapp-link href="#"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-7 18-3-7z"/></svg> Telegram Mini App</a>
-<a class="btn btn-secondary mobile-cta mobile-browser-cta" data-browser-workspace-link href="/api/login-google/start?continue=%2Fapp"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 20c.7-3.5 3-5 7-5s6.3 1.5 7 5"/></svg> Sign in</a>
+<a class="btn btn-primary mobile-cta" data-miniapp-link href="#"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 18-8-7 18-3-7z"/></svg> {{TELEGRAM}}</a>
+<a class="btn btn-secondary mobile-cta mobile-browser-cta" data-browser-workspace-link href="/api/login-google/start?continue=%2Fapp"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 20c.7-3.5 3-5 7-5s6.3 1.5 7 5"/></svg> {{LOGIN}}</a>
 <footer class="footer">
   <div class="container footer-row">
     <div class="footer-brand"><img src="/public/assets/icons/app-icon.png" alt="" width="30" height="30">EarnIt Kids</div>
-    <div data-i18n="footer">Tasks, coins and rewards - without notes and endless reminders.</div>
+    <div>{{FOOTER}}</div>
   </div>
 </footer>
 <script type="module" src="/public/site.js"></script>
