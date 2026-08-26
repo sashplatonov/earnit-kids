@@ -95,8 +95,8 @@ self.addEventListener('notificationclick', (event) => {
     event.notification.close();
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-            const rawTarget = event.notification.data?.url || event.notification.data?.deepLink || '/workspace';
-            let target = '/workspace';
+            const rawTarget = event.notification.data?.url || event.notification.data?.deepLink || '/app';
+            let target = '/app';
             try {
                 const targetUrl = new URL(rawTarget, self.location.origin);
                 if (targetUrl.origin === self.location.origin && !targetUrl.pathname.startsWith('/api/')) target = `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`;

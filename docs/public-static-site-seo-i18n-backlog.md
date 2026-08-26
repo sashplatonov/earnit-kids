@@ -716,7 +716,7 @@ git commit -m "fix(auth): target browser app route"
 
 ## PSS-APP-003: Migrate the PWA scope and notification fallback to `/app`
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** PSS-APP-001
 

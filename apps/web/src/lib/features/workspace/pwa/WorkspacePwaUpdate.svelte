@@ -12,7 +12,7 @@
     let activationTimeout: ReturnType<typeof setTimeout> | undefined;
 
     onMount(() => {
-        if (!/(^|\/)workspace(?:\/|$)/.test(window.location.pathname)) return;
+        if (!/(^|\/)app(?:\/|$)/.test(window.location.pathname)) return;
 
         const announceUpdate = (event: Event) => {
             const candidate = (event as CustomEvent<ServiceWorkerRegistration>).detail;
