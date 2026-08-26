@@ -4,11 +4,10 @@ import { resolve } from 'node:path';
 import {
     DEFAULT_LOCALE,
     LOCALES,
-    detectLocale,
     getMessage,
     messages,
     normalizeLocale,
-    resolveLocale,
+    resolveDocumentLocale,
     withLanguage,
 } from '../../scripts/public-site/i18n.js';
 import { resolvePublicOrigin } from '../../scripts/public-site/urls.js';
@@ -20,14 +19,10 @@ describe('static public-site i18n', () => {
         expect(normalizeLocale('de')).toBeNull();
     });
 
-    it('prefers an explicit valid query over browser preferences', () => {
-        expect(resolveLocale('?lang=en', { languages: ['ru-RU'], language: 'ru-RU' })).toBe('en');
-        expect(resolveLocale('?lang=unsupported', { languages: ['ru-RU'], language: 'en-US' })).toBe('ru');
-    });
-
-    it('uses ordered browser preferences and falls back to English', () => {
-        expect(detectLocale({ languages: ['de', 'ru-RU'], language: 'en-US' })).toBe('ru');
-        expect(detectLocale({ languages: ['de'], language: 'de-DE' })).toBe(DEFAULT_LOCALE);
+    it('uses only the served document language and falls back to English', () => {
+        expect(resolveDocumentLocale({ documentElement: { lang: 'ru' } })).toBe('ru');
+        expect(resolveDocumentLocale({ documentElement: { lang: 'en' } })).toBe('en');
+        expect(resolveDocumentLocale({ documentElement: { lang: 'de' } })).toBe(DEFAULT_LOCALE);
     });
 
     it('keeps equal dictionary keys and safely falls back for missing messages', () => {
@@ -53,6 +48,8 @@ describe('static public-site i18n', () => {
                 const html = readFileSync(resolve(directory, file), 'utf8');
                 expect(html).not.toContain('{{');
                 expect(html).toContain(`<html lang="${locale}">`);
+                expect(html.match(/data-language="(?:en|ru)"[^>]*aria-current="page"/g)).toHaveLength(1);
+                expect(html).toContain(`data-language="${locale}" aria-current="page"`);
                 expect(html.match(/<link rel="canonical"/g)).toHaveLength(1);
                 expect(html.match(/hreflang="(en|ru|x-default)"/g)).toHaveLength(3);
                 expect(html).toContain(locale === 'ru' ? 'Награды' : 'Rewards');

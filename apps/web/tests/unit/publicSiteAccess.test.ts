@@ -1,11 +1,32 @@
 import { describe, expect, it, vi } from 'vitest';
-import { GOOGLE_WORKSPACE_FALLBACK, requestBrowserWorkspaceUrl } from '../../static/public/site.js';
+import { GOOGLE_WORKSPACE_FALLBACK, enhancePublicSite, requestBrowserWorkspaceUrl } from '../../static/public/site.js';
 
 function jsonResponse(body: unknown, status = 200): Response {
     return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
 
 describe('public site browser access', () => {
+    it('localizes dynamic feedback from html lang, never browser or query preferences', () => {
+        const status = { className: '', setAttribute: vi.fn(), textContent: '' };
+        const documentRef = {
+            documentElement: { lang: 'en' },
+            querySelectorAll: vi.fn(() => []),
+            querySelector: vi.fn(() => null),
+            createElement: vi.fn(() => status),
+            body: { append: vi.fn() },
+        } as unknown as Parameters<typeof enhancePublicSite>[0];
+        const windowRef = {
+            location: { pathname: '/', origin: 'https://example.test', href: 'https://example.test/?lang=ru&error=oauth' },
+            navigator: { languages: ['ru-RU'], language: 'ru-RU' },
+            EARNIT_CONFIG: {},
+            matchMedia: () => ({ matches: false }),
+        } as unknown as Parameters<typeof enhancePublicSite>[1];
+
+        enhancePublicSite(documentRef, windowRef, vi.fn());
+
+        expect(status.textContent).toBe('Google sign-in is temporarily unavailable. Use the browser sign-in link to try again.');
+    });
+
     it('keeps a local login fallback and requests the app OAuth target', async () => {
         const fetchMock = vi.fn<typeof fetch>()
             .mockResolvedValueOnce(jsonResponse({ googleEnabled: true }))

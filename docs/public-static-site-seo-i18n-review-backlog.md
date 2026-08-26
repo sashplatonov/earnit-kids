@@ -299,7 +299,7 @@ git commit -m "fix(web): emit absolute public seo metadata"
 
 ## PSS-REV-004: Make static language selection path-owned and announced
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** PSS-REV-001
 

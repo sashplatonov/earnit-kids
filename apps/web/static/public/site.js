@@ -1,5 +1,5 @@
 
-import { getMessage, resolveLocale } from "./i18n.js";
+import { getMessage, resolveDocumentLocale } from "./i18n.js";
 import { publicLanguageHref } from "./urls.js";
 
 export const GOOGLE_WORKSPACE_FALLBACK = "/";
@@ -46,7 +46,7 @@ export async function requestBrowserWorkspaceUrl(fetchImpl, config = {}) {
 }
 
 export function enhancePublicSite(documentRef, windowRef, fetchImpl) {
-  const locale = documentRef.documentElement.lang === "ru" ? "ru" : resolveLocale(windowRef.location.search, windowRef.navigator);
+  const locale = resolveDocumentLocale(documentRef);
   documentRef.querySelectorAll("[data-language]").forEach((link) => {
     const href = publicLanguageHref(windowRef.location.pathname, link.dataset.language, windowRef.location.origin);
     if (href) link.href = href;

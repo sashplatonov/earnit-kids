@@ -31,6 +31,8 @@ async function expectRawPublicDocument(browser: Browser, locale: 'en' | 'ru', pa
     try {
         await page.goto(`${locale === 'ru' ? '/ru' : ''}${path}`);
         await expectPublicMetadata(page, locale, path, title, body);
+        await expect(page.locator('[data-language][aria-current="page"]')).toHaveCount(1);
+        await expect(page.locator(`[data-language="${locale}"]`)).toHaveAttribute('aria-current', 'page');
         await expect(page.locator('script[src="/public/site.js"]')).toHaveCount(1);
     } finally {
         await context.close();
@@ -195,6 +197,8 @@ test('language controls remain real, keyboard-accessible public links at 320px',
         await page.goto(publicPage);
         const languageLinks = page.locator('[data-language]');
         await expect(languageLinks).toHaveCount(2);
+        await expect(page.locator('[data-language][aria-current="page"]')).toHaveCount(1);
+        await expect(page.locator('[data-language="en"]')).toHaveAttribute('aria-current', 'page');
         const publicOrigin = new URL(page.url()).origin;
         for (const locale of ['en', 'ru']) {
             const link = languageLinks.filter({ hasText: locale.toUpperCase() });
@@ -213,6 +217,13 @@ test('language controls remain real, keyboard-accessible public links at 320px',
     await expect(page).toHaveURL('/ru/tasks.html');
     await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
     await expect(page.getByRole('link', { name: 'Задания', exact: true })).toHaveCount(1);
+});
+
+test('English dynamic feedback stays English for Russian browser preferences', async ({ page }) => {
+    await page.context().setExtraHTTPHeaders({ 'Accept-Language': 'ru-RU' });
+    await page.goto('/?lang=en&error=oauth');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page.locator('[role="status"]')).toHaveText('Google sign-in is temporarily unavailable. Use the browser sign-in link to try again.');
 });
 
 test('public Google entry uses same-origin startup and preserves the local workspace target', async ({ page }) => {
