@@ -162,7 +162,7 @@ test('Russian browser preference redirects every English public document once', 
         });
         expect(redirect.status()).toBe(308);
         expect(redirect.headers().location).toBe(`/ru${publicPage}`);
-        expect(redirect.headers().vary).toBe('Accept-Language');
+        expect(redirect.headers().vary).toBe('Accept-Language, Cookie');
 
         await page.goto(`/ru${publicPage}`);
         await expectPublicMetadata(page, 'ru', publicPage, publicLocales[1].title[publicPages.indexOf(publicPage)], publicLocales[1].body);

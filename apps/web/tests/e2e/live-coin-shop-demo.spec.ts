@@ -50,7 +50,7 @@ test('Russian live demo is directly reachable and preserves locale copy', async 
 
     expect(response?.status()).toBe(200);
     await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
-    await expect(page).toHaveTitle('Живое демо магазина наград · EarnIt Kids');
+    await expect(page).toHaveTitle('Демо магазина наград · EarnIt Kids');
     await expect(page.getByRole('main', { name: 'Моя семья' })).toBeVisible();
     await expect(page.getByRole('tab', { name: /^Главная/ })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Начать демо заново', exact: true })).toBeVisible();

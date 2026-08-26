@@ -103,7 +103,7 @@
 {:else}
     <main class="telegram-page" aria-live="polite">
         <div class="telegram-card">
-            <img class="telegram-mark" src="/img/public/app-icon.png" alt="" width="88" height="88" />
+            <img class="telegram-mark" src="/public/assets/icons/app-icon.png" alt="" width="88" height="88" />
             <h1>EarnIt Kids</h1>
             {#if state === 'loading'}
                 <p>{$i18n.t('app.telegram.entry.checkingSession')}</p>
