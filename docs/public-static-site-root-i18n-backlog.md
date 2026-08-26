@@ -295,7 +295,7 @@ git commit -m "test(web): cover rooted localized public site"
 
 ## PSS-005: Update the public-site release runbook
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** PSS-004
 

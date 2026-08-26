@@ -103,44 +103,59 @@ permission, an authenticated session, and a reachable push provider.
 
 ## Release and deployment checklist
 
-1. Open every public page at `/public/index.html`, `/public/how.html`,
-   `/public/tasks.html`, `/public/rewards.html`, `/public/parents.html`, and
-   `/public/faq.html`. Confirm that both the configured Telegram Mini App URL
-   and the browser workspace fallback are visible and usable at a 320px-wide
-   viewport, with no horizontal overflow. Confirm the browser action starts the
-   same-origin Google URL endpoint and that a failed startup leaves the local
-   login link available.
-2. Confirm the deployed web origin, backend origin, HTTPS certificate, DNS, and
+1. Open the canonical public pages at `/`, `/how.html`, `/tasks.html`,
+   `/rewards.html`, `/parents.html`, and `/faq.html`. Confirm that the default
+   language is English in an unsupported or otherwise non-Russian browser
+   context, while a browser whose preferred language is Russian receives
+   Russian copy. Select EN and RU on each page, confirm the selected language
+   is announced by the control, and follow public navigation to verify the
+   choice remains in the URL and content. Do not expect a family `locale`
+   cookie or authenticated locale state to change.
+2. At a 320px-wide viewport, confirm every canonical public page has no
+   horizontal overflow, visible keyboard focus, and usable language controls.
+   Confirm CSS, JavaScript, icons, images, and `/public/config.js` load from
+   the deployed origin. Confirm both the configured Telegram Mini App URL and
+   the browser workspace fallback are visible and usable. The public access
+   fallback must retain the same-origin Google-start anchor when startup is
+   unavailable, and neither OAuth nor Telegram URLs may receive `lang`.
+3. Verify that a root request carrying `tgWebAppStartParam` still enters the
+   Russian Telegram Mini App flow with its complete query string preserved.
+   This check belongs to the official Telegram launch path; a normal browser
+   request to `/` must remain the public marketing home.
+4. Confirm the deployed web origin, backend origin, HTTPS certificate, DNS, and
    exact `CORS_ORIGINS` values. Send an authenticated and an unauthenticated
    `OPTIONS` preflight to a representative `/api/*` endpoint and inspect the
    returned origin and credentials headers.
-3. Confirm Google Cloud OAuth consent-screen publishing status and register
+5. Confirm Google Cloud OAuth consent-screen publishing status and register
    exactly ${APP_URL}/api/login-google/callback. Test login and cancellation
    with a non-production account; verify the callback does not accept a foreign
    redirect or email for an invitation.
-4. Sign in to the browser workspace with a test account, confirm the browser
+6. Sign in to the browser workspace with a test account, confirm the browser
    sign-out control is present, and verify a successful sign-out clears the
    session before returning to the static public site. Also verify that a
    failed logout remains on the workspace and presents a generic error.
-5. Confirm the mail provider sender/domain, SPF/DKIM/DMARC, bounce/complaint
+7. Confirm the mail provider sender/domain, SPF/DKIM/DMARC, bounce/complaint
    path, provider credentials, and rate limits. Send a controlled test invite,
    verify provider acceptance and mailbox delivery, then revoke the test
    invitation. Never paste the raw URL into logs or monitoring.
-6. Generate or load the VAPID key pair through the approved secret-management
+8. Generate or load the VAPID key pair through the approved secret-management
    process. Set the public key, private key, subject, and retry limit; deploy
    with `ENABLE_WEB_PUSH=true`; enable push in an HTTPS browser and verify the
    subscription and a delivered notification, including unsubscribe behavior.
-7. In BotFather, configure the Mini App URL to the deployed
+9. In BotFather, configure the Mini App URL to the deployed
    `TELEGRAM_MINI_APP_URL` (or its ${APP_URL}/telegram default). Verify the
    bot webhook ownership, secret, rollout gate, and callback settings. Launch
    from the official Telegram client with a test identity and check both parent
    and child authorization boundaries.
-8. Confirm database migrations, outbox/retention worker health, structured
+10. Confirm database migrations, outbox/retention worker health, structured
    backend errors, bounded web diagnostics, security headers, and alerting for
    failed mail, Telegram, and push delivery.
-9. Run the local quality gates below, then run the deployment smoke checks
-   above. Record provider responses, client/device, timestamp, and deployment
-   revision separately from local test output.
+11. Confirm the former Mini App reference carousel and its four screenshots
+   are absent from the deployed public site. Their reappearance is a deployment
+   regression, not an expected visual variation. Run the local quality gates
+   below, then run the deployment smoke checks above. Record provider responses,
+   client/device, timestamp, and deployment revision separately from local test
+   output.
 
 ## Verification boundaries
 
