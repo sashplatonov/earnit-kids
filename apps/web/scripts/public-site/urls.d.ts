@@ -1,5 +1,6 @@
 export const PUBLIC_LOCALES: readonly ['en', 'ru'];
 export const DEFAULT_PUBLIC_LOCALE: 'en';
+export const PUBLIC_PAGES: readonly { key: string; englishPath: string; artifact: string }[];
 export function publicDocument(pathname: string, locale?: 'en' | 'ru'): {
     key: string;
     englishPath: string;

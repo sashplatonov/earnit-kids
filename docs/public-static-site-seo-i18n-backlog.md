@@ -265,7 +265,7 @@ git commit -m "feat(web): generate localized public documents"
 
 ## PSS-SEO-003: Publish language-aware sitemap and production robots policy
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** PSS-SEO-001, PSS-SEO-002
 

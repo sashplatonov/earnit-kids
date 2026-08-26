@@ -5,8 +5,7 @@ import type { RequestHandler } from './$types';
 // EXPLAIN: production environments (staging/preview/dev) block indexing so
 // EXPLAIN: they never compete with production in search results.
 function isProduction(): boolean {
-    const value = process.env.PRODUCTION ?? '';
-    return value === 'true' || value === '1';
+    return (process.env.DEPLOYMENT_ENV ?? '').trim().toLowerCase() === 'production';
 }
 
 export const GET: RequestHandler = async () => {

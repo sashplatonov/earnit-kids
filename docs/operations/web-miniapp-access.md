@@ -51,7 +51,7 @@ host loopback addresses.
 | `CORS_ORIGINS` | Comma-separated exact browser origins allowed by the backend. Include the deployed web origin and no untrusted origins. Verify credentials-enabled preflight after deployment. |
 | `JWT_SECRET` | Session and signed continuation material. Use a unique secret, store it in the secret manager, and rotate according to the incident/secret-rotation policy. |
 | `PARENT_INVITATION_PEPPER` | Secret digest pepper for parent invitation tokens. Keep separate from `JWT_SECRET`; rotation invalidates existing invitation digests unless a migration strategy is provided. |
-| `PRODUCTION` | Enables production cookie behavior. Set `true` for the production runtime. |
+| `DEPLOYMENT_ENV` | Selects the deployed environment for runtime policy. Set `production` in the production web/backend runtime; use `development`, `preview`, or `staging` elsewhere. |
 | `SESSION_TTL_SECONDS`, `REFRESH_TOKEN_TTL_SECONDS` | Session and refresh-token lifetimes. Confirm the values match the organization's account-security policy. |
 
 ### Google OAuth and parent email invitations
