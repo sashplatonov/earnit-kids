@@ -1,10 +1,24 @@
 import adapter from '@sveltejs/adapter-node';
+import staticAdapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+
+const isStaticBuild = process.env.STATIC_BUILD === 'true';
+const assetsDirectory = process.env.PUBLIC_SITE_ASSETS_DIR || 'static';
 
 const config = {
     preprocess: vitePreprocess(),
     kit: {
-        adapter: adapter({ precompress: false }),
+        adapter: isStaticBuild
+            ? staticAdapter({
+                pages: 'build/static',
+                assets: 'build/static',
+                precompress: false,
+                strict: false,
+            })
+            : adapter({ precompress: false }),
+        files: {
+            assets: assetsDirectory,
+        },
         csp: {
             mode: 'auto',
             directives: {

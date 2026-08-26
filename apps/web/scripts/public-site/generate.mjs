@@ -8,7 +8,9 @@ const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectDirectory = path.resolve(scriptDirectory, '../..');
 const templatePath = path.join(scriptDirectory, 'template.html');
 const pagesDirectory = path.join(scriptDirectory, 'pages');
-const outputDirectory = path.join(projectDirectory, 'static/public');
+const outputDirectory = process.env.PUBLIC_OUTPUT_DIR
+    ? path.resolve(projectDirectory, process.env.PUBLIC_OUTPUT_DIR)
+    : path.join(projectDirectory, 'static/public');
 const template = await readFile(templatePath, 'utf8');
 const publicOrigin = resolvePublicOrigin(process.env.APP_URL, {
     production: process.env.DEPLOYMENT_ENV === 'production',
