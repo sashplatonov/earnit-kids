@@ -198,7 +198,7 @@ git commit -m "refactor(web): route workspace mutations through action ports"
 
 ## LCDP-004: Собрать public demo из настоящего родительского workspace shell
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** LCDP-002, LCDP-003
 
