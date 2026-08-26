@@ -103,8 +103,9 @@ describe('static public-site i18n', () => {
             const directory = locale === 'ru' ? resolve(root, 'ru') : root;
             for (const file of ['index.html', 'how.html', 'tasks.html', 'rewards.html', 'parents.html', 'faq.html']) {
                 const html = readFileSync(resolve(directory, file), 'utf8');
-                expect(html.match(locale === 'ru' ? /href="\/ru\/demo"/g : /href="\/demo"/g)).toHaveLength(file === 'rewards.html' ? 2 : 1);
-                expect(html).toContain(locale === 'ru' ? 'Попробовать' : 'Try');
+                expect(html.match(locale === 'ru' ? /href="\/ru\/demo"/g : /href="\/demo"/g)).toHaveLength(['how.html', 'rewards.html'].includes(file) ? 2 : 1);
+                expect(html).toContain(locale === 'ru' ? '>Демо<' : '>Demo<');
+                expect(html).toContain(locale === 'ru' ? 'href="/ru/how.html#tasks"' : 'href="/how.html#tasks"');
             }
             const rewards = readFileSync(resolve(directory, 'rewards.html'), 'utf8');
             expect(rewards).toContain(locale === 'ru' ? 'интерактивное пространство' : 'interactive workspace');

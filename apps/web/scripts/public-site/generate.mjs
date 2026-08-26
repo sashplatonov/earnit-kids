@@ -20,14 +20,25 @@ const escapeAttribute = (value) => String(value).replaceAll('&', '&amp;').replac
 const replaceAll = (source, values) => Object.entries(values).reduce((result, [key, value]) => result.replaceAll(`{{${key}}}`, String(value)), source);
 
 function navigationFor(activeKey, locale) {
-    const pages = PUBLIC_PAGES.map((page) => {
-        const active = page.key === activeKey ? ' active' : '';
-        const current = page.key === activeKey ? ' aria-current="page"' : '';
-        const href = locale === 'ru' ? `/ru${page.englishPath}` : page.englishPath;
-        return `<a class="tab${active}" href="${href}"${current}>${messages[locale].pageTitles[page.key]}</a>`;
-    }).join('');
+    const prefix = locale === 'ru' ? '/ru' : '';
+    const productPages = ['how', 'tasks', 'rewards', 'parents'];
+    const productActive = productPages.includes(activeKey) ? ' active' : '';
+    const productLinks = productPages.map((key) => `<a href="${prefix}/how.html#${key}">${messages[locale].pageTitles[key]}</a>`).join('');
+    const homeActive = activeKey === 'index' ? ' active' : '';
+    const faqActive = activeKey === 'faq' ? ' active' : '';
+    const homeCurrent = activeKey === 'index' ? ' aria-current="page"' : '';
+    const faqCurrent = activeKey === 'faq' ? ' aria-current="page"' : '';
+    const homeLabel = messages[locale].pageTitles.index;
+    const faqLabel = messages[locale].pageTitles.faq;
     const demoPath = locale === 'ru' ? '/ru/demo' : '/demo';
-    return `${pages}<a class="tab" href="${demoPath}">${messages[locale].demo}</a>`;
+    return `<a class="tab${homeActive}" href="${prefix}/"${homeCurrent}>${homeLabel}</a><details class="menu-popover${productActive}"><summary class="tab">${messages[locale].productMenu}</summary><div class="menu-popover__panel">${productLinks}</div></details><a class="tab${faqActive}" href="${prefix}/faq.html"${faqCurrent}>${faqLabel}</a><a class="tab" href="${demoPath}">${messages[locale].demo}</a>`;
+}
+
+function combinedProductContent(locale) {
+    return ['how', 'tasks', 'rewards', 'parents'].map((key) => {
+        const content = messages[locale].pages[key].content;
+        return content.replace('<section class="page-hero">', `<section id="${key}" class="page-hero">`);
+    }).join('');
 }
 
 async function generateLocale(locale) {
@@ -35,7 +46,8 @@ async function generateLocale(locale) {
     await mkdir(localeDirectory, { recursive: true });
     for (const page of PUBLIC_PAGES) {
         const fragment = await readFile(path.join(pagesDirectory, `${page.key}.html`), 'utf8');
-        const localizedContent = fragment.replaceAll(`{{${page.key}.content}}`, messages[locale].pages[page.key].content);
+        const content = page.key === 'how' ? combinedProductContent(locale) : messages[locale].pages[page.key].content;
+        const localizedContent = fragment.replaceAll(`{{${page.key}.content}}`, content);
         const englishPath = page.englishPath;
         const output = replaceAll(template, {
             LANG: locale,
