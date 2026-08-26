@@ -55,6 +55,11 @@ describe('static public-site i18n', () => {
                 expect(html.match(/<link rel="canonical"/g)).toHaveLength(1);
                 expect(html.match(/hreflang="(en|ru|x-default)"/g)).toHaveLength(3);
                 expect(html).toContain(locale === 'ru' ? 'Награды' : 'Rewards');
+                expect(html).toMatch(/<title>[^<]+ - EarnIt Kids<\/title>/);
+                expect(html).toMatch(/<meta name="description" content="[^"]+">/);
+                expect(html).not.toMatch(/<link rel="canonical" href="\/public\//);
+                expect(html).not.toMatch(/<link rel="alternate"[^>]+href="\/public\//);
+                expect(html).not.toContain('?lang=');
             }
         }
     });

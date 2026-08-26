@@ -356,7 +356,7 @@ git commit -m "feat(web): publish localized public sitemap"
 
 ## PSS-SEO-004: Prove crawler-visible and interactive public locale behavior
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** PSS-SEO-001, PSS-SEO-002, PSS-SEO-003
 

@@ -1,6 +1,35 @@
-import { expect, test, type Route } from '@playwright/test';
+import { expect, test, type Browser, type Page, type Route } from '@playwright/test';
 
 const publicPages = ['/', '/how.html', '/tasks.html', '/rewards.html', '/parents.html', '/faq.html'];
+const publicLocales = [
+    { locale: 'en', prefix: '', title: ['Home', 'How it works', 'Tasks', 'Rewards', 'For parents', 'Questions'], body: 'Rewards' },
+    { locale: 'ru', prefix: '/ru', title: ['Главная', 'Как работает', 'Задания', 'Награды', 'Для родителей', 'Вопросы'], body: 'Награды' },
+] as const;
+
+async function expectPublicMetadata(page: Page, locale: 'en' | 'ru', path: string, title: string, body: string) {
+    const expectedPath = `${locale === 'ru' ? '/ru' : ''}${path}`;
+    await expect(page).toHaveURL(new RegExp(`${expectedPath.replaceAll('/', '\\/')}$`));
+    await expect(page.locator('html')).toHaveAttribute('lang', locale);
+    await expect(page).toHaveTitle(new RegExp(`^${title} - EarnIt Kids$`));
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /.+/);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', expectedPath);
+    await expect(page.locator('link[rel="alternate"][hreflang="en"]')).toHaveAttribute('href', path);
+    await expect(page.locator('link[rel="alternate"][hreflang="ru"]')).toHaveAttribute('href', `/ru${path}`);
+    await expect(page.locator('link[rel="alternate"][hreflang="x-default"]')).toHaveAttribute('href', path);
+    await expect(page.getByText(body, { exact: false }).first()).toBeVisible();
+}
+
+async function expectRawPublicDocument(browser: Browser, locale: 'en' | 'ru', path: string, title: string, body: string) {
+    const context = await browser.newContext({ javaScriptEnabled: false });
+    const page = await context.newPage();
+    try {
+        await page.goto(`${locale === 'ru' ? '/ru' : ''}${path}`);
+        await expectPublicMetadata(page, locale, path, title, body);
+        await expect(page.locator('script[src="/public/site.js"]')).toHaveCount(1);
+    } finally {
+        await context.close();
+    }
+}
 
 test('production entry points expose the browser security contract', async ({ page, request }) => {
     const publicResponse = await page.goto('/');
@@ -72,6 +101,46 @@ test('public pages stay in the canonical URL set and preserve language across na
     await expect(page.getByRole('link', { name: 'Задания', exact: true })).toHaveCount(1);
 });
 
+test('canonical public documents expose localized metadata before JavaScript runs', async ({ browser, request }) => {
+    for (const { locale, prefix, title, body } of publicLocales) {
+        for (const [index, path] of publicPages.entries()) {
+            const urlPath = `${prefix}${path}`;
+            const response = await request.get(urlPath);
+            expect(response.status()).toBe(200);
+            const html = await response.text();
+            expect(html).toContain(`<html lang="${locale}">`);
+            expect(html).toContain(`<title>${title[index]} - EarnIt Kids</title>`);
+            expect(html).toContain(`<link rel="canonical" href="${urlPath}">`);
+            expect(html).toContain(`<link rel="alternate" hreflang="en" href="${path}">`);
+            expect(html).toContain(`<link rel="alternate" hreflang="ru" href="/ru${path}">`);
+            expect(html).toContain(`<link rel="alternate" hreflang="x-default" href="${path}">`);
+            expect(html).toContain(body);
+            expect(html).not.toMatch(/<link rel="canonical" href="\/public\//);
+            expect(html).not.toMatch(/<link rel="alternate"[^>]+href="\/public\//);
+
+            await expectRawPublicDocument(browser, locale, path, title[index], body);
+        }
+    }
+});
+
+test('legacy locale queries redirect to canonical public paths without loops', async ({ request }) => {
+    for (const [source, target] of [
+        ['/how.html?lang=ru&utm_source=mail', '/ru/how.html?utm_source=mail'],
+        ['/ru/tasks.html?lang=en&utm_source=mail', '/tasks.html?utm_source=mail'],
+        ['/?lang=ru', '/ru/'],
+    ]) {
+        const redirect = await request.get(source, { maxRedirects: 0 });
+        expect(redirect.status()).toBe(308);
+        expect(redirect.headers().location).toBe(target);
+        expect((await request.get(target, { maxRedirects: 0 })).status()).toBe(200);
+    }
+
+    const unknownLocale = await request.get('/faq.html?lang=de', { maxRedirects: 0 });
+    expect(unknownLocale.status()).toBe(200);
+    expect(await unknownLocale.text()).toContain('<html lang="en">');
+    expect(unknownLocale.headers().location).toBeUndefined();
+});
+
 test('public locale paths are server-owned and ignore browser preference', async ({ page }) => {
     await page.addInitScript(() => {
         Object.defineProperty(navigator, 'languages', { configurable: true, value: ['ru-RU'] });
@@ -84,6 +153,33 @@ test('public locale paths are server-owned and ignore browser preference', async
     await page.goto('/ru/tasks.html');
     await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
     await expect(page).toHaveTitle('Задания - EarnIt Kids');
+});
+
+test('language controls remain real, keyboard-accessible public links at 320px', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+
+    for (const publicPage of publicPages) {
+        await page.goto(publicPage);
+        const languageLinks = page.locator('[data-language]');
+        await expect(languageLinks).toHaveCount(2);
+        const publicOrigin = new URL(page.url()).origin;
+        for (const locale of ['en', 'ru']) {
+            const link = languageLinks.filter({ hasText: locale.toUpperCase() });
+            const expectedPath = locale === 'en' ? publicPage : `/ru${publicPage}`;
+            await expect(link).toHaveAttribute('href', `${publicOrigin}${expectedPath}`);
+            await expect(link).toHaveCSS('min-height', /^(44px|48px)$/);
+            await link.focus();
+            await expect(link).toBeFocused();
+            await expect(link).not.toHaveCSS('outline-style', 'none');
+        }
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+    }
+
+    await page.goto('/tasks.html');
+    await page.locator('[data-language="ru"]').click();
+    await expect(page).toHaveURL('/ru/tasks.html');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+    await expect(page.getByRole('link', { name: 'Задания', exact: true })).toHaveCount(1);
 });
 
 test('public Google entry uses same-origin startup and preserves the local workspace target', async ({ page }) => {

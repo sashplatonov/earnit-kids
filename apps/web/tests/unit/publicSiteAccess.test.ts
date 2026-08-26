@@ -19,6 +19,18 @@ describe('public site browser access', () => {
         });
     });
 
+    it('keeps an explicit public CTA redirect target scoped to the app route', async () => {
+        const fetchMock = vi.fn<typeof fetch>()
+            .mockResolvedValueOnce(jsonResponse({ googleEnabled: true }))
+            .mockResolvedValueOnce(jsonResponse({ url: 'https://accounts.google.com/o/oauth2/auth?state=signed' }));
+
+        await expect(requestBrowserWorkspaceUrl(fetchMock, { redirectTo: '/app' })).resolves.toContain('accounts.google.com');
+        expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/login-google/url?redirect_to=%2Fapp', {
+            credentials: 'same-origin',
+            cache: 'no-store',
+        });
+    });
+
     it('returns one stable failure for disabled or unavailable Google startup', async () => {
         const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ googleEnabled: false }));
 
