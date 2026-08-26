@@ -28,6 +28,9 @@ describe('public-site URL contract', () => {
         expect(normalizePublicRequest('https://example.test/how.html', {
             acceptLanguage: 'en-US, ru;q=0.8',
         }).redirect).toBeNull();
+        expect(normalizePublicRequest('https://example.test/demo.html', {
+            acceptLanguage: 'ru-RU, en;q=0.8',
+        }).redirect).toBe('https://example.test/ru/demo.html');
     });
 
     it('keeps explicit valid locale queries ahead of browser preferences', () => {

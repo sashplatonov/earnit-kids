@@ -234,7 +234,7 @@ git commit -m "feat(web): link public site to localized parent demo"
 
 ## PSD-004: Prove the generated demo contract in browser coverage
 
-**Status:** TODO
+**Status:** DONE
 
 **Priority:** P2
 

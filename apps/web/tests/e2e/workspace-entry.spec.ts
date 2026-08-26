@@ -1,9 +1,9 @@
 import { expect, test, type Browser, type Page, type Route } from '@playwright/test';
 
-const publicPages = ['/', '/how.html', '/tasks.html', '/rewards.html', '/parents.html', '/faq.html'];
+const publicPages = ['/', '/how.html', '/tasks.html', '/rewards.html', '/parents.html', '/faq.html', '/demo.html'];
 const publicLocales = [
-    { locale: 'en', prefix: '', title: ['Home', 'How it works', 'Tasks', 'Rewards', 'For parents', 'Questions'], body: 'Rewards' },
-    { locale: 'ru', prefix: '/ru', title: ['Главная', 'Как работает', 'Задания', 'Награды', 'Для родителей', 'Вопросы'], body: 'Награды' },
+    { locale: 'en', prefix: '', title: ['Home', 'How it works', 'Tasks', 'Rewards', 'For parents', 'Questions', 'Parent demo'], body: 'Rewards' },
+    { locale: 'ru', prefix: '/ru', title: ['Главная', 'Как работает', 'Задания', 'Награды', 'Для родителей', 'Вопросы', 'Демо для родителя'], body: 'Награды' },
 ] as const;
 
 test.use({ locale: 'en-US' });
@@ -290,6 +290,72 @@ test('public Google entry keeps its local fallback for disabled, failed, and inv
         await browserLink.click();
         await expect(page.getByRole('status')).toContainText(/Google sign-in is temporarily unavailable|Вход через Google временно недоступен/);
     }
+});
+
+test('public parent demo is localized, read-only, and keeps authenticated destinations explicit', async ({ page }) => {
+    const forbiddenRequests: string[] = [];
+    page.on('request', (request) => {
+        const pathname = new URL(request.url()).pathname;
+        if (/^\/api\/(data|history|requests|shop)(?:\/|$)/.test(pathname) || /^\/api\/(?:approve|reject|purchase|delete|retry)(?:\/|$)/.test(pathname)) {
+            forbiddenRequests.push(request.url());
+        }
+    });
+
+    await page.goto('/demo.html');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page.getByRole('heading', { name: 'Parent demo' })).toBeVisible();
+    await expect(page.getByText(/sample data/i)).toBeVisible();
+    await expect(page.getByRole('tab')).toHaveCount(4);
+    await expect(page.locator('[role="tabpanel"]')).toHaveCount(4);
+    await expect(page.getByRole('tab', { name: 'Tasks', exact: true })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tabpanel', { name: 'Tasks' })).toBeVisible();
+
+    const tabNames = [['Rewards shop', 'rewards'], ['History', 'history'], ['Requests', 'requests']] as const;
+    for (const [name, id] of tabNames) {
+        await page.getByRole('tab', { name, exact: true }).click();
+        await expect(page).toHaveURL(new RegExp(`/demo.html\\?tab=${id}`));
+        await expect(page.getByRole('tabpanel', { name })).toBeVisible();
+    }
+    await page.getByRole('tab', { name: 'Requests', exact: true }).press('Home');
+    await expect(page.getByRole('tab', { name: 'Tasks', exact: true })).toBeFocused();
+    await page.getByRole('tab', { name: 'Tasks', exact: true }).press('End');
+    await expect(page.getByRole('tab', { name: 'Requests', exact: true })).toBeFocused();
+
+    await page.goto('/demo.html?tab=not-a-tab');
+    await expect(page.getByRole('tab', { name: 'Tasks', exact: true })).toHaveAttribute('aria-selected', 'true');
+    await expect(page).toHaveURL('/demo.html?tab=not-a-tab');
+    await expect(page.locator('.demo-actions').getByRole('link', { name: /sign in/i })).toHaveAttribute('href', '/api/login-google/start?continue=%2Fapp');
+    await expect(page.locator('.demo-actions').getByRole('link', { name: /open the rewards shop/i })).toHaveAttribute('href', '/app?context=rewards');
+    expect(forbiddenRequests).toEqual([]);
+});
+
+test('Russian parent demo follows its document locale and preserves it in tab state', async ({ page }) => {
+    await page.goto('/ru/demo.html?tab=requests');
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+    await expect(page).toHaveTitle('Демо для родителя - EarnIt Kids');
+    await expect(page.getByRole('heading', { name: 'Демо для родителя' })).toBeVisible();
+    await expect(page.getByRole('tabpanel', { name: 'Запросы' }).getByText('Читать 15 минут')).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Запросы', exact: true })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('link', { name: /открыть магазин наград/i })).toHaveAttribute('href', '/ru/app?context=rewards');
+    await page.getByRole('tab', { name: 'Задания', exact: true }).click();
+    await expect(page).toHaveURL('/ru/demo.html?tab=tasks');
+    await expect(page.getByRole('tabpanel', { name: 'Задания' }).getByText('Читать 15 минут')).toBeVisible();
+});
+
+test('parent demo stays accessible and compact at 320px', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.goto('/demo.html');
+
+    const interactive = page.locator('.demo-tab, .demo-actions a');
+    for (const element of await interactive.all()) {
+        await expect(element).toHaveCSS('min-height', /^(44px|48px)$/);
+    }
+    const firstTab = page.getByRole('tab', { name: 'Tasks', exact: true });
+    await firstTab.focus();
+    await expect(firstTab).toBeFocused();
+    await expect(firstTab).not.toHaveCSS('outline-style', 'none');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 
 test('public native Google entry remains a real anchor when JavaScript is unavailable', async ({ page }) => {
