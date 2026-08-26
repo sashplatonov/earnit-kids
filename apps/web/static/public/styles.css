@@ -35,8 +35,8 @@ button,input{font:inherit}
 .header-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto;align-items:center;gap:10px;min-height:70px}
 .brand{display:flex;flex:0 0 auto;align-items:center;gap:10px;font-weight:850;white-space:nowrap;letter-spacing:-.02em}
 .brand img{width:38px;height:38px;border-radius:12px}
-.tabs{display:flex;align-items:center;justify-content:space-between;min-width:0;gap:3px;padding:5px;background:#eef2f7;border:1px solid #e1e6ed;border-radius:13px}
-.tab{display:flex;align-items:center;justify-content:center;min-height:44px;white-space:nowrap;padding:8px 11px;border-radius:9px;color:#5b6678;font-size:13px;font-weight:750}
+.tabs{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));align-items:center;min-width:0;gap:3px;padding:5px;background:#eef2f7;border:1px solid #e1e6ed;border-radius:13px}
+.tab{display:flex;min-width:0;align-items:center;justify-content:center;min-height:44px;padding:8px 11px;border-radius:9px;color:#5b6678;font-size:13px;font-weight:750;line-height:1.2;text-align:center;white-space:normal;overflow-wrap:anywhere}
 .tab:hover{color:var(--blue);background:#f9fbff}
 .tab.active{color:var(--blue);background:#fff;box-shadow:0 1px 4px rgba(37,61,97,.09)}
 .header-cta{flex:0 0 auto;margin-left:0;padding-inline:13px;white-space:nowrap}
@@ -111,8 +111,8 @@ h3{font-size:19px}
   .container{width:min(calc(100% - 26px),var(--max))}
   .site-header .container{width:min(calc(100% - 26px),var(--max))}
   .header-row{grid-template-columns:auto 1fr auto auto;gap:8px;padding:8px 0}
-  .tabs{grid-column:1 / -1;grid-row:2;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));width:100%;gap:3px}
-  .tab{min-width:0;padding-inline:8px;text-align:center;white-space:normal;line-height:1.2}
+  .tabs{grid-column:1 / -1;grid-row:2;width:100%;gap:3px}
+  .tab{padding-inline:8px}
 }
 @media(max-width:900px){
   .hero-grid,.split{grid-template-columns:1fr}
