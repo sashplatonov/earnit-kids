@@ -388,6 +388,7 @@ Remote deployment/CI, native Telegram client, PWA offline cache и physical-devi
 - **LCD-004 auth gate**: `PUBLIC_PAGES`/auth-gate в `+layout.svelte`/`+layout.server.ts` не существует. Auth — per-route через `+page.server.ts`; добавлен `+page.server.ts` для `/demo` без проверки auth (по образцу `telegram/+page.server.ts`). `hooks.server.ts` делает только locale canonicalization.
 - **LCD-004 i18n/lifecycle**: добавлены предупреждения про strict `MessageKey` (явные ключи, без dynamic interpolation) и про `onMount(() => reload())` + `if (!open) return` (никогда не грузит).
 - **LCD-006 Playwright**: добавлена заметка про `localhost:3001` vs `PLAYWRIGHT_USE_PREVIEW=true`.
+- **LCD-R-001 remediation**: the documented `--project=chromium` command passed locally with 3 preview-backed tests; `npm run lint` and `git diff --check` also passed.
 
 Что осталось верным в бэклоге: текущие тесты ожидают 7 страниц / 14 sitemap URL, после LCD-001 должно стать 6 / 12; все файлы на удаление существуют; все якоря (`requestItem`, `applyDataSnapshot`, `DEMO_TABS`, `demoData`, `rewardRequestSent`, demo в sitemap/tests/runbook) присутствуют; новые директории `src/routes/demo/` и `src/lib/features/live-demo/` корректно отсутствуют.
 

@@ -18,7 +18,7 @@ Make the documented and accepted Playwright command for the public live coin sho
 
 ## LCD-R-001: Declare the Chromium Playwright project
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** -
 
@@ -89,4 +89,5 @@ git commit -m "test(web): declare chromium Playwright project"
 - Source review covered the route, demo session, reward-request context port, shared reward UI, i18n, PWA registration boundary, static-site link generation, and focused unit/E2E tests.
 - Passed locally: targeted Vitest suite (5 files, 26 tests), `npm run lint`, and focused Playwright invocation without `--project` (3 tests).
 - Confirmed failure: `cd apps/web && npm run test:e2e -- --project=chromium tests/e2e/live-coin-shop-demo.spec.ts` exits before tests because no Playwright projects are declared.
+- LCD-R-001 passed locally: `cd apps/web && npm run test:e2e -- --project=chromium tests/e2e/live-coin-shop-demo.spec.ts` completed 3 tests with the preview-backed `chromium` project; `npm run lint` and `git diff --check` also passed.
 - These results are local source/browser evidence only; they do not prove CI, deployed infrastructure, Telegram Mini App client, or physical-device behavior.

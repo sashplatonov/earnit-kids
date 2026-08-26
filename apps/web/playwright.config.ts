@@ -29,6 +29,12 @@ export default defineConfig({
             },
         } : {}),
     },
+    projects: [{
+        name: 'chromium',
+        use: {
+            browserName: 'chromium',
+        },
+    }],
     webServer: usePreviewServer
         ? [{
             command: 'node tests/e2e/e2eBackend.mjs',
