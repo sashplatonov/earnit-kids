@@ -53,7 +53,7 @@ test('Russian live demo is directly reachable and preserves locale copy', async 
     await expect(page).toHaveTitle('Живое демо магазина наград · EarnIt Kids');
     await expect(page.getByRole('main', { name: 'Моя семья' })).toBeVisible();
     await expect(page.getByRole('tab', { name: /^Главная/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Сбросить демо', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Начать демо заново', exact: true })).toBeVisible();
     await expect(page.getByText('Ваши действия остаются в этой вкладке браузера', { exact: false })).toBeVisible();
     await expectNoApiRequests(apiRequests);
 });
