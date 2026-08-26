@@ -145,6 +145,10 @@ export function resolveDomainsForPath(pathname: string): MessageDomain[] {
         return ['common', 'errors'];
     }
 
+    if (internalPath === '/demo') {
+        return ['common', 'app', 'errors'];
+    }
+
     if (internalPath === '/login' || internalPath === '/select-family' || internalPath === '/invite/parent') {
         return ['common', 'auth', 'errors'];
     }

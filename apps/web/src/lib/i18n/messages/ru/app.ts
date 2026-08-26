@@ -21,6 +21,13 @@ export const appMessages = {
         catalogLabel: 'Каталог',
         catalogTitle: 'Каталог',
     },
+    liveDemo: {
+        title: 'Живое демо магазина наград',
+        description: 'Попробуйте детский магазин наград на небольшой тестовой семье.',
+        temporaryData: 'Это временное демо. Ваши действия остаются в этой вкладке браузера и не отправляются на сервер.',
+        reset: 'Сбросить демо',
+        resetDone: 'Демо возвращено в начальное состояние.',
+    },
     shell: {
         parentWorkspaceTitle: 'Моя семья',
         childWorkspaceTitle: 'Мой маршрут',

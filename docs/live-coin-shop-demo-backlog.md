@@ -197,7 +197,7 @@ Svelte rendering, i18n copy, route, E2E, parent approval и purchase.
 
 ## LCD-004: Собрать public live demo из реального rewards component
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** LCD-002, LCD-003
 

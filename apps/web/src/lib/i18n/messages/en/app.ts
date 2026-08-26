@@ -21,6 +21,13 @@ export const appMessages = {
         catalogLabel: 'Catalog',
         catalogTitle: 'Catalog',
     },
+    liveDemo: {
+        title: 'Live rewards shop demo',
+        description: 'Try the child rewards experience with a small sample family.',
+        temporaryData: 'This is a temporary demo. Your actions stay in this browser tab and never reach the server.',
+        reset: 'Reset demo',
+        resetDone: 'The demo was reset to its starting state.',
+    },
     shell: {
         parentWorkspaceTitle: 'My family',
         childWorkspaceTitle: 'My journey',
