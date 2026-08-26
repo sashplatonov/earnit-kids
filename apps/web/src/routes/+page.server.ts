@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import { localizePath } from '$lib/i18n';
+import { DEFAULT_LOCALE, localizePath, normalizeLocale } from '$lib/i18n';
 import type { PageServerLoad } from './$types';
 
 // EXPLAIN: The edge serves the static marketing home at the canonical root,
@@ -7,9 +7,12 @@ import type { PageServerLoad } from './$types';
 // browser JS runs.
 // EXPLAIN: An authenticated Telegram session must not change this public URL;
 // EXPLAIN: the Mini App links back to the root specifically to leave Telegram.
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ url, locals }) => {
     if (url.searchParams.has('tgWebAppStartParam')) {
-        throw redirect(302, `${localizePath('/telegram', 'ru')}${url.search}`);
+        // EXPLAIN: Honor the visitor's negotiated locale (cookie or
+        // Accept-Language) instead of forcing Russian on every Telegram launch.
+        const locale = normalizeLocale(locals.locale) ?? DEFAULT_LOCALE;
+        throw redirect(302, `${localizePath('/telegram', locale)}${url.search}`);
     }
 
     return {};

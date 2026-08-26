@@ -31,7 +31,7 @@ function navigationFor(activeKey, locale) {
     const homeLabel = messages[locale].pageTitles.index;
     const faqLabel = messages[locale].pageTitles.faq;
     const demoPath = locale === 'ru' ? '/ru/demo' : '/demo';
-    return `<a class="tab${homeActive}" href="${prefix}/"${homeCurrent}>${homeLabel}</a><details class="menu-popover${productActive}" open><summary class="tab">${messages[locale].productMenu}</summary><div class="menu-popover__panel">${productLinks}</div></details><a class="tab${faqActive}" href="${prefix}/faq.html"${faqCurrent}>${faqLabel}</a><a class="tab" href="${demoPath}">${messages[locale].demo}</a>`;
+    return `<a class="tab${homeActive}" href="${prefix}/"${homeCurrent}>${homeLabel}</a><details class="menu-popover${productActive}"><summary class="tab">${messages[locale].productMenu}</summary><div class="menu-popover__panel">${productLinks}</div></details><a class="tab${faqActive}" href="${prefix}/faq.html"${faqCurrent}>${faqLabel}</a><a class="tab" href="${demoPath}">${messages[locale].demo}</a>`;
 }
 
 function combinedProductContent(locale) {

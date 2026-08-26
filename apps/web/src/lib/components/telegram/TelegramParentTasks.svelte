@@ -199,8 +199,8 @@
         <div class="delta"><span>{$i18n.t('app.telegram.tasks.completeChild')}</span><b>{$appStore.childNickname || $i18n.t('app.telegram.header.child')}</b></div>
         <div class="delta"><span>{$i18n.t('app.telegram.tasks.completeAward')}</span><b class="award">+{confirmComplete.coins} <TelegramCoin size={13} /></b></div>
         <div class="actions">
-            <button class="cancel" type="button" on:click={() => confirmComplete = null}>{$i18n.t('app.telegram.tasks.cancel')}</button>
-            <button class="primary" type="button" disabled={completingId != null} on:click={() => confirmComplete && void completeForChild(confirmComplete)}>{$i18n.t('app.telegram.tasks.completeShort')}</button>
+            <button class="cancel" type="button" on:click={() => confirmComplete = null}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.tasks.cancel')} />{$i18n.t('app.telegram.tasks.cancel')}</button>
+            <button class="primary" type="button" disabled={completingId != null} on:click={() => confirmComplete && void completeForChild(confirmComplete)}><TelegramIcon name="done" size={16} label={$i18n.t('app.telegram.tasks.completeShort')} />{$i18n.t('app.telegram.tasks.completeShort')}</button>
         </div>
     </TelegramBottomSheet>
 {/if}
@@ -234,8 +234,8 @@
     .delta b { font-weight:700; }
     .delta .award { display:inline-flex; align-items:center; gap:.25rem; color:#17884b; }
     .actions { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; margin-top:.9rem; }
-    .actions .cancel { min-height:2.75rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
-    .actions .primary { min-height:2.75rem; border:0; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; font-weight:750; cursor:pointer; }
+    .actions .cancel { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; min-height:2.75rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
+    .actions .primary { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; min-height:2.75rem; border:0; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; font-weight:750; cursor:pointer; }
     .actions .primary:disabled { cursor:wait; opacity:.6; }
     .muted { color:#66718a; }
     .error { margin:.75rem 0 0; padding:.6rem .75rem; border-radius:.75rem; background:#fff0f0; color:#a33b3b; font-size:.875rem; }

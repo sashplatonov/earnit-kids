@@ -206,8 +206,8 @@
         <div class="delta"><span>{$i18n.t('app.telegram.rewards.grantChild')}</span><b>{$appStore.childNickname || $i18n.t('app.telegram.header.child')}</b></div>
         <div class="delta"><span>{$i18n.t('app.telegram.rewards.grantBalance')}</span><b>{$appStore.balance} → {Math.max(0, ($appStore.balance ?? 0) - (confirmGrant.price ?? 0))}</b></div>
         <div class="actions">
-            <button class="cancel" type="button" on:click={() => confirmGrant = null}>{$i18n.t('app.telegram.rewards.cancel')}</button>
-            <button class="primary" type="button" disabled={grantingId != null} on:click={() => confirmGrant && void grantToChild(confirmGrant)}>{$i18n.t('app.telegram.rewards.grantFor', { amount: confirmGrant.price })}</button>
+            <button class="cancel" type="button" on:click={() => confirmGrant = null}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.rewards.cancel')} />{$i18n.t('app.telegram.rewards.cancel')}</button>
+            <button class="primary" type="button" disabled={grantingId != null} on:click={() => confirmGrant && void grantToChild(confirmGrant)}><TelegramIcon name="award" size={16} label={$i18n.t('app.telegram.rewards.grantFor', { amount: confirmGrant.price })} />{$i18n.t('app.telegram.rewards.grantFor', { amount: confirmGrant.price })}</button>
         </div>
     </TelegramBottomSheet>
 {/if}
@@ -240,8 +240,8 @@
     .delta { display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-top:.5rem; padding:.6rem .7rem; border-radius:.6rem; background:#f4f6f9; color:#33415f; font-size:.9rem; }
     .delta b { font-weight:700; }
     .actions { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; margin-top:.9rem; }
-    .actions .cancel { min-height:2.75rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
-    .actions .primary { min-height:2.75rem; border:0; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; font-weight:750; cursor:pointer; }
+    .actions .cancel { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; min-height:2.75rem; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#33415f; font:inherit; cursor:pointer; }
+    .actions .primary { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; min-height:2.75rem; border:0; border-radius:.7rem; background:#3867d6; color:#fff; font:inherit; font-weight:750; cursor:pointer; }
     .actions .primary:disabled { cursor:wait; opacity:.6; }
     .muted { color:#66718a; }
     .error { margin:.75rem 0 0; padding:.6rem .75rem; border-radius:.75rem; background:#fff0f0; color:#a33b3b; font-size:.875rem; }

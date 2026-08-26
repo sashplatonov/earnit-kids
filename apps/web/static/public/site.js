@@ -117,6 +117,21 @@ export function enhancePublicSite(documentRef, windowRef, fetchImpl) {
     });
   }
 
+  // Close the "About the app" dropdown on outside click and panel link click.
+  const popover = documentRef.querySelector(".menu-popover");
+  if (popover) {
+    documentRef.addEventListener("click", (event) => {
+      if (!popover.open) return;
+      if (event.target instanceof Node && popover.contains(event.target)) return;
+      popover.open = false;
+    });
+    popover.addEventListener("click", (event) => {
+      if (event.target instanceof Element && event.target.closest(".menu-popover__panel a")) {
+        popover.open = false;
+      }
+    });
+  }
+
 }
 
 if (typeof window !== "undefined" && typeof document !== "undefined") {

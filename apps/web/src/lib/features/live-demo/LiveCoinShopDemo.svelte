@@ -3,6 +3,7 @@
     import TelegramParentShell from '$lib/components/telegram/TelegramParentShell.svelte';
     import TelegramChildShell from '$lib/components/telegram/TelegramChildShell.svelte';
     import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
+    import LocaleSwitcher from '$lib/components/LocaleSwitcher.svelte';
     import { useI18n } from '$lib/i18n/context';
     import { provideWorkspaceActions } from '$lib/features/workspace/workspaceActions';
     import { provideTaskActions } from '$lib/telegram/services/taskActions';
@@ -67,6 +68,7 @@
 <main class="demo-page">
     <div class="demo-toolbar">
         <p class="notice" role="note">{$i18n.t('app.liveDemo.temporaryData')}</p>
+        <LocaleSwitcher mode="route" compact />
         <a class="public-link" href={publicSiteHref()} on:click={leaveDemo}><TelegramIcon name="logout" size={16} label={undefined} />{$i18n.t('app.liveDemo.publicSite')}</a>
         <button class="reset" type="button" on:click={resetDemo}><TelegramIcon name="refresh" size={16} label={undefined} />{$i18n.t('app.liveDemo.reset')}</button>
     </div>

@@ -241,7 +241,11 @@ const server = createServer((req, res) => {
                 if (publicRequest.vary) {
                     headers.Vary = 'Accept-Language, Cookie';
                 }
-                res.writeHead(308, headers);
+                // EXPLAIN: 302 (non-cacheable) so a visitor who later switches
+                // language via the locale cookie is not trapped by a cached
+                // permanent redirect to the old locale.
+                headers['Cache-Control'] = 'no-store';
+                res.writeHead(302, headers);
                 res.end();
                 return;
             }
