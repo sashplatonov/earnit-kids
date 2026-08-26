@@ -25,6 +25,7 @@ export const appMessages = {
         title: 'Live rewards shop demo',
         description: 'Try the child rewards experience with a small sample family.',
         temporaryData: 'This is a temporary demo. Your actions stay in this browser tab and never reach the server.',
+        demoActionNotice: 'Demo mode: this change stays in this browser tab and is not sent to the server.',
         reset: 'Reset demo',
         resetDone: 'The demo was reset to its starting state.',
         publicSite: 'Back to public site',

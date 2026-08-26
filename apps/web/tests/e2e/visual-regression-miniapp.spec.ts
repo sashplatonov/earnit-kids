@@ -226,6 +226,17 @@ test('request and task lists keep one surface and usable geometry at narrow widt
         await expect(requestList.locator('.entity-emoji')).toHaveCount(0);
         await expect(requestList.locator('.row').first().getByLabel(/Task request|Заявка на задание/)).toBeVisible();
         await expect(requestList.locator('.row').nth(1).getByLabel(/Reward request|Заявка на награду/)).toBeVisible();
+        const cancelButton = requestList.locator('.cancel').first();
+        await expect(cancelButton).toBeVisible();
+        expect(await cancelButton.evaluate((node) => {
+            const row = node.closest('.row')!.getBoundingClientRect();
+            const actions = node.closest('.entity-actions')!.getBoundingClientRect();
+            const button = node.getBoundingClientRect();
+            return button.width >= 44
+                && button.height >= 44
+                && button.top >= actions.top
+                && button.bottom <= row.bottom;
+        })).toBeTruthy();
         expect(await requestList.evaluate((node) => {
             const rows = [...node.children];
             const surface = getComputedStyle(node);

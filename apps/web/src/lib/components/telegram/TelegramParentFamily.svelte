@@ -292,6 +292,7 @@
     <div class="sheet-backdrop" role="presentation" on:click={() => manageChild = null}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="child-manage-title" tabindex="-1">
         <h2 id="child-manage-title">{manageChild.nickname}</h2>
+        {#if demoMode}<p class="demo-unavailable" role="note">{$i18n.t('app.liveDemo.demoActionNotice')}</p>{/if}
 
         <div class="settings">
             <div class="setting"><span class="setting-icon"><TelegramIcon name="send" size={20} label={$i18n.t('app.telegram.family.telegram')} /></span><span class="grow"><span class="setting-title">{$i18n.t('app.telegram.family.telegram')}</span><span class="setting-meta">{telegram?.linked ? $i18n.t('app.telegram.family.telegramLinked') : $i18n.t('app.telegram.family.telegramNotLinked')}</span></span><span class="manage-badge" class:badge-active={telegram?.linked}>{telegram?.linked ? $i18n.t('app.telegram.family.telegramLinked') : $i18n.t('app.telegram.family.telegramNotLinked')}</span></div>

@@ -72,6 +72,7 @@ import { useI18n } from '$lib/i18n/context';
     <div class="sheet-backdrop" role="presentation" on:click={onClose}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="limits-title" tabindex="-1">
         <h2 id="limits-title">{$i18n.t('app.telegram.limits.title')}</h2>
+        {#if demoMode}<p class="demo-notice" role="note">{$i18n.t('app.liveDemo.demoActionNotice')}</p>{/if}
 
         <div class="summary">
             <span class="setting-icon"><TelegramIcon name="gauge" size={20} label={$i18n.t('app.telegram.limits.title')} /></span>
@@ -122,6 +123,7 @@ import { useI18n } from '$lib/i18n/context';
     .sheet { position:fixed; inset:auto 0 0; z-index:41; padding:1rem max(1rem, env(safe-area-inset-left)) calc(1rem + env(safe-area-inset-bottom)); border-radius:1.1rem 1.1rem 0 0; background:#fff; box-shadow:0 -1rem 3rem rgb(27 39 73 / 18%); }
     @media (min-width: 700px) { .sheet { inset:50% auto auto 50%; width:min(38rem,calc(100% - 3rem)); max-height:min(82dvh,46rem); overflow-y:auto; padding:1.4rem; border-radius:1.25rem; box-shadow:0 1.5rem 4rem rgb(27 39 73 / 22%); transform:translate(-50%,-50%); } }
     h2 { margin:0 0 .75rem; color:#18243d; font-size:1.15rem; }
+    .demo-notice { margin:0 0 .75rem; padding:.55rem .65rem; border:1px solid #ead9a4; border-radius:.65rem; background:#fff9e8; color:#705719; font-size:.8rem; line-height:1.4; }
     .summary { display:flex; align-items:center; gap:.6rem; padding:.6rem; border:1px solid #e6e9f0; border-radius:.8rem; background:#f8f9fc; }
     .grow { flex:1; min-width:0; }
     .setting-icon { display:grid; place-items:center; width:2.1rem; height:2.1rem; flex:0 0 auto; border-radius:.6rem; background:#eef0ff; color:#5b63e9; }

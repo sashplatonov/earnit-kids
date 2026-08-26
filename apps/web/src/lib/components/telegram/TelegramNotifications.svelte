@@ -157,6 +157,7 @@ import { useI18n } from '$lib/i18n/context';
     <div class="sheet-backdrop" role="presentation" on:click={onClose}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="notifications-title" tabindex="-1">
         <h2 id="notifications-title">{$i18n.t('app.telegram.notifications.title')}</h2>
+        {#if demoMode}<p class="demo-notice" role="note">{$i18n.t('app.liveDemo.demoActionNotice')}</p>{/if}
         {#if showBrowserPush}<BrowserPushControls />{/if}
         {#if loading}
             <p class="muted">{$i18n.t('app.telegram.shell.loading')}</p>
@@ -238,6 +239,7 @@ import { useI18n } from '$lib/i18n/context';
     .sheet { position:fixed; inset:auto 0 0; z-index:41; padding:1rem max(1rem, env(safe-area-inset-left)) calc(1rem + env(safe-area-inset-bottom)); border-radius:1.1rem 1.1rem 0 0; background:#fff; box-shadow:0 -1rem 3rem rgb(27 39 73 / 18%); max-height:82dvh; overflow:auto; }
     @media (min-width: 700px) { .sheet { inset:50% auto auto 50%; width:min(42rem,calc(100% - 3rem)); max-height:min(82dvh,46rem); padding:1.4rem; border-radius:1.25rem; box-shadow:0 1.5rem 4rem rgb(27 39 73 / 22%); transform:translate(-50%,-50%); } }
     h2 { margin:0 0 .75rem; color:#18243d; font-size:1.15rem; }
+    .demo-notice { margin:0 0 .75rem; padding:.55rem .65rem; border:1px solid #ead9a4; border-radius:.65rem; background:#fff9e8; color:#705719; font-size:.8rem; line-height:1.4; }
     .sheet-subtitle { margin:1rem 0 .4rem; color:#4d5870; font-size:.85rem; }
     .flat { border:1px solid #e6e9f0; border-radius:.9rem; background:#fff; padding:0 .6rem; }
     .group-label { margin:.5rem 0 .1rem; color:#8a93a8; font-size:.75rem; font-weight:600; }
