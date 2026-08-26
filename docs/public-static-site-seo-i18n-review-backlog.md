@@ -123,7 +123,7 @@ git commit -m "fix(web): route public locale from browser preference"
 
 ## PSS-REV-002: Keep failed auth entry flows on the canonical public page
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** -
 

@@ -360,6 +360,43 @@ class AuthResourceTest {
     }
 
     @Test
+    void loginGoogleStart_whenGoogleUnavailable_withoutAppUrl_redirectsToCanonicalPublicRoot() {
+        AuthGoogleResource googleResource = new AuthGoogleResource(
+            authService,
+            cookieBuilder,
+            appConfig,
+            mock(GoogleOAuthService.class),
+            jwtService,
+            java.util.Optional.empty());
+
+        Response response = googleResource.loginGoogleStart(null, "/workspace", null, null);
+
+        assertThat(response.getStatus()).isEqualTo(303);
+        assertThat(response.getLocation().toString()).isEqualTo("/?error=google_start_failed");
+        assertThat(response.getHeaderString("Cache-Control")).contains("no-store");
+        assertThat(response.getHeaderString("Location")).doesNotContain("/public/");
+    }
+
+    @Test
+    void loginGoogleStart_whenGoogleUnavailable_withAppUrl_redirectsToConfiguredCanonicalPublicRoot() {
+        AuthGoogleResource googleResource = new AuthGoogleResource(
+            authService,
+            cookieBuilder,
+            appConfig,
+            mock(GoogleOAuthService.class),
+            jwtService,
+            java.util.Optional.of("https://app.example.com"));
+
+        Response response = googleResource.loginGoogleStart(null, "/workspace", null, null);
+
+        assertThat(response.getStatus()).isEqualTo(303);
+        assertThat(response.getLocation().toString())
+            .isEqualTo("https://app.example.com/?error=google_start_failed");
+        assertThat(response.getHeaderString("Cache-Control")).contains("no-store");
+        assertThat(response.getHeaderString("Location")).doesNotContain("/public/");
+    }
+
+    @Test
     void loginGoogleUrl_prefersExplicitRedirectUriEnv() {
         AuthGoogleResource googleResource = new AuthGoogleResource(
             authService,

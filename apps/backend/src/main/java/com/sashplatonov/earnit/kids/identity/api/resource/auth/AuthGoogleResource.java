@@ -117,8 +117,11 @@ public class AuthGoogleResource {
     if (authorization.getStatus() != Response.Status.OK.getStatusCode()) {
       String fallback =
           publicOriginResolver.toAbsoluteRedirect(
-              "/public/index.html?error=google_start_failed", request);
-      return Response.seeOther(URI.create(fallback)).build();
+              "/?error=google_start_failed", request);
+      return Response.seeOther(URI.create(fallback))
+          .header("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+          .header("Pragma", "no-cache")
+          .build();
     }
 
     Map<?, ?> entity = (Map<?, ?>) authorization.getEntity();
@@ -261,29 +264,6 @@ public class AuthGoogleResource {
         .orElseGet(
             () ->
                 publicOriginResolver.resolveAbsoluteAppUri("/api/login-google/callback", request));
-  }
-
-  private String deriveLoginRedirectTarget(String redirectTarget) {
-    if (redirectTarget == null || redirectTarget.isBlank()) {
-      return "/public/index.html";
-    }
-
-    try {
-      URI uri = URI.create(redirectTarget);
-      String path = uri.getPath();
-      if (path == null || path.isBlank()) {
-        return "/public/index.html";
-      }
-      if ("/telegram".equals(path)) {
-        return "/public/index.html";
-      }
-      if (path.endsWith("/telegram")) {
-        return "/public/index.html";
-      }
-    } catch (IllegalArgumentException ignored) {
-    }
-
-    return "/public/index.html";
   }
 
   private String appendError(String redirectTarget, String error) {

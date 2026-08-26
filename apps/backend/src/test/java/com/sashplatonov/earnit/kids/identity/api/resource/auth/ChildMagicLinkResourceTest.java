@@ -45,12 +45,27 @@ class ChildMagicLinkResourceTest {
     }
 
     @Test
-    void loginByToken_invalidToken_redirectsToPublicSite() {
+    void loginByToken_invalidToken_withoutAppUrl_redirectsToCanonicalPublicRoot() {
         when(authService.authenticateChild("bad")).thenReturn(OperationResult.failure("bad"));
 
         Response response = resource.loginByToken(request, "bad");
 
         assertThat(response.getStatus()).isEqualTo(303);
-        assertThat(response.getLocation().toString()).isEqualTo("/public/index.html?error=invalid_token");
+        assertThat(response.getLocation().toString()).isEqualTo("/?error=invalid_token");
+        assertThat(response.getHeaderString("Cache-Control")).contains("no-store");
+        assertThat(response.getHeaderString("Location")).doesNotContain("/public/");
+    }
+
+    @Test
+    void loginByToken_invalidToken_withAppUrl_redirectsToConfiguredCanonicalPublicRoot() {
+        resource = new ChildMagicLinkResource(authService, cookieBuilder, "https://app.example.com");
+        when(authService.authenticateChild("bad")).thenReturn(OperationResult.failure("bad"));
+
+        Response response = resource.loginByToken(request, "bad");
+
+        assertThat(response.getStatus()).isEqualTo(303);
+        assertThat(response.getLocation().toString()).isEqualTo("https://app.example.com/?error=invalid_token");
+        assertThat(response.getHeaderString("Cache-Control")).contains("no-store");
+        assertThat(response.getHeaderString("Location")).doesNotContain("/public/");
     }
 }
