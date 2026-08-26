@@ -70,6 +70,22 @@ describe('static public-site i18n', () => {
         expect(() => resolvePublicOrigin('not-an-url', { production: true })).toThrow(/valid HTTP/);
     });
 
+    it('exposes localized demo links and keeps the rewards shop target distinct', () => {
+        const root = resolve(process.cwd(), 'static/public');
+        for (const locale of ['en', 'ru'] as const) {
+            const directory = locale === 'ru' ? resolve(root, 'ru') : root;
+            const expectedDemoPath = locale === 'ru' ? '/ru/demo.html' : '/demo.html';
+            for (const file of ['index.html', 'how.html', 'tasks.html', 'rewards.html', 'parents.html', 'faq.html', 'demo.html']) {
+                const html = readFileSync(resolve(directory, file), 'utf8');
+                expect(html).toContain(`href="${expectedDemoPath}" aria-label="${messages[locale].demoLinkLabel}">${messages[locale].demoLink}</a>`);
+                expect(html).toContain('/api/login-google/start?continue=%2Fapp');
+            }
+            const rewards = readFileSync(resolve(directory, 'rewards.html'), 'utf8');
+            expect(rewards).toContain(locale === 'ru' ? 'href="/ru/app?context=rewards"' : 'href="/app?context=rewards"');
+            expect(rewards).not.toContain('href="/public/demo.html"');
+        }
+    });
+
     it('adds language only to same-origin public links', () => {
         expect(withLanguage('/how.html?x=1', 'ru')).toBe('/ru/how.html?x=1');
         expect(withLanguage('https://telegram.me/example', 'ru')).toBe('https://telegram.me/example');

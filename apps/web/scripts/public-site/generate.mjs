@@ -16,6 +16,7 @@ const publicOrigin = resolvePublicOrigin(process.env.APP_URL, {
 
 const escapeAttribute = (value) => String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 const replaceAll = (source, values) => Object.entries(values).reduce((result, [key, value]) => result.replaceAll(`{{${key}}}`, String(value)), source);
+const publicPath = (pathname, locale, origin) => new URL(publicLanguageHref(pathname, locale, origin)).pathname;
 
 function navigationFor(activeKey, locale) {
     return PUBLIC_PAGES.map((page) => {
@@ -42,6 +43,7 @@ async function generateLocale(locale) {
             CANONICAL: publicLanguageHref(englishPath, locale, publicOrigin),
             EN_URL: publicLanguageHref(englishPath, 'en', publicOrigin),
             RU_URL: publicLanguageHref(englishPath, 'ru', publicOrigin),
+            DEMO_URL: publicPath('/demo.html', locale, publicOrigin),
             EN_CURRENT: locale === 'en' ? ' aria-current="page"' : '',
             RU_CURRENT: locale === 'ru' ? ' aria-current="page"' : '',
             HOME_URL: locale === 'ru' ? '/ru/' : '/',
@@ -54,6 +56,8 @@ async function generateLocale(locale) {
             LANGUAGE_GROUP: escapeAttribute(messages[locale].languageGroup),
             TELEGRAM: escapeAttribute(messages[locale].telegram),
             LOGIN: escapeAttribute(messages[locale].login),
+            DEMO_LINK: escapeAttribute(messages[locale].demoLink),
+            DEMO_LINK_LABEL: escapeAttribute(messages[locale].demoLinkLabel),
             CONTENT: localizedContent,
             PAGE_SCRIPT: page.key === 'demo' ? '<script type="module" src="/public/demo.js"></script>' : '',
         });

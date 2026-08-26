@@ -169,7 +169,7 @@ git commit -m "feat(web): render read-only public parent demo"
 
 ## PSD-003: Link the localized public site to the demo and shop context
 
-**Status:** TODO
+**Status:** DONE
 
 **Priority:** P2
 
