@@ -141,7 +141,7 @@ Demo fixture, route, shopApi endpoints, parent rewards, task requests и persist
 
 ## LCD-003: Создать memory-only session и fixture магазина
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** LCD-002
 
