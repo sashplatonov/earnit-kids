@@ -48,6 +48,16 @@
         shellRevision += 1;
         announcement = $i18n.t('app.liveDemo.resetDone');
     }
+
+    function publicSiteHref(): string {
+        const path = $i18n.locale === 'ru' ? '/ru/' : '/';
+        return publicOrigin ? `${publicOrigin}${path}` : path;
+    }
+
+    function leaveDemo(event: MouseEvent): void {
+        event.preventDefault();
+        window.location.assign(publicSiteHref());
+    }
 </script>
 
 <svelte:head>
@@ -57,8 +67,8 @@
 <main class="demo-page">
     <div class="demo-toolbar">
         <p class="notice" role="note">{$i18n.t('app.liveDemo.temporaryData')}</p>
-        <a class="public-link" href={publicOrigin || '/'}><TelegramIcon name="link" size={16} label={$i18n.t('app.liveDemo.publicSite')} />{$i18n.t('app.liveDemo.publicSite')}</a>
-        <button class="reset" type="button" on:click={resetDemo}><TelegramIcon name="refresh" size={16} label={$i18n.t('app.liveDemo.reset')} />{$i18n.t('app.liveDemo.reset')}</button>
+        <a class="public-link" href={publicSiteHref()} on:click={leaveDemo}><TelegramIcon name="logout" size={16} label={undefined} />{$i18n.t('app.liveDemo.publicSite')}</a>
+        <button class="reset" type="button" on:click={resetDemo}><TelegramIcon name="refresh" size={16} label={undefined} />{$i18n.t('app.liveDemo.reset')}</button>
     </div>
     <p class="announcement" aria-live="polite">{announcement}</p>
     {#if mounted}
@@ -75,7 +85,7 @@
 <style>
     .demo-page { min-height:100vh; box-sizing:border-box; padding:0 1rem 2rem; background:#f8fafc; color:#18243d; }
     .demo-toolbar { display:flex; align-items:center; gap:.65rem; width:min(100%, 48rem); margin:0 auto; padding:.35rem 0; }
-    .public-link, .reset { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; min-height:2.25rem; padding:.35rem .65rem; border-radius:.6rem; font:inherit; font-size:.86rem; font-weight:650; white-space:nowrap; }
+    .public-link, .reset { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; min-height:2.75rem; padding:.35rem .65rem; border-radius:.6rem; font:inherit; font-size:.86rem; font-weight:650; white-space:nowrap; }
     .public-link { color:#2454bb; text-decoration:none; }
     .reset { flex:none; border:1px solid #3867d6; background:#fff; color:#2454bb; cursor:pointer; }
     .reset:focus-visible { outline:3px solid #93b4ff; outline-offset:2px; }

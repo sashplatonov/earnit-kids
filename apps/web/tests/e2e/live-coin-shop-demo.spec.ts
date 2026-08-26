@@ -58,6 +58,18 @@ test('Russian live demo is directly reachable and preserves locale copy', async 
     await expectNoApiRequests(apiRequests);
 });
 
+test('leaving the live demo reloads the public site at the root', async ({ page }) => {
+    await page.goto('/demo');
+
+    await Promise.all([
+        page.waitForNavigation(),
+        page.getByRole('link', { name: 'Back to public site', exact: true }).click(),
+    ]);
+
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.locator('body')).toContainText('EarnIt Kids');
+});
+
 test('live demo remains usable at 320px with keyboard-visible touch targets', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
     const apiRequests = captureApiRequests(page);
