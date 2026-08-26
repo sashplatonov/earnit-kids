@@ -10,22 +10,24 @@ rewards. The browser and Telegram use the same server-side family data.
   <a href="https://earnit-kids.freeddns.org/demo">
     <img alt="Try the live demo" src="https://img.shields.io/badge/Try%20the%20live%20demo-3867D6?style=for-the-badge&logo=googlechrome&logoColor=white">
   </a>
-  <a href="https://earnit-kids.freeddns.org/telegram">
+  <a href="https://t.me/@earnit_kids_bot?startapp=home">
     <img alt="Open the Telegram Mini App" src="https://img.shields.io/badge/Open%20Telegram%20Mini%20App-229ED9?style=for-the-badge&logo=telegram&logoColor=white">
   </a>
 </p>
 
 ## Table of contents
 
-- [🚀 Run it locally](#-run-it-locally)
-- [🏗️ Project architecture](#️-project-architecture)
-- [👀 Parent workspace](#-parent-workspace)
-- [📣 GitHub social preview](#-github-social-preview)
-- [🧭 What lives where](#-what-lives-where)
-- [🔐 What the system protects](#-what-the-system-protects)
-- [🌍 Languages](#-languages)
-- [🧪 Check a change](#-check-a-change)
-- [📚 Further reading](#-further-reading)
+- [EarnIt Kids](#earnit-kids)
+  - [Table of contents](#table-of-contents)
+  - [🚀 Run it locally](#-run-it-locally)
+  - [🏗️ Project architecture](#️-project-architecture)
+  - [👀 Parent workspace](#-parent-workspace)
+  - [📣 GitHub social preview](#-github-social-preview)
+  - [🧭 What lives where](#-what-lives-where)
+  - [🔐 What the system protects](#-what-the-system-protects)
+  - [🌍 Languages](#-languages)
+  - [🧪 Check a change](#-check-a-change)
+  - [📚 Further reading](#-further-reading)
 
 ## 🚀 Run it locally
 

@@ -4,7 +4,7 @@ import { gzip } from 'node:zlib';
 import httpProxy from 'http-proxy-3';
 import { handler } from '../build/handler.js';
 import { buildProxyReferer, resolveProxyContext, resolveTelegramMiniAppUrl } from './proxy-context.mjs';
-import { normalizePublicRequest, publicDocumentPath } from './public-site/urls.js';
+import { normalizePublicRequest, publicDocumentPath, PUBLIC_LOCALES } from './public-site/urls.js';
 
 function applyCliOverrides(argv) {
     for (let index = 0; index < argv.length; index += 1) {
@@ -232,6 +232,9 @@ const server = createServer((req, res) => {
                 return;
             }
 
+            // EXPLAIN: Capture ?lang= before normalizePublicRequest strips it
+            // from the URL, so we can set the locale cookie on the redirect.
+            const queryLang = url.searchParams.get('lang');
             const publicRequest = normalizePublicRequest(url, {
                 acceptLanguage: pathname.startsWith('/ru/') ? undefined : req.headers['accept-language'],
                 cookie: pathname.startsWith('/ru/') ? undefined : req.headers.cookie,
@@ -240,6 +243,12 @@ const server = createServer((req, res) => {
                 const headers = { Location: `${publicRequest.url.pathname}${publicRequest.url.search}` };
                 if (publicRequest.vary) {
                     headers.Vary = 'Accept-Language, Cookie';
+                }
+                // EXPLAIN: When the visitor explicitly requested a locale via
+                // ?lang=, persist it as a cookie so future visits honor the
+                // choice instead of re-negotiating from Accept-Language.
+                if (queryLang && PUBLIC_LOCALES.includes(queryLang)) {
+                    headers['Set-Cookie'] = `locale=${encodeURIComponent(queryLang)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
                 }
                 // EXPLAIN: 302 (non-cacheable) so a visitor who later switches
                 // language via the locale cookie is not trapped by a cached

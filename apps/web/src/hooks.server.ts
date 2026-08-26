@@ -8,6 +8,7 @@ import {
     resolveLocaleFromAcceptLanguage,
     shouldCanonicalizePath,
     splitLocaleFromPath,
+    stripLocaleFromPath,
 } from '$lib/i18n';
 import { loadAppConfig } from '$lib/server/config';
 import { resolveSessionSnapshot } from '$lib/server/session';
@@ -28,6 +29,27 @@ export const handle: Handle = async ({ event, resolve }) => {
     const { locale: localeFromPath, pathname: internalPath } = splitLocaleFromPath(event.url.pathname);
     const cookieLocale = normalizeLocale(event.cookies.get(LOCALE_COOKIE_NAME));
     const headerLocale = resolveLocaleFromAcceptLanguage(event.request.headers.get('accept-language'));
+
+    // EXPLAIN: The ?lang= query parameter is a no-JavaScript fallback for
+    // locale switching on bare bypassed paths (e.g. /demo) where the
+    // LocaleSwitcher cannot rely on client-side hydration (Telegram WebView
+    // CSP may block inline scripts). The server persists the cookie and
+    // redirects to the locale-appropriate path.
+    const queryLang = normalizeLocale(event.url.searchParams.get('lang'));
+    if (queryLang) {
+        event.cookies.set(LOCALE_COOKIE_NAME, queryLang, {
+            path: '/',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 365,
+        });
+        const cleanUrl = new URL(event.url.pathname, event.url.origin);
+        cleanUrl.search = event.url.search;
+        cleanUrl.searchParams.delete('lang');
+        const targetPath = queryLang === DEFAULT_LOCALE
+            ? stripLocaleFromPath(localizePath(internalPath, queryLang))
+            : localizePath(internalPath, queryLang);
+        throw redirect(302, `${targetPath}${cleanUrl.search}${event.url.hash}`);
+    }
 
     // EXPLAIN: The Telegram Mini App is served at a bare URL (no locale prefix).
     // The public marketing site is served from static/public/.

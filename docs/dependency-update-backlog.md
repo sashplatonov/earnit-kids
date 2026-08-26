@@ -2,21 +2,32 @@
 
 ## Goal
 
-Update all project dependencies (web, Telegram integration, Java, Quarkus, Docker base images, static analysis tools) to their latest stable versions while keeping the full build, test, lint, and Docker pipeline green. No behavioural changes to the product — only dependency upgrades with necessary compatibility fixes.
+Update all project dependencies (web, Telegram integration, Java, Quarkus, Docker base images, static analysis tools, Maven plugins) to their latest available versions — including major version jumps — while keeping the full build, test, lint, and Docker pipeline green. No behavioural changes to the product — only dependency upgrades with necessary compatibility fixes.
 
 ## Architectural decisions
 
-- **Source of truth for versions:** `npm outdated` and `mvn versions:display-dependency-updates` / `display-property-updates` run against the current repository on 2026-08-26. Target versions are the latest stable (non-milestone, non-beta) releases identified by those commands.
-- **Layer boundaries:** Backend upgrades are scoped to `apps/backend/pom.xml` and Dockerfiles. Web upgrades are scoped to `apps/web/package.json` and `apps/web/package-lock.json`. No application code changes unless a compatibility fix is required by the upgraded library.
-- **Compatibility strategy:** Minor and patch updates are applied in grouped batches per ecosystem. Major version bumps (http-proxy-3 1→2, TypeScript 6→7) are isolated into separate tasks because they carry breaking API changes and require individual validation.
+- **Source of truth for versions:** `npm outdated`, `mvn versions:display-dependency-updates`, `display-property-updates`, and `display-plugin-updates` with `-DallowMajorUpdates=true`, run against the current repository on 2026-08-26. Target versions are the latest stable releases identified by those commands. Pre-release versions (alpha, beta, milestone) are skipped — only GA/stable releases are targeted.
+- **Major version jumps included:**
+  - Checkstyle: 10.21.4 → **14.0.0** (four major version jumps — 10→11→12→13→14)
+  - http-proxy-3: 1.23.3 → **2.0.0**
+  - TypeScript: 6.0.3 → **7.0.2**
+  - maven-compiler-plugin: 3.13.0 → **3.15.0** (latest stable; 4.0.0-beta exists but is beta)
+- **Pre-release versions skipped (not stable):**
+  - Netty 5.0.0.Alpha2 — latest stable is 4.2.17.Final
+  - AssertJ 4.0.0-M1 — latest stable is 3.27.7
+  - MapStruct 1.7.0.Beta2 — latest stable is 1.6.3
+  - Surefire/Failsafe 3.6.0-M1 — latest stable is 3.5.4
+  - maven-compiler-plugin 4.0.0-beta-4 — latest stable is 3.15.0
+- **Layer boundaries:** Backend upgrades are scoped to `apps/backend/pom.xml`, `apps/backend/config/`, and Dockerfiles. Web upgrades are scoped to `apps/web/package.json` and `apps/web/package-lock.json`. No application code changes unless a compatibility fix is required by the upgraded library.
+- **Compatibility strategy:** Minor and patch updates are applied in grouped batches per ecosystem. Major version bumps (Checkstyle 14, http-proxy-3 2, TypeScript 7, maven-compiler-plugin 3.15) are isolated into separate tasks because they carry breaking API/config changes and require individual validation.
 - **Telegram SDK:** The Telegram Mini App SDK (`telegram-web-app.js`) is loaded from `https://telegram.org/js/telegram-web-app.js` in `apps/web/src/app.html` with no version pin — Telegram serves the latest compatible version. The backend Telegram integration uses standard Quarkus REST/JAX-RS (no third-party Telegram bot library). Both are upgraded transitively via the Quarkus and web stack updates — no separate Telegram dependency exists.
-- **Rejected duplicate approaches:** Do not introduce `npm-check-updates`, `renovate`, or `dependabot` config in this backlog. Do not split the Quarkus BOM from its managed dependencies — they move together as one batch.
+- **Rejected duplicate approaches:** Do not introduce `npm-check-updates`, `renovate`, or `dependabot` config. Do not split the Quarkus BOM from its managed dependencies.
 - **Java 25 constraint:** `maven.compiler.release` must remain `25`. The `--enable-preview` flag must remain in surefire/failsafe `argLine`. No Java version changes.
-- **Netty 4.1 → 4.2:** The Netty BOM override in `dependencyManagement` is a new minor series (4.2.x). Quarkus 3.39.1 may already manage Netty 4.2.x via its own BOM — the explicit override may need removal if Quarkus BOM already provides 4.2.17. Verify resolved version before pinning.
-- **BouncyCastle migration:** `bcprov-jdk15on` is deprecated. The `web-push` library 5.1.2 pulls it transitively. If `web-push` latest (check Maven Central) already requires `bcprov-jdk18on`, update both together. Otherwise, keep the explicit `bcprov-jdk15on` override and update to its latest patch within the 1.x line.
-- **MapStruct 1.7.0.Beta2 and Surefire 3.6.0-M1:** These are pre-release versions. Skip them — stay on 1.6.3 and 3.5.4 respectively until a stable release is available.
-- **AssertJ 4.0.0-M1:** Milestone release — skip. Stay on 3.27.x line (update to 3.27.7).
-- **Checkstyle property update shows 14.0.0:** That is a major version jump. The safe update within the 10.x line is 10.26.1 (shown in dependency-updates). Target 10.26.1, not 14.0.0.
+- **Netty 4.1 → 4.2:** Netty 5.0.0.Alpha2 exists but is alpha. Latest stable is 4.2.17.Final. The explicit override may be removable if Quarkus 3.39.1 BOM already manages 4.2.x.
+- **BouncyCastle migration:** `bcprov-jdk15on:1.70` is deprecated. Migrate to `bcprov-jdk18on` (latest stable 1.81+). The `BouncyCastleProvider` class name is identical across jdk15on/jdk18on.
+- **Checkstyle 14.0.0:** This is the highest-risk update. Checkstyle 14 requires Java 21+ (compatible with project's Java 25). The `config/checkstyle.xml` will likely need updates — rules may have been renamed, removed, or added across 10→11→12→13→14. The Checkstyle 14.0.0 POM itself uses `maven-checkstyle-plugin 3.6.0` and `checkstyle.plugin.version 3.6.0`, confirming plugin compatibility.
+- **Svelte 4→5 legacy syntax migration:** The project runs Svelte 5 (`5.56.4`) but every `.svelte` component uses Svelte 4 syntax (`export let`, `$:` reactives, `on:click`, `<slot>`, `createEventDispatcher`). Svelte 5 supports these in legacy mode, but they are deprecated and will be removed in Svelte 6. This is the single largest migration effort in the backlog: 62+ files for `export let`, 34+ files for `$:` reactives, 51+ files for `on:event`, 8 files for `<slot>`, 4 files for `createEventDispatcher`.
+- **Unused jsoup dependency:** `jsoup` (1.18.3→1.23.2) is declared in `apps/backend/pom.xml` but not imported anywhere in Java source. Remove it as part of the dependency cleanup.
 
 ## Recommended implementation order
 
@@ -25,20 +36,25 @@ Update all project dependencies (web, Telegram integration, Java, Quarkus, Docke
 | 1 | P0-1 | P0 | - | Quarkus BOM is the foundation for all backend dependencies |
 | 2 | P1-1 | P1 | P0-1 | Netty BOM must align with Quarkus BOM expectations |
 | 3 | P1-2 | P1 | P0-1 | Jackson is a shared serialization contract |
-| 4 | P1-3 | P1 | P0-1 | Third-party libraries (jsoup, google-api-client, etc.) |
+| 4 | P1-3 | P1 | P0-1 | Third-party libraries (jsoup removal, google-api-client, jose4j, argon2, lombok) |
 | 5 | P1-4 | P1 | P0-1 | BouncyCastle + web-push security update |
 | 6 | P1-5 | P1 | P0-1 | Test dependencies (mockito, assertj, rest-assured) |
-| 7 | P1-6 | P1 | P0-1 | Static analysis tools (checkstyle, PMD, spotbugs) |
-| 8 | P1-7 | P1 | P0-1 | Build plugins (jacoco) |
-| 9 | P1-8 | P1 | - | Web npm patch/minor updates (safe batch) |
-| 10 | P1-9 | P1 | P1-8 | Web npm minor feature updates (eslint, playwright, etc.) |
+| 7 | P1-6 | P1 | P0-1 | Static analysis tools (PMD, SpotBugs — minor updates) |
+| 8 | P0-2 | P0 | P0-1 | Checkstyle 10→14 major jump — highest risk, isolated |
+| 9 | P1-7 | P1 | P0-1 | Build plugins (jacoco, maven-compiler-plugin) |
+| 10 | P1-8 | P1 | - | Web npm patch and minor updates (safe batch) |
 | 11 | P2-1 | P2 | P1-8 | http-proxy-3 major version (1→2), breaking changes |
-| 12 | P2-2 | P2 | P1-9 | TypeScript major version (6→7), breaking changes |
+| 12 | P2-2 | P2 | P1-8 | TypeScript major version (6→7), breaking changes |
 | 13 | P2-3 | P2 | P0-1, P1-8 | Docker base image updates |
 | 14 | P2-4 | P2 | - | Telegram SDK load strategy verification |
-| 15 | P1-10 | P1 | All backend tasks | Backend full verification gate |
-| 16 | P1-11 | P1 | All web tasks | Web full verification gate |
-| 17 | P0-2 | P0 | P1-10, P1-11, P2-3 | Full-stack Docker Compose verification |
+| 15 | P1-11 | P1 | P1-8 | Svelte 5 migration: props (`export let`→`$props()`) |
+| 16 | P1-12 | P1 | P1-11 | Svelte 5 migration: reactivity (`$:`→`$derived`/`$effect`) |
+| 17 | P1-13 | P1 | P1-11 | Svelte 5 migration: events (`on:click`→`onclick`) |
+| 18 | P1-14 | P1 | P1-11 | Svelte 5 migration: snippets (`<slot>`→`{@render}`) |
+| 19 | P1-15 | P1 | P1-11 | Svelte 5 migration: `createEventDispatcher`→callback props |
+| 20 | P1-9 | P1 | All backend tasks | Backend full verification gate |
+| 21 | P1-10 | P1 | All web tasks, P1-11–P1-15 | Web full verification gate |
+| 22 | P0-3 | P0 | P1-9, P1-10, P2-3 | Full-stack Docker Compose verification |
 
 ---
 
@@ -80,7 +96,7 @@ The Quarkus BOM is the single source of truth for all `io.quarkus:*` artifact ve
 
 - Netty BOM override version (handled in P1-1).
 - Jackson databind override version (handled in P1-2).
-- Static analysis tool versions (handled in P1-6).
+- Static analysis tool versions (handled in P1-6 and P0-2).
 - Docker base image updates (handled in P2-3).
 
 ### Acceptance criteria
@@ -113,7 +129,7 @@ git commit -m "chore(backend): bump Quarkus platform to 3.39.1"
 
 **Exact scope:**
 
-Update the Netty BOM override in `apps/backend/pom.xml` from 4.1.135.Final to 4.2.17.Final. The `netty.version` property controls the `netty-bom` import and all explicit `io.netty:*` entries in `dependencyManagement`.
+Update the Netty BOM override in `apps/backend/pom.xml` from 4.1.135.Final to 4.2.17.Final (latest stable — Netty 5.0.0.Alpha2 is alpha and skipped). The `netty.version` property controls the `netty-bom` import and all explicit `io.netty:*` entries in `dependencyManagement`.
 
 **Files:**
 
@@ -130,20 +146,19 @@ The backend uses Netty 4.2.17.Final consistently across all modules. `dependency
 
 ### Architectural decision
 
-Netty 4.2.x is a new minor series within the 4.x line. The Quarkus 3.39.1 BOM (from P0-1) may already manage Netty at 4.2.x — check the resolved version after P0-1. If Quarkus already provides 4.2.17.Final, the explicit `netty-bom` override and all individual `io.netty:*` entries in `dependencyManagement` can be removed entirely (simplification). If Quarkus provides an older 4.2.x, keep the override and update to 4.2.17.Final. The decision is made by inspecting `dependency:tree -Dincludes=io.netty` output after P0-1 is applied.
+Netty 4.2.x is a new minor series within the 4.x line. Netty 5.0.0.Alpha2 exists but is an alpha release — not suitable for production. The Quarkus 3.39.1 BOM (from P0-1) may already manage Netty at 4.2.x — check the resolved version after P0-1. If Quarkus already provides 4.2.17.Final, the explicit `netty-bom` override and all individual `io.netty:*` entries in `dependencyManagement` can be removed entirely (simplification). If Quarkus provides an older 4.2.x, keep the override and update to 4.2.17.Final.
 
 ### Required changes
 
 1. Run `./mvnw dependency:tree -Dincludes=io.netty` after P0-1 to see what Quarkus 3.39.1 resolves Netty to.
 2. If Quarkus already resolves 4.2.17.Final: remove the `netty-bom` import and all individual `io.netty:*` entries from `dependencyManagement` — let Quarkus BOM manage them.
-3. If Quarkus resolves an older 4.2.x: update `<netty.version>` to `4.2.17.Final` and keep the override.
-4. If Quarkus resolves 4.1.x: update `<netty.version>` to `4.2.17.Final` and keep the override — this forces the upgrade.
-5. Verify no Netty API breakages in application code (the codebase does not directly import Netty — it's transitive via Quarkus/Vert.x).
+3. If Quarkus resolves an older 4.2.x or 4.1.x: update `<netty.version>` to `4.2.17.Final` and keep the override.
+4. Verify no Netty API breakages in application code (the codebase does not directly import Netty — it's transitive via Quarkus/Vert.x).
 
 ### Out of scope
 
 - Jackson databind version (P1-2).
-- Application code changes beyond what Netty 4.2 API changes require.
+- Netty 5.x (alpha — not targeted).
 
 ### Acceptance criteria
 
@@ -192,7 +207,7 @@ All JSON request/response handling uses Jackson 2.22.2. Existing DTO record seri
 
 ### Architectural decision
 
-Jackson 2.22.x is a minor version bump. The explicit override exists because Quarkus may manage a different Jackson version. After P0-1, check if Quarkus 3.39.1 already provides Jackson 2.22.x — if so, the override can be removed. Otherwise, update the override to 2.22.2. Jackson minor versions are backward compatible for standard `@JsonCreator` records and `ObjectMapper` usage.
+Jackson 2.22.x is a minor version bump. The explicit override exists because Quarkus may manage a different Jackson version. After P0-1, check if Quarkus 3.39.1 already provides Jackson 2.22.x — if so, the override can be removed. Otherwise, update the override to 2.22.2.
 
 ### Required changes
 
@@ -235,12 +250,12 @@ git commit -m "chore(backend): bump Jackson databind to 2.22.2"
 
 **Exact scope:**
 
-Update standalone third-party dependencies in `apps/backend/pom.xml` that are not managed by the Quarkus BOM: jsoup, google-api-client, rest-assured, and assertj-core.
+Update standalone third-party dependencies in `apps/backend/pom.xml` that are not managed by the Quarkus BOM: jsoup, google-api-client, rest-assured, assertj-core, jose4j, argon2-jvm, and Lombok.
 
 **Files:**
 
 - Modify `apps/backend/pom.xml`.
-- Search anchors: `jsoup` (version `1.18.3`), `google-api-client` (version `2.8.1`), `rest-assured` (no version — managed by Quarkus BOM), `assertj-core` (version `3.27.3`).
+- Search anchors: `jsoup` (version `1.18.3`), `google-api-client` (version `2.8.1`), `assertj-core` (version `3.27.3`), `jose4j` (version `0.9.6`), `argon2-jvm` (version `2.12`), `lombok` (version `1.18.46`).
 
 **Goal:**
 
@@ -248,11 +263,11 @@ All standalone third-party libraries are at their latest stable versions with no
 
 ### Outcome
 
-jsoup 1.23.2, google-api-client 2.9.0, rest-assured 6.0.1, assertj-core 3.27.7. All existing tests pass.
+jsoup 1.23.2, google-api-client 2.9.0, rest-assured 6.0.1, assertj-core 3.27.7, jose4j latest stable, argon2-jvm latest stable, Lombok latest stable. All existing tests pass.
 
 ### Architectural decision
 
-These libraries have independent version lines and are either explicitly versioned (jsoup, google-api-client, assertj) or managed by the Quarkus BOM (rest-assured). jsoup 1.18→1.23 is a minor jump but jsoup maintains strong backward compatibility. google-api-client 2.8→2.9 is a minor bump. assertj 3.27.3→3.27.7 is a patch. rest-assured 6.0.0→6.0.1 is a patch (may be managed by Quarkus BOM — check after P0-1).
+These libraries have independent version lines. jsoup 1.18→1.23 is a minor jump but jsoup maintains strong backward compatibility. google-api-client 2.8→2.9 is a minor bump. assertj 3.27.3→3.27.7 is a patch (4.0.0-M1 is milestone — skipped). rest-assured 6.0.0→6.0.1 is a patch. jose4j, argon2-jvm, and Lombok should be checked for latest stable versions on Maven Central.
 
 ### Required changes
 
@@ -260,15 +275,19 @@ These libraries have independent version lines and are either explicitly version
 2. Update google-api-client from `2.8.1` to `2.9.0` in the `<dependency>` block (inline version).
 3. Update assertj-core from `3.27.3` to `3.27.7` in the `<dependency>` block (inline version).
 4. For rest-assured: after P0-1, check if Quarkus 3.39.1 BOM already manages 6.0.1. If yes, no change needed. If it still shows 6.0.0, add an explicit version override `6.0.1` in `dependencyManagement`.
-5. Run full test suite — jsoup is used for HTML sanitization (`WebPushProtocolAdapter` and related), google-api-client for Google OAuth (`GoogleIdentityVerifier`), rest-assured for API tests, assertj for test assertions.
-6. If jsoup 1.23 introduces sanitization behaviour changes, verify that HTML sanitization tests still pass and that no new tags or attributes are allowed through.
+5. Check Maven Central for latest stable `org.bitbucket.b_c:jose4j` (currently 0.9.6) — update if a newer stable version exists.
+6. Check Maven Central for latest stable `de.mkammerer:argon2-jvm` (currently 2.12) — update if a newer stable version exists.
+7. Check Maven Central for latest stable `org.projectlombok:lombok` (currently 1.18.46) — update if a newer stable version exists.
+8. Run full test suite — jsoup is used for HTML sanitization, google-api-client for Google OAuth (`GoogleIdentityVerifier`), rest-assured for API tests, assertj for test assertions, jose4j for JWT, argon2 for password hashing, Lombok for code generation.
+9. If jsoup 1.23 introduces sanitization behaviour changes, verify that HTML sanitization tests still pass.
+10. If Lombok update requires a different annotation processor path, update the `maven-compiler-plugin` `annotationProcessorPaths` section.
 
 ### Out of scope
 
 - BouncyCastle / web-push (P1-4).
 - Mockito (P1-5).
-- Static analysis tools (P1-6).
-- MapStruct (stay on 1.6.3 — 1.7.0.Beta2 is a beta).
+- Static analysis tools (P1-6, P0-2).
+- MapStruct (stay on 1.6.3 — 1.7.0.Beta2 is beta).
 
 ### Acceptance criteria
 
@@ -276,6 +295,7 @@ These libraries have independent version lines and are either explicitly version
 - google-api-client resolves to 2.9.0.
 - assertj-core resolves to 3.27.7.
 - rest-assured resolves to 6.0.1 (either from BOM or explicit override).
+- jose4j, argon2-jvm, Lombok at latest stable (or unchanged if no newer stable version exists).
 - Google OAuth verifier test (`GoogleIdentityVerifier`) passes.
 - HTML sanitization tests pass.
 - `./mvnw verify` passes.
@@ -290,7 +310,7 @@ cd apps/backend && JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw 
 
 ```bash
 git add apps/backend/pom.xml
-git commit -m "chore(backend): bump jsoup, google-api-client, assertj, rest-assured"
+git commit -m "chore(backend): bump jsoup, google-api-client, assertj, rest-assured, jose4j, argon2, lombok"
 ```
 
 ---
@@ -303,7 +323,7 @@ git commit -m "chore(backend): bump jsoup, google-api-client, assertj, rest-assu
 
 **Exact scope:**
 
-Update the BouncyCastle provider and `web-push` library in `apps/backend/pom.xml`. The current `bcprov-jdk15on:1.70` is deprecated — migrate to `bcprov-jdk18on` if the latest `web-push` version requires it. The `web-push` library (nl.martijndwars) is used by `WebPushJavaAdapter` for VAPID-signed push notifications.
+Update the BouncyCastle provider and `web-push` library in `apps/backend/pom.xml`. The current `bcprov-jdk15on:1.70` is deprecated — migrate to `bcprov-jdk18on` (latest stable 1.81+). The `web-push` library (nl.martijndwars) is used by `WebPushJavaAdapter` for VAPID-signed push notifications.
 
 **Files:**
 
@@ -321,37 +341,33 @@ Web push encryption uses the latest BouncyCastle provider and web-push library w
 
 ### Architectural decision
 
-BouncyCastle `bcprov-jdk15on` is the legacy artifact (last release 1.78). The active artifact is `bcprov-jdk18on` (latest 1.81+). The `web-push` library 5.1.2 depends on `bcprov-jdk15on`. Check Maven Central for the latest `web-push` version:
+BouncyCastle `bcprov-jdk15on` is the legacy artifact. The active artifact is `bcprov-jdk18on` (latest 1.81+). The `web-push` library 5.1.2 depends on `bcprov-jdk15on` transitively. Check Maven Central for the latest `web-push` version:
 
-- If latest `web-push` (e.g., 5.1.3+) already depends on `bcprov-jdk18on`: update `web-push` to latest, replace `bcprov-jdk15on` with `bcprov-jdk18on` (matching the version `web-push` expects), and update the import in `WebPushJavaAdapter` if the package path changed (it should not — `org.bouncycastle.jce.provider.BouncyCastleProvider` is stable across jdk15on/jdk18on).
-- If `web-push` still uses `bcprov-jdk15on` at its latest version: update `bcprov-jdk15on` to its latest patch (1.78.1) and keep `web-push` at 5.1.2 or update to latest patch.
-- The `BouncyCastleProvider` class name and `Security.addProvider()` API are identical between jdk15on and jdk18on — no code change expected unless the package moves.
+- If latest `web-push` already depends on `bcprov-jdk18on`: update `web-push` to latest, replace `bcprov-jdk15on` with `bcprov-jdk18on`.
+- If `web-push` still uses `bcprov-jdk15on` at its latest version: replace `bcprov-jdk15on` with `bcprov-jdk18on` explicitly anyway (the `BouncyCastleProvider` class name and `Security.addProvider()` API are identical across jdk15on/jdk18on), and update `web-push` to latest patch.
 
 ### Required changes
 
 1. Check Maven Central for latest `nl.martijndwars:web-push` version and its BouncyCastle dependency.
-2. Check Maven Central for latest `org.bouncycastle:bcprov-jdk18on` (or `bcprov-jdk15on` if web-push hasn't migrated).
+2. Check Maven Central for latest `org.bouncycastle:bcprov-jdk18on` version.
 3. Update the `web-push` `<dependency>` to the latest stable version.
-4. Update or replace the BouncyCastle `<dependency>`:
-   - If migrating to jdk18on: change `<artifactId>bcprov-jdk15on</artifactId>` to `<artifactId>bcprov-jdk18on</artifactId>` and update the version to latest stable.
-   - If staying on jdk15on: update version to latest (1.78.1).
+4. Replace `bcprov-jdk15on` with `bcprov-jdk18on` and set version to latest stable (1.81+).
 5. Run `./mvnw dependency:tree -Dincludes=org.bouncycastle` to verify no duplicate BouncyCastle artifacts on the classpath.
 6. Run web push tests — if none exist for `WebPushJavaAdapter` directly, run the full suite which includes `PushResource` and related integration tests.
 7. Verify `WebPushJavaAdapter.java` still compiles — the `BouncyCastleProvider`, `Notification`, and `PushService` APIs should be unchanged.
 
 ### Out of scope
 
-- jose4j (version 0.9.6 — check if update is available and include here if minor/patch only).
-- argon2-jvm (version 2.12 — check if update is available and include here if minor/patch only).
-- Lombok (version 1.18.46 — check if update is available and include here if minor/patch only).
+- jose4j (updated in P1-3).
+- argon2-jvm (updated in P1-3).
 
 ### Acceptance criteria
 
-- No `bcprov-jdk15on` on the classpath if migrated to `bcprov-jdk18on` (verify via `dependency:tree`).
+- No `bcprov-jdk15on` on the classpath (verify via `dependency:tree`).
+- `bcprov-jdk18on` at latest stable version.
 - No duplicate BouncyCastle versions in `dependency:tree`.
 - `WebPushJavaAdapter` compiles and the BouncyCastle provider is registered at startup.
 - `./mvnw verify` passes.
-- No `Security.addProvider` or `BouncyCastleProvider` API changes required in application code.
 
 ### Targeted validation
 
@@ -363,7 +379,7 @@ cd apps/backend && JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw 
 
 ```bash
 git add apps/backend/pom.xml apps/backend/src/main/java/com/sashplatonov/earnit/kids/platform/webpush/WebPushJavaAdapter.java
-git commit -m "chore(backend): update BouncyCastle and web-push library"
+git commit -m "chore(backend): migrate BouncyCastle to jdk18on and update web-push"
 ```
 
 ---
@@ -390,22 +406,22 @@ Mockito 5.23.0 is used consistently across all test scopes with no mock behaviou
 
 ### Outcome
 
-All Mockito-based tests (`AccountServiceImplTest`, `AuthServiceImplTest`, `ConstraintViolationExceptionMapperTest`, etc.) pass with Mockito 5.23.0. The surefire/failsafe `-javaagent` path resolves correctly to the 5.23.0 jar.
+All Mockito-based tests pass with Mockito 5.23.0. The surefire/failsafe `-javaagent` path resolves correctly to the 5.23.0 jar.
 
 ### Architectural decision
 
-Mockito 5.23.0 is a minor version bump within the 5.x line. The `-javaagent` path in surefire/failsafe `argLine` uses `${mockito.version}` so it automatically resolves to the new version. Mockito 5.x minor versions maintain backward compatibility for `@Mock`, `@InjectMocks`, `MockitoExtension`, and `mock()` static methods used in the test suite.
+Mockito 5.23.0 is a minor version bump within the 5.x line. The `-javaagent` path in surefire/failsafe `argLine` uses `${mockito.version}` so it automatically resolves to the new version.
 
 ### Required changes
 
 1. Update `<mockito.version>5.21.0</mockito.version>` to `5.23.0`.
 2. Run the full test suite — verify all Mockito-based unit tests pass.
-3. If Mockito 5.23 introduces stricter mock behaviour (e.g., stricter stubbing), fix the test to align — do not use `@SuppressWarnings` or lenient configurations to suppress legitimate test issues.
+3. If Mockito 5.23 introduces stricter mock behaviour, fix the test to align — do not use `@SuppressWarnings` or lenient configurations to suppress legitimate test issues.
 
 ### Out of scope
 
 - AssertJ (updated in P1-3).
-- Surefire plugin version (stay on 3.5.4 — 3.6.0-M1 is a milestone).
+- Surefire plugin version (stay on 3.5.4 — 3.6.0-M1 is milestone).
 - JaCoCo (P1-7).
 
 ### Acceptance criteria
@@ -430,7 +446,7 @@ git commit -m "chore(backend): bump Mockito to 5.23.0"
 
 ---
 
-## TASK P1-6: Update backend static analysis tools
+## TASK P1-6: Update PMD and SpotBugs
 
 **Status:** TODO
 **Priority:** P1
@@ -438,50 +454,47 @@ git commit -m "chore(backend): bump Mockito to 5.23.0"
 
 **Exact scope:**
 
-Update Checkstyle, PMD, and SpotBugs versions in `apps/backend/pom.xml`. These are build-time static analysis tools that run during the `verify` phase. The Checkstyle config (`config/checkstyle.xml`), PMD ruleset (`config/pmd/backend-srp-ruleset.xml`), and SpotBugs exclude filter (`config/spotbugs-exclude.xml`) may need adjustments if new rules are introduced or existing rules are renamed.
+Update PMD and SpotBugs versions in `apps/backend/pom.xml`. These are build-time static analysis tools that run during the `verify` phase. Checkstyle is handled separately in P0-2 due to its major version jump.
 
 **Files:**
 
 - Modify `apps/backend/pom.xml`.
-- Search anchor: `<checkstyle.version>10.21.4</checkstyle.version>`, `<pmd.version>7.17.0</pmd.version>`, `<spotbugs.version>4.9.8.3</spotbugs.version>`, `<spotbugs.annotations.version>4.10.2</spotbugs.annotations.version>` in `apps/backend/pom.xml`.
-- Modify `apps/backend/config/checkstyle.xml` if Checkstyle 10.26 introduces new required rules or renames existing ones.
+- Search anchor: `<pmd.version>7.17.0</pmd.version>`, `<spotbugs.version>4.9.8.3</spotbugs.version>`, `<spotbugs.annotations.version>4.10.2</spotbugs.annotations.version>` in `apps/backend/pom.xml`.
 - Modify `apps/backend/config/pmd/backend-srp-ruleset.xml` if PMD 7.26 renames rules.
 - Modify `apps/backend/config/spotbugs-exclude.xml` if SpotBugs 4.10 changes detector categories.
 
 **Goal:**
 
-Checkstyle 10.26.1, PMD 7.26.0, SpotBugs 4.10.4.0 (plugin) / 4.10.4 (annotations) run successfully during `verify` with no new violations and no rule exclusions added.
+PMD 7.26.0, SpotBugs 4.10.4.0 (plugin) / 4.10.4 (annotations) run successfully during `verify` with no new violations and no rule exclusions added.
 
 ### Outcome
 
-The `verify` phase passes with updated static analysis tools. No new Checkstyle, PMD, or SpotBugs violations are introduced. If the tools find pre-existing issues that were previously undetected, fix the code rather than suppressing the rules.
+The `verify` phase passes with updated PMD and SpotBugs. No new violations are introduced. If the tools find pre-existing issues that were previously undetected, fix the code rather than suppressing the rules.
 
 ### Architectural decision
 
-Checkstyle 10.21→10.26 is a minor jump within the 10.x line. PMD 7.17→7.26 is a minor jump within the 7.x line. SpotBugs 4.9→4.10 is a minor jump. All three tools maintain backward compatibility for standard rulesets within minor versions. The risk is that new rules may be enabled by default or existing rules may become stricter. The project's `AGENTS.md` explicitly forbids adding Checkstyle, SpotBugs, PMD, or compiler exclusions to make checks pass — any new violations must be fixed in code.
+PMD 7.17→7.26 is a minor jump within the 7.x line. SpotBugs 4.9→4.10 is a minor jump. Both tools maintain backward compatibility for standard rulesets within minor versions. The project's `AGENTS.md` explicitly forbids adding PMD or SpotBugs exclusions to make checks pass — any new violations must be fixed in code. Checkstyle is excluded from this task because it has a major version jump (10→14) and is handled in P0-2.
 
 ### Required changes
 
-1. Update `<checkstyle.version>` from `10.21.4` to `10.26.1`.
-2. Update `<pmd.version>` from `7.17.0` to `7.26.0`.
-3. Update `<spotbugs.version>` from `4.9.8.3` to `4.10.4.0`.
-4. Update `<spotbugs.annotations.version>` from `4.10.2` to `4.10.4`.
-5. Run `./mvnw verify` — if Checkstyle reports new violations, fix the code (do not suppress). If PMD reports new violations, fix the code. If SpotBugs reports new findings, fix the code or update `spotbugs-exclude.xml` only if the finding is a confirmed false positive that was not detected before.
-6. If a Checkstyle rule is removed or renamed in 10.26, update `config/checkstyle.xml` to use the new rule name.
-7. If a PMD rule is removed or renamed in 7.26, update `config/pmd/backend-srp-ruleset.xml`.
+1. Update `<pmd.version>` from `7.17.0` to `7.26.0`.
+2. Update `<spotbugs.version>` from `4.9.8.3` to `4.10.4.0`.
+3. Update `<spotbugs.annotations.version>` from `4.10.2` to `4.10.4`.
+4. Run `./mvnw verify` — if PMD reports new violations, fix the code. If SpotBugs reports new findings, fix the code or update `spotbugs-exclude.xml` only if the finding is a confirmed false positive.
+5. If a PMD rule is removed or renamed in 7.26, update `config/pmd/backend-srp-ruleset.xml`.
 
 ### Out of scope
 
+- Checkstyle (handled in P0-2 — major version jump 10→14).
 - JaCoCo version (P1-7).
 - Surefire plugin version (stay on 3.5.4).
-- Application logic changes beyond fixing static analysis violations.
 
 ### Acceptance criteria
 
 - `./mvnw verify` passes.
-- No new `<exclude>` entries added to `config/checkstyle.xml`, `config/pmd/backend-srp-ruleset.xml`, or `config/spotbugs-exclude.xml` unless a confirmed false positive.
+- No new `<exclude>` entries added to `config/pmd/backend-srp-ruleset.xml` or `config/spotbugs-exclude.xml` unless a confirmed false positive.
 - No `@SuppressWarnings` annotations added to Java source files.
-- Checkstyle, PMD, and SpotBugs reports show zero violations.
+- PMD and SpotBugs reports show zero violations.
 
 ### Targeted validation
 
@@ -493,12 +506,96 @@ cd apps/backend && JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw 
 
 ```bash
 git add apps/backend/pom.xml apps/backend/config/
-git commit -m "chore(backend): bump Checkstyle, PMD, SpotBugs to latest"
+git commit -m "chore(backend): bump PMD and SpotBugs to latest"
 ```
 
 ---
 
-## TASK P1-7: Update JaCoCo plugin to 0.8.15
+## TASK P0-2: Update Checkstyle to 14.0.0 (major version jump)
+
+**Status:** TODO
+**Priority:** P0
+**Depends on:** P0-1
+
+**Exact scope:**
+
+Update Checkstyle from 10.21.4 to 14.0.0 in `apps/backend/pom.xml`. This is a **four major version jump** (10→11→12→13→14) and the highest-risk dependency update in this backlog. The Checkstyle config file `apps/backend/config/checkstyle.xml` will likely need significant updates — rules may have been renamed, removed, added, or changed in severity across these major versions. Checkstyle 14.0.0 requires Java 21+ (compatible with the project's Java 25).
+
+**Files:**
+
+- Modify `apps/backend/pom.xml`.
+- Search anchor: `<checkstyle.version>10.21.4</checkstyle.version>` in `apps/backend/pom.xml`.
+- Modify `apps/backend/config/checkstyle.xml` — extensive updates expected for Checkstyle 14.0.0 rule compatibility.
+- Potentially modify Java source files if Checkstyle 14.0.0 flags new violations that were not detected by 10.21.4.
+
+**Goal:**
+
+Checkstyle 14.0.0 runs successfully during the `validate` phase with no violations and no rule exclusions added to make checks pass.
+
+### Outcome
+
+The `verify` phase passes with Checkstyle 14.0.0. The `config/checkstyle.xml` is updated to use Checkstyle 14.0.0-compatible rule names and configuration syntax. All Java source code passes the updated ruleset.
+
+### Architectural decision
+
+Checkstyle 14.0.0 is a major version released on 2026-08-18 (8 days ago). The jump from 10 to 14 spans four major versions, each of which may have:
+- Renamed or removed configuration properties
+- Changed rule default behaviours
+- Added new required rules
+- Changed the XML config schema
+
+The `maven-checkstyle-plugin` version (3.6.0) is already at latest stable and is confirmed compatible with Checkstyle 14.0.0 (the Checkstyle 14.0.0 POM itself uses `checkstyle.plugin.version 3.6.0`). The `maven-checkstyle-plugin` dependency on `com.puppycrawl.tools:checkstyle` is explicitly versioned via `${checkstyle.version}`, so updating the property is sufficient.
+
+This task is P0 because a broken Checkstyle config will block the entire `verify` phase, preventing all other backend work. It is isolated from P1-6 (PMD/SpotBugs) because the Checkstyle config changes are expected to be extensive and deserve focused attention.
+
+### Required changes
+
+1. Update `<checkstyle.version>` from `10.21.4` to `14.0.0`.
+2. Run `./mvnw validate` to trigger Checkstyle — expect config parsing errors or rule violations.
+3. For each config error:
+   - If a rule name is removed/renamed: update `config/checkstyle.xml` to the new name, or remove the rule if it no longer exists.
+   - If a rule property is renamed: update the property in `config/checkstyle.xml`.
+   - If the XML schema changed: update the config header/DTD reference.
+4. For each new violation in Java source code:
+   - Fix the code to comply with the rule (do not suppress).
+   - If the rule is not relevant to the project, disable it explicitly in `config/checkstyle.xml` with a comment explaining why.
+5. Iterate: `./mvnw validate` → fix → repeat until Checkstyle passes.
+6. Run full `./mvnw verify` to ensure no other phase is affected.
+7. Consult the Checkstyle migration notes for versions 11, 12, 13, and 14 for breaking changes:
+   - https://checkstyle.org/releasenotes.html
+   - Pay attention to removed modules, renamed properties, and changed defaults.
+
+### Out of scope
+
+- PMD and SpotBugs (P1-6).
+- maven-checkstyle-plugin version (already at 3.6.0 — latest stable).
+- Application logic changes beyond fixing Checkstyle violations.
+
+### Acceptance criteria
+
+- `./mvnw validate` passes with Checkstyle 14.0.0.
+- `./mvnw verify` passes.
+- `config/checkstyle.xml` uses only Checkstyle 14.0.0-compatible rules and properties.
+- No new `<exclude>` entries or suppression configurations added unless a confirmed false positive.
+- No `@SuppressWarnings` annotations added to Java source files.
+- Checkstyle report has zero violations.
+
+### Targeted validation
+
+```bash
+cd apps/backend && JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw validate && ./mvnw verify
+```
+
+### Commit
+
+```bash
+git add apps/backend/pom.xml apps/backend/config/checkstyle.xml apps/backend/src/main/java/
+git commit -m "chore(backend): upgrade Checkstyle to 14.0.0"
+```
+
+---
+
+## TASK P1-7: Update JaCoCo and maven-compiler-plugin
 
 **Status:** TODO
 **Priority:** P1
@@ -506,35 +603,40 @@ git commit -m "chore(backend): bump Checkstyle, PMD, SpotBugs to latest"
 
 **Exact scope:**
 
-Update the JaCoCo Maven plugin version from 0.8.14 to 0.8.15 in `apps/backend/pom.xml`. JaCoCo runs during `verify` to measure test coverage with a minimum 80% line coverage rule.
+Update the JaCoCo Maven plugin from 0.8.14 to 0.8.15 and the maven-compiler-plugin from 3.13.0 to 3.15.0 (latest stable — 4.0.0-beta exists but is beta) in `apps/backend/pom.xml`.
 
 **Files:**
 
 - Modify `apps/backend/pom.xml`.
 - Search anchor: `<jacoco.version>0.8.14</jacoco.version>` in `apps/backend/pom.xml`.
+- Search anchor: `<artifactId>maven-compiler-plugin</artifactId>` followed by `<version>3.13.0</version>` in `apps/backend/pom.xml`.
 
 **Goal:**
 
-JaCoCo 0.8.15 generates coverage reports and enforces the 80% line coverage minimum with no regressions.
+JaCoCo 0.8.15 and maven-compiler-plugin 3.15.0 run successfully with no regressions in coverage reporting or compilation.
 
 ### Outcome
 
-The `verify` phase passes with JaCoCo 0.8.15. Coverage report is generated and the coverage check passes.
+The `verify` phase passes with updated build plugins. JaCoCo coverage report is generated and the 80% minimum passes. Compilation with `--enable-preview` and Java 25 works correctly with maven-compiler-plugin 3.15.0.
 
 ### Architectural decision
 
-JaCoCo 0.8.15 is a patch release. The `argLine` uses `@{argLine}` to preserve the JaCoCo javaagent injection (per repository memory note). The coverage exclusions for Panache repositories and infrastructure persistence packages remain unchanged. JaCoCo patch releases are backward compatible.
+JaCoCo 0.8.15 is a patch release. The `argLine` uses `@{argLine}` to preserve the JaCoCo javaagent injection (per repository memory note). maven-compiler-plugin 3.15.0 is a minor version bump from 3.13.0 — it may have changes to how `--enable-preview` and annotation processor paths are handled. The `annotationProcessorPaths` for Lombok and MapStruct must still resolve correctly. maven-compiler-plugin 4.0.0-beta-4 exists but is a beta — skipped in favour of 3.15.0 stable.
 
 ### Required changes
 
 1. Update `<jacoco.version>` from `0.8.14` to `0.8.15`.
-2. Run `./mvnw verify` — verify the JaCoCo agent attaches correctly and the coverage report is generated.
-3. If coverage numbers shift slightly due to JaCoCo 0.8.15's improved bytecode analysis, ensure the 80% minimum still passes. If it drops below 80%, add tests — do not lower the threshold.
+2. Update `maven-compiler-plugin` version from `3.13.0` to `3.15.0`.
+3. Run `./mvnw verify` — verify the JaCoCo agent attaches correctly and the coverage report is generated.
+4. Verify that `--enable-preview` flag still works with maven-compiler-plugin 3.15.0.
+5. Verify that Lombok and MapStruct annotation processors still run correctly.
+6. If coverage numbers shift slightly due to JaCoCo 0.8.15's improved bytecode analysis, ensure the 80% minimum still passes. If it drops below 80%, add tests — do not lower the threshold.
 
 ### Out of scope
 
 - Coverage threshold changes (must remain at 80% line coverage).
 - JaCoCo exclusions (must remain as-is for Panache repositories).
+- Surefire/Failsafe plugin version (stay on 3.5.4 — 3.6.0-M1 is milestone).
 
 ### Acceptance criteria
 
@@ -542,6 +644,8 @@ JaCoCo 0.8.15 is a patch release. The `argLine` uses `@{argLine}` to preserve th
 - JaCoCo report is generated at `target/site/jacoco/`.
 - Coverage check passes (80% minimum line coverage).
 - `@{argLine}` placeholder preserved in surefire/failsafe `argLine`.
+- `--enable-preview` compilation works with maven-compiler-plugin 3.15.0.
+- Lombok and MapStruct annotation processing works.
 
 ### Targeted validation
 
@@ -553,12 +657,12 @@ cd apps/backend && JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw 
 
 ```bash
 git add apps/backend/pom.xml
-git commit -m "chore(backend): bump JaCoCo to 0.8.15"
+git commit -m "chore(backend): bump JaCoCo to 0.8.15 and maven-compiler-plugin to 3.15.0"
 ```
 
 ---
 
-## TASK P1-8: Update web npm patch and minor safe packages
+## TASK P1-8: Update web npm patch and minor packages
 
 **Status:** TODO
 **Priority:** P1
@@ -566,7 +670,7 @@ git commit -m "chore(backend): bump JaCoCo to 0.8.15"
 
 **Exact scope:**
 
-Update all npm packages in `apps/web/package.json` that have patch or minor version updates available without major version jumps. This is the safe batch — no breaking API changes expected.
+Update all npm packages in `apps/web/package.json` that have patch or minor version updates available (excluding major version jumps which are handled in P2-1 and P2-2). This is the safe batch — no breaking API changes expected.
 
 Packages to update (current → target):
 - `@lucide/svelte`: 1.31.0 → 1.34.0 (minor)
@@ -600,7 +704,7 @@ All safe-update npm packages are at their latest patch/minor versions. The web a
 
 ### Architectural decision
 
-These are all patch or minor version bumps within their respective major lines. Svelte 5.56.x patches, SvelteKit 2.70.x minor, Vite 8.2.x minor, and ESLint 10.9.x minor are all backward compatible. The `@sveltejs/adapter-node` (5.5.7) and `@sveltejs/adapter-static` (3.0.10) are already at their latest within their ranges — no change needed. TypeScript stays at 6.0.3 (major bump to 7.0 is handled separately in P2-2). `http-proxy-3` stays at 1.23.3 (major bump to 2.0 is handled separately in P2-1).
+These are all patch or minor version bumps within their respective major lines. Svelte 5.56.x patches, SvelteKit 2.70.x minor, Vite 8.2.x minor, and ESLint 10.9.x minor are all backward compatible. `@sveltejs/adapter-node` (5.5.7) and `@sveltejs/adapter-static` (3.0.10) are already at their latest within their ranges. TypeScript stays at 6.0.3 (major to 7.0 is P2-2). `http-proxy-3` stays at 1.23.3 (major to 2.0 is P2-1).
 
 ### Required changes
 
@@ -616,7 +720,7 @@ These are all patch or minor version bumps within their respective major lines. 
 - `http-proxy-3` major version (P2-1).
 - `typescript` major version (P2-2).
 - `@sveltejs/adapter-node` and `@sveltejs/adapter-static` (already at latest within range).
-- E2E tests (validated in P1-11).
+- E2E tests (validated in P1-10).
 
 ### Acceptance criteria
 
@@ -642,65 +746,7 @@ git commit -m "chore(web): bump npm patch and minor dependencies"
 
 ---
 
-## TASK P1-9: Update web npm minor feature packages
-
-**Status:** TODO
-**Priority:** P1
-**Depends on:** P1-8
-
-**Exact scope:**
-
-This task is merged into P1-8 if P1-8 succeeds without issues. It exists as a separate checkpoint only if P1-8 reveals that one of the minor updates (e.g., SvelteKit 2.70, Vite 8.2, ESLint 10.9) requires code changes that should be isolated. If P1-8 passes cleanly, this task is marked DONE with no changes and the commit is a no-op.
-
-**Files:**
-
-- Potentially modify `apps/web/eslint.config.js` if ESLint 10.9 changes flat config behaviour.
-- Potentially modify `apps/web/vite.config.ts` if Vite 8.2 changes config structure.
-- Potentially modify `apps/web/svelte.config.js` if SvelteKit 2.70 changes adapter config.
-
-**Goal:**
-
-Confirm that all minor version updates from P1-8 are fully integrated with no deferred fixes.
-
-### Outcome
-
-All web tooling (ESLint, Vite, SvelteKit, Playwright) works at its updated version with no configuration drift.
-
-### Architectural decision
-
-This is a verification checkpoint. If P1-8 passes all gates cleanly, no action is needed. If P1-8 required skipping a package due to a minor incompatibility, this task addresses the specific configuration or code change needed to bring that package up to date.
-
-### Required changes
-
-1. Review the output of P1-8's validation commands.
-2. If all passed: mark DONE, no commit needed.
-3. If any package was held back: apply the specific fix (config change or code change) and rerun validation.
-
-### Out of scope
-
-- Major version updates (P2-1, P2-2).
-
-### Acceptance criteria
-
-- `npm run lint && npm run test && npm run build` all pass.
-- `npm outdated` shows only http-proxy-3 and typescript as having available updates (deferred to P2-1 and P2-2).
-
-### Targeted validation
-
-```bash
-cd apps/web && npm run lint && npm run test && npm run build
-```
-
-### Commit
-
-```bash
-git add apps/web/
-git commit -m "chore(web): finalize minor dependency integration"
-```
-
----
-
-## TASK P2-1: Update http-proxy-3 to 2.0.0
+## TASK P2-1: Update http-proxy-3 to 2.0.0 (major version)
 
 **Status:** TODO
 **Priority:** P2
@@ -727,7 +773,7 @@ The web preview/proxy server uses http-proxy-3 2.0.0 with no proxy behaviour reg
 
 ### Architectural decision
 
-http-proxy-3 2.0.0 is a major version bump. Before implementing, check the [http-proxy-3 changelog](https://github.com/sagemathinc/http-proxy-3) for breaking changes. The library is used in `scripts/preview.mjs` (the production preview server) and potentially in `scripts/build.mjs`. The proxy server is critical for the Docker deployment (`apps/web/Dockerfile` CMD is `node scripts/preview.mjs`). If the 2.0 API is incompatible and the migration is too complex, document the decision to stay on 1.23.3 and mark this task as BLOCKED with a clear reason.
+http-proxy-3 2.0.0 is a major version bump. The library is used in `scripts/preview.mjs` (the production preview server). The proxy server is critical for the Docker deployment (`apps/web/Dockerfile` CMD is `node scripts/preview.mjs`). If the 2.0 API is incompatible and the migration is too complex, document the decision to stay on 1.23.3 and mark this task as BLOCKED with a clear reason.
 
 ### Required changes
 
@@ -766,11 +812,11 @@ git commit -m "chore(web): bump http-proxy-3 to 2.0.0"
 
 ---
 
-## TASK P2-2: Update TypeScript to 7.0.2
+## TASK P2-2: Update TypeScript to 7.0.2 (major version)
 
 **Status:** TODO
 **Priority:** P2
-**Depends on:** P1-9
+**Depends on:** P1-8
 
 **Exact scope:**
 
@@ -793,7 +839,7 @@ TypeScript 7.0.2 is used for type checking and build with no type errors. `svelt
 
 ### Architectural decision
 
-TypeScript 7.0 is a major version bump. Check the [TypeScript 7.0 release notes](https://www.typescriptlang.org/docs/handbook/release-notes/) for breaking changes. Common breaking changes in major TS versions include: stricter type narrowing, removed deprecated compiler options, changed lib defaults. The project uses `tsconfig.json` with SvelteKit's generated config. If TypeScript 7.0 introduces too many new type errors that require extensive code changes, document the decision to stay on 6.0.3 and mark this task as BLOCKED.
+TypeScript 7.0 is a major version bump. Check the TypeScript 7.0 release notes for breaking changes. Common breaking changes in major TS versions include: stricter type narrowing, removed deprecated compiler options, changed lib defaults. If TypeScript 7.0 introduces too many new type errors that require extensive code changes, document the decision to stay on 6.0.3 and mark this task as BLOCKED.
 
 ### Required changes
 
@@ -842,7 +888,7 @@ git commit -m "chore(web): bump TypeScript to 7.0.2"
 
 **Exact scope:**
 
-Update Docker base image tags and the New Relic agent version in all Dockerfiles. Check for newer base image tags for: `eclipse-temurin:25-jdk-jammy`, `eclipse-temurin:25-jre-jammy`, `node:24-alpine`, `postgres:18-alpine`, `quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-25`, `quay.io/quarkus/ubi9-quarkus-micro-image:2.0`, and `NEW_RELIC_AGENT_VERSION`.
+Update Docker base image tags and the New Relic agent version in all Dockerfiles to their latest available versions.
 
 **Files:**
 
@@ -854,7 +900,7 @@ Update Docker base image tags and the New Relic agent version in all Dockerfiles
 
 **Goal:**
 
-All Docker base images use the latest available tags for their respective major versions. The New Relic Java agent is at its latest stable version.
+All Docker base images use the latest available tags. The New Relic Java agent is at its latest stable version.
 
 ### Outcome
 
@@ -862,16 +908,16 @@ All Docker base images use the latest available tags for their respective major 
 
 ### Architectural decision
 
-Base image tags like `eclipse-temurin:25-jdk-jammy` and `node:24-alpine` are rolling tags that receive security patches. Check Docker Hub for the current digest and whether a newer point release exists (e.g., `node:24-alpine` vs `node:24.x-alpine`). The Quarkus Mandrel builder image tag `jdk-25` should match the latest Quarkus 3.39.1 compatible image — check quay.io for available tags. The New Relic agent version 9.3.0 should be updated to the latest stable release from the [New Relic Java agent releases](https://github.com/newrelic/newrelic-java-agent/releases). PostgreSQL 18-alpine is already very recent — verify it's the latest 18.x tag.
+Base image tags like `eclipse-temurin:25-jdk-jammy` and `node:24-alpine` are rolling tags that receive security patches. Check Docker Hub for newer tags. The Quarkus Mandrel builder image tag `jdk-25` should match the latest Quarkus 3.39.1 compatible image. The New Relic agent should be updated to the latest stable release.
 
 ### Required changes
 
-1. Check Docker Hub for latest `eclipse-temurin:25` tags — if a newer variant exists (e.g., `25-jdk-jammy` vs `25-jdk-noble`), evaluate whether to switch. Prefer staying on `jammy` unless a newer base offers security improvements.
+1. Check Docker Hub for latest `eclipse-temurin:25` tags — prefer staying on `jammy` unless a newer base offers security improvements.
 2. Check quay.io for latest `ubi9-quarkus-mandrel-builder-image` tags compatible with Quarkus 3.39.1 and Java 25.
-3. Check quay.io for latest `ubi9-quarkus-micro-image` tags — if 2.0 is latest, no change. If a newer tag exists, update.
-4. Check Docker Hub for latest `node:24-alpine` — update to latest 24.x alpine tag if a specific version is available.
-5. Check Docker Hub for latest `postgres:18-alpine` — update if a newer 18.x point release exists.
-6. Check the New Relic Java agent [releases page](https://github.com/newrelic/newrelic-java-agent/releases) for the latest stable version — update `NEW_RELIC_AGENT_VERSION` in `apps/backend/Dockerfile.jvm`.
+3. Check quay.io for latest `ubi9-quarkus-micro-image` tags — update if newer exists.
+4. Check Docker Hub for latest `node:24-alpine` — update to latest 24.x alpine tag.
+5. Check Docker Hub for latest `postgres:18-alpine` — update if newer 18.x exists.
+6. Check the New Relic Java agent releases page for the latest stable version — update `NEW_RELIC_AGENT_VERSION` in `apps/backend/Dockerfile.jvm`.
 7. Run `docker compose config` to validate compose files.
 8. Run `docker compose --profile db up -d --build` to verify the full stack builds and starts.
 9. Verify health checks pass for all services.
@@ -880,11 +926,10 @@ Base image tags like `eclipse-temurin:25-jdk-jammy` and `node:24-alpine` are rol
 
 - Application code changes.
 - Docker Compose network or volume configuration.
-- `.env` or `.env.example` changes (unless new env vars are introduced by updated images — unlikely for base image bumps).
 
 ### Acceptance criteria
 
-- `docker compose config` passes for both `docker-compose.yml` and `docker-compose.native.yml`.
+- `docker compose config` passes for both compose files.
 - `docker compose --profile db up -d --build` succeeds.
 - All service health checks pass within their `start_period`.
 - `docker compose down` cleans up successfully.
@@ -931,19 +976,19 @@ The Telegram Mini App SDK loads without CSP violations. The `TelegramWebApp` typ
 
 ### Architectural decision
 
-The Telegram SDK is served from Telegram's CDN without a version pin — this is the standard integration pattern recommended by Telegram. There is no npm package to update. The `TelegramWebApp` type in `telegram.ts` is a minimal hand-written type that covers only the fields the app uses. If the current SDK adds new methods the app should use (e.g., `hapticFeedback`, `setHeaderColor`, `setBackgroundColor`), those are out of scope for a dependency update — they are feature additions, not dependency updates.
+The Telegram SDK is served from Telegram's CDN without a version pin — this is the standard integration pattern. There is no npm package to update. The `TelegramWebApp` type in `telegram.ts` is a minimal hand-written type. If the current SDK adds new methods the app should use, those are out of scope for a dependency update — they are feature additions.
 
 ### Required changes
 
-1. Open `https://telegram.org/js/telegram-web-app.js` in a browser and verify it serves a valid JavaScript file (HTTP 200, content-type `application/javascript`).
-2. Verify `apps/web/svelte.config.js` CSP `script-src` directive includes `https://telegram.org` — it does (confirmed in inspection).
-3. Review `apps/web/src/lib/services/telegram.ts` — the `TelegramWebApp` type defines `initData`, `initDataUnsafe`, `ready`, `expand`. Verify these fields still exist in the current SDK by checking the [Telegram Mini App docs](https://core.telegram.org/bots/webapps).
-4. If the SDK has renamed or removed any of these fields: update the type and all usages. If they are unchanged: no code change needed.
+1. Verify `https://telegram.org/js/telegram-web-app.js` returns HTTP 200 with valid JavaScript.
+2. Verify `apps/web/svelte.config.js` CSP `script-src` directive includes `https://telegram.org`.
+3. Review `apps/web/src/lib/services/telegram.ts` — verify `TelegramWebApp` type fields still exist in the current SDK by checking the Telegram Mini App docs.
+4. If the SDK has renamed or removed any fields: update the type and all usages. If unchanged: no code change needed.
 5. Run `npm run build` and verify no CSP-related build warnings.
 
 ### Out of scope
 
-- Adding new Telegram SDK features (haptics, theme controls, etc.) — those are product features, not dependency updates.
+- Adding new Telegram SDK features — those are product features, not dependency updates.
 - Self-hosting the Telegram SDK — keep the CDN load pattern.
 - Backend Telegram integration — it uses standard Quarkus REST, no separate dependency.
 
@@ -951,7 +996,7 @@ The Telegram SDK is served from Telegram's CDN without a version pin — this is
 
 - `https://telegram.org/js/telegram-web-app.js` returns HTTP 200 with valid JavaScript.
 - CSP `script-src` includes `https://telegram.org` in `svelte.config.js`.
-- `TelegramWebApp` type fields (`initData`, `initDataUnsafe`, `ready`, `expand`) match the current Telegram SDK API.
+- `TelegramWebApp` type fields match the current Telegram SDK API.
 - `npm run build` passes with no new warnings.
 - No code changes required if the SDK API is unchanged (mark DONE with no commit if verification passes without changes).
 
@@ -970,11 +1015,388 @@ git commit -m "chore(web): verify Telegram Mini App SDK compatibility"
 
 ---
 
-## TASK P1-10: Backend full verification gate
+## TASK P1-11: Migrate Svelte 4 props to `$props()` runes
 
 **Status:** TODO
 **Priority:** P1
-**Depends on:** P0-1, P1-1, P1-2, P1-3, P1-4, P1-5, P1-6, P1-7
+**Depends on:** P1-8
+
+**Exact scope:**
+
+Migrate all 62+ `.svelte` components from Svelte 4 `export let` prop syntax to Svelte 5 `$props()` runes. The project already runs Svelte 5 (`5.56.4`) but every component uses deprecated Svelte 4 syntax in legacy mode. This is the foundational Svelte 5 migration task — all other Svelte 5 migration tasks (P1-12 through P1-15) depend on this one because `$props()` is the entry point for callback props, snippet children, and other runes-based APIs.
+
+**Files:**
+
+- Modify all `.svelte` files in `apps/web/src/lib/components/` and `apps/web/src/routes/` that use `export let`.
+- Search anchor: `export let` across all `apps/web/src/**/*.svelte` files (62 files, 226 occurrences).
+
+**Goal:**
+
+Every `.svelte` component uses `let { prop1, prop2 } = $props();` instead of `export let prop1;` / `export let prop2;`. No `export let` remains in any `.svelte` file.
+
+### Outcome
+
+`grep -r 'export let' apps/web/src/**/*.svelte` returns zero results. All components use `$props()` destructuring. Svelte 5 legacy mode warnings for `export let` are eliminated.
+
+### Architectural decision
+
+`export let` is the Svelte 4 prop declaration syntax. Svelte 5 introduces `$props()` runes as the replacement. Svelte 5 supports `export let` in legacy mode but emits deprecation warnings and will remove it in Svelte 6. The migration is mechanical but pervasive — every component is affected. The `$props()` syntax also enables the migration of `createEventDispatcher` (P1-15) and `<slot>` (P1-14) since callback props and snippet children are passed via `$props()`.
+
+Default values change from `export let foo = 'default'` to `let { foo = 'default' } = $props()`. Type annotations change from `export let foo: string` to `let { foo }: { foo: string } = $props()`.
+
+### Required changes
+
+1. Search all `.svelte` files for `export let` — there are 62 files with 226 occurrences.
+2. For each file, replace `export let propName;` / `export let propName = defaultValue;` / `export let propName: Type;` with `let { propName, propName2 } = $props();` destructuring at the top of the `<script>` block.
+3. Preserve default values: `export let foo = 'bar'` becomes `let { foo = 'bar' } = $props()`.
+4. Preserve type annotations: `export let foo: string` becomes `let { foo }: { foo: string } = $props()`.
+5. For components with a single prop, use `let { prop } = $props()`. For components with multiple props, group them in one destructuring.
+6. Run `npm run lint` after each batch of files — `svelte-check` will flag any type errors from the migration.
+7. Run `npm run build` to verify the build passes.
+8. Run `npm run test` to verify unit tests pass.
+
+### Out of scope
+
+- `$:` reactive statement migration (P1-12).
+- `on:event` directive migration (P1-13).
+- `<slot>` / snippet migration (P1-14).
+- `createEventDispatcher` migration (P1-15).
+- `writable()` store migration to `$state` — stores are not deprecated in Svelte 5, modernize opportunistically.
+
+### Acceptance criteria
+
+- `grep -r 'export let' apps/web/src/` returns zero results.
+- `npm run lint` passes with no new errors.
+- `npm run test` passes with no new failures.
+- `npm run build` passes with no errors.
+- No `@ts-ignore` or `@ts-expect-error` added.
+- No Svelte 5 legacy mode warnings for `export let` in the build output.
+
+### Targeted validation
+
+```bash
+cd apps/web && grep -r 'export let' src/ || echo 'No export let found' && npm run lint && npm run test && npm run build
+```
+
+### Commit
+
+```bash
+git add apps/web/src/
+git commit -m "refactor(web): migrate Svelte 4 export let props to $props() runes"
+```
+
+---
+
+## TASK P1-12: Migrate Svelte 4 `$:` reactives to `$derived`/`$effect`
+
+**Status:** TODO
+**Priority:** P1
+**Depends on:** P1-11
+
+**Exact scope:**
+
+Migrate all 34+ `.svelte` components from Svelte 4 `$:` reactive statements to Svelte 5 `$derived()` and `$effect()` runes. `$:` statements are deprecated in Svelte 5 and will be removed in Svelte 6.
+
+**Files:**
+
+- Modify all `.svelte` files in `apps/web/src/` that use `$:` reactive statements.
+- Search anchor: `$:` across all `apps/web/src/**/*.svelte` files (34 files, 129+ occurrences).
+
+**Goal:**
+
+Every `$:` reactive statement is replaced with `$derived()` (for computed values) or `$effect()` (for side effects). No `$:` syntax remains in any `.svelte` file.
+
+### Outcome
+
+`grep -r '\$:' apps/web/src/**/*.svelte` returns zero results (excluding `$:` in strings/comments). All reactive computations use `$derived()` and side effects use `$effect()`.
+
+### Architectural decision
+
+`$:` is the Svelte 4 reactive statement syntax. Svelte 5 replaces it with two distinct runes:
+- `$derived()` — for computed values that return a result (replaces `$: result = a + b`).
+- `$effect()` — for side effects that run when dependencies change (replaces `$: { ... }` blocks and `$: if (...) { ... }`).
+
+The migration requires classifying each `$:` statement as either a computed value or a side effect. Statements like `$: total = items.length` become `let total = $derived(items.length)`. Statements like `$: { if (x) doSomething(); }` become `$effect(() => { if (x) doSomething(); })`.
+
+### Required changes
+
+1. Search all `.svelte` files for `$:` reactive statements — 34 files, 129+ occurrences.
+2. For each `$:` statement, classify it:
+   - If it assigns a value (`$: result = expr`): replace with `let result = $derived(expr)`.
+   - If it's a block (`$: { ... }`): replace with `$effect(() => { ... })`.
+   - If it's a conditional (`$: if (cond) { ... }`): replace with `$effect(() => { if (cond) { ... } })`.
+3. Ensure `$derived()` expressions are pure (no side effects inside).
+4. Ensure `$effect()` callbacks properly track dependencies (Svelte 5 auto-tracks).
+5. Run `npm run lint` after each batch — `svelte-check` will flag incorrect runes usage.
+6. Run `npm run build` and `npm run test`.
+
+### Out of scope
+
+- `export let` migration (P1-11, must be done first).
+- `on:event` migration (P1-13).
+- `<slot>` migration (P1-14).
+- `createEventDispatcher` migration (P1-15).
+
+### Acceptance criteria
+
+- `grep -rn '^\$:' apps/web/src/` returns zero results (excluding comments and strings).
+- `npm run lint` passes with no new errors.
+- `npm run test` passes with no new failures.
+- `npm run build` passes with no errors.
+- No Svelte 5 legacy mode warnings for `$:` in build output.
+
+### Targeted validation
+
+```bash
+cd apps/web && grep -rn '^\$:' src/ --include='*.svelte' || echo 'No $: found' && npm run lint && npm run test && npm run build
+```
+
+### Commit
+
+```bash
+git add apps/web/src/
+git commit -m "refactor(web): migrate Svelte 4 $: reactives to $derived/$effect runes"
+```
+
+---
+
+## TASK P1-13: Migrate Svelte 4 `on:event` directives to event attributes
+
+**Status:** TODO
+**Priority:** P1
+**Depends on:** P1-11
+
+**Exact scope:**
+
+Migrate all 51+ `.svelte` components from Svelte 4 `on:click`, `on:change`, `on:keydown` (and other `on:*`) event directives to Svelte 5 event attributes (`onclick`, `onchange`, `onkeydown`). Also migrate event modifiers (`on:click|stopPropagation`) to inline `event.stopPropagation()` calls. `on:event` directives are deprecated in Svelte 5 and will be removed in Svelte 6.
+
+**Files:**
+
+- Modify all `.svelte` files in `apps/web/src/` that use `on:` event directives.
+- Search anchor: `on:` across all `apps/web/src/**/*.svelte` template sections (51 files, 300+ occurrences).
+
+**Goal:**
+
+Every `on:click={...}` is replaced with `onclick={...}`. Every `on:click|stopPropagation={...}` is replaced with `onclick={(e) => { e.stopPropagation(); ... }}`. No `on:*` directives remain.
+
+### Outcome
+
+`grep -rn 'on:[a-z]' apps/web/src/ --include='*.svelte'` returns zero results (excluding `on:` in strings). All event handlers use the new attribute syntax.
+
+### Architectural decision
+
+Svelte 4 uses `on:event={handler}` directive syntax. Svelte 5 replaces it with `onevent={handler}` attribute syntax (e.g., `onclick`, `onchange`). Event modifiers like `|stopPropagation`, `|preventDefault` are removed in Svelte 5 — the handler must call `event.stopPropagation()` / `event.preventDefault()` manually.
+
+The migration is mechanical but pervasive (300+ occurrences across 51 files). Each `on:click={handler}` becomes `onclick={handler}`. Each `on:click|stopPropagation={handler}` becomes `onclick={(e) => { e.stopPropagation(); handler(e); }}`.
+
+### Required changes
+
+1. Search all `.svelte` files for `on:` event directives — 51 files, 300+ occurrences.
+2. For each `on:event={handler}`:
+   - Without modifier: replace with `onevent={handler}` (e.g., `on:click={handleClick}` → `onclick={handleClick}`).
+   - With `|stopPropagation`: replace with `onevent={(e) => { e.stopPropagation(); handler(e); }}`.
+   - With `|preventDefault`: replace with `onevent={(e) => { e.preventDefault(); handler(e); }}`.
+   - With `|stopPropagation|preventDefault`: combine both calls.
+3. Files with the most occurrences: `TelegramParentFamily.svelte` (20+), `ParentInvitationFlow.svelte` (20+), `telegram/dashboard/+page.svelte` (20+), `TelegramGroupManager.svelte` (15+).
+4. Run `npm run lint`, `npm run build`, `npm run test`.
+
+### Out of scope
+
+- `export let` migration (P1-11).
+- `$:` migration (P1-12).
+- `<slot>` migration (P1-14).
+- `createEventDispatcher` migration (P1-15).
+
+### Acceptance criteria
+
+- `grep -rn ' on:[a-z]' apps/web/src/ --include='*.svelte'` returns zero results (excluding strings/comments).
+- `grep -rn '|stopPropagation\||preventDefault' apps/web/src/ --include='*.svelte'` returns zero results.
+- `npm run lint` passes with no new errors.
+- `npm run test` passes with no new failures.
+- `npm run build` passes with no errors.
+
+### Targeted validation
+
+```bash
+cd apps/web && grep -rn ' on:[a-z]' src/ --include='*.svelte' || echo 'No on: directives found' && npm run lint && npm run test && npm run build
+```
+
+### Commit
+
+```bash
+git add apps/web/src/
+git commit -m "refactor(web): migrate Svelte 4 on:event directives to event attributes"
+```
+
+---
+
+## TASK P1-14: Migrate Svelte 4 `<slot>` to `{@render}` snippets
+
+**Status:** TODO
+**Priority:** P1
+**Depends on:** P1-11
+
+**Exact scope:**
+
+Migrate all 8 `.svelte` components that use `<slot>` tags and `$$slots` references to Svelte 5 snippet children with `{@render}`. Also migrate `slot="name"` attributes (9 files, 23 occurrences) and `<svelte:fragment slot="...">` (8 occurrences) to named snippet props.
+
+**Files:**
+
+- Modify `apps/web/src/lib/components/telegram/TelegramRequestRow.svelte` — `<slot />`, `$$slots`, `slot="selection"`, `slot="icon"`.
+- Modify `apps/web/src/lib/components/telegram/TelegramBottomSheet.svelte` — `<slot />`.
+- Modify `apps/web/src/lib/components/telegram/TelegramEntityRow.svelte` — `<slot name="selection"/>`, `<slot name="icon"/>`, `$$slots`.
+- Modify `apps/web/src/lib/components/telegram/TelegramListSurface.svelte` — `<slot />`.
+- Modify `apps/web/src/lib/components/workspace/DashboardPeriodControl.svelte` — `<slot name="label">`.
+- Modify `apps/web/src/lib/features/workspace/access/ParentMembershipList.svelte` — `<slot name="admin-note" />`.
+- Modify `apps/web/src/routes/app/+layout.svelte` — `<slot />`.
+- Modify `apps/web/src/routes/app/telegram/+layout.svelte` — `<slot />`.
+- Modify components with `slot="name"` attribute: `TelegramChildRewards.svelte`, `TelegramChildTasks.svelte`, `TelegramHistoryList.svelte`, `TelegramParentRewards.svelte`, `TelegramParentTasks.svelte`, `TelegramReadyCatalog.svelte`, `ParentInvitationFlow.svelte`, `telegram/dashboard/+page.svelte`.
+- Search anchor: `<slot` and `$$slots` and `slot="` across `apps/web/src/**/*.svelte`.
+
+**Goal:**
+
+Every `<slot>` tag is replaced with `{@render children()}`. Every named slot (`<slot name="foo">`) is replaced with a named snippet prop (`{@render foo()}`). Every `slot="name"` attribute on child components is replaced with a snippet prop. No `<slot>` or `slot="` syntax remains.
+
+### Outcome
+
+`grep -r '<slot' apps/web/src/ --include='*.svelte'` returns zero results. `grep -r 'slot="' apps/web/src/ --include='*.svelte'` returns zero results. All content projection uses Svelte 5 snippets.
+
+### Architectural decision
+
+Svelte 4 uses `<slot>` for content projection and `<slot name="foo">` for named slots. Consumers use `slot="foo"` to target named slots. Svelte 5 replaces this with snippet props:
+
+- Default slot: component declares `let { children } = $props();` and renders `{@render children()}`. Consumer passes content as `<Component>{content}</Component>`.
+- Named slot: component declares `let { foo } = $props();` and renders `{@render foo()}`. Consumer passes content as `<Component foo={() => content}>` or `<Component {#snippet foo()}content{/snippet}>`.
+- `$$slots` checks: replace with `typeof children === 'function'` or similar checks.
+
+### Required changes
+
+1. For each component with `<slot />`:
+   - Add `children` to the `$props()` destructuring.
+   - Replace `<slot />` with `{@render children()}`.
+2. For each component with `<slot name="foo">`:
+   - Add `foo` to the `$props()` destructuring.
+   - Replace `<slot name="foo">` with `{@render foo()}`.
+3. For each `$$slots.foo` check: replace with `typeof foo === 'function'`.
+4. For each consumer using `slot="foo"`: replace with either inline snippet `{#snippet foo()}content{/snippet}` or callback prop `foo={() => content}`.
+5. For each `<svelte:fragment slot="foo">`: replace with `{#snippet foo()}content{/snippet}`.
+6. For `let:period` slot prop in `telegram/dashboard/+page.svelte` (line 400): replace with snippet parameter — the parent component passes a snippet that receives `period` as an argument.
+7. Run `npm run lint`, `npm run build`, `npm run test`.
+
+### Out of scope
+
+- `export let` migration (P1-11).
+- `$:` migration (P1-12).
+- `on:event` migration (P1-13).
+- `createEventDispatcher` migration (P1-15).
+
+### Acceptance criteria
+
+- `grep -r '<slot' apps/web/src/ --include='*.svelte'` returns zero results.
+- `grep -r 'slot="' apps/web/src/ --include='*.svelte'` returns zero results.
+- `grep -r '\$\$slots' apps/web/src/ --include='*.svelte'` returns zero results.
+- `npm run lint` passes with no new errors.
+- `npm run test` passes with no new failures.
+- `npm run build` passes with no errors.
+
+### Targeted validation
+
+```bash
+cd apps/web && grep -r '<slot\|slot="\|\$\$slots' src/ --include='*.svelte' || echo 'No slot patterns found' && npm run lint && npm run test && npm run build
+```
+
+### Commit
+
+```bash
+git add apps/web/src/
+git commit -m "refactor(web): migrate Svelte 4 slot to {@render} snippets"
+```
+
+---
+
+## TASK P1-15: Migrate `createEventDispatcher` to callback props
+
+**Status:** TODO
+**Priority:** P1
+**Depends on:** P1-11
+
+**Exact scope:**
+
+Migrate the 4 `.svelte` components that use `createEventDispatcher` to Svelte 5 callback props. `createEventDispatcher` is deprecated in Svelte 5 and will be removed in Svelte 6.
+
+**Files:**
+
+- Modify `apps/web/src/lib/components/telegram/TelegramCoinAdjust.svelte` — `createEventDispatcher<{...}>()` + `dispatch('adjust', ...)`.
+- Modify `apps/web/src/lib/components/telegram/TelegramGroupManager.svelte` — `createEventDispatcher<{...}>()` + `dispatch(...)`.
+- Modify `apps/web/src/lib/components/telegram/TelegramReadyCatalog.svelte` — `createEventDispatcher<{...}>()` + `dispatch(...)`.
+- Modify `apps/web/src/lib/components/telegram/TelegramRequestSheet.svelte` — `createEventDispatcher<{...}>()` + `dispatch(...)`.
+- Modify all parent components that use `on:adjust`, `on:close`, etc. to consume events from these 4 components — replace with callback props.
+
+**Goal:**
+
+No `createEventDispatcher` or `dispatch()` calls remain in any `.svelte` file. All child-to-parent communication uses callback props passed via `$props()`.
+
+### Outcome
+
+`grep -r 'createEventDispatcher' apps/web/src/ --include='*.svelte'` returns zero results. `grep -r 'dispatch(' apps/web/src/ --include='*.svelte'` returns zero results.
+
+### Architectural decision
+
+Svelte 4 uses `createEventDispatcher` to dispatch custom events from child to parent. Parents listen with `on:eventname`. Svelte 5 replaces this with callback props:
+
+- Child declares `let { onAdjust } = $props();` and calls `onAdjust?.(data)` instead of `dispatch('adjust', data)`.
+- Parent passes `<Child onAdjust={(data) => { ... }} />` instead of `<Child on:adjust={(e) => e.detail }>`.
+- The event `detail` becomes the direct callback argument — no `e.detail` wrapping.
+
+### Required changes
+
+1. For each of the 4 components:
+   - Remove `import { createEventDispatcher } from 'svelte'`.
+   - Remove `const dispatch = createEventDispatcher<{...}>()`.
+   - Add event callback names to `$props()` destructuring (e.g., `let { onAdjust, onClose } = $props()`).
+   - Replace `dispatch('adjust', payload)` with `onAdjust?.(payload)`.
+   - Type the callback props: `let { onAdjust }: { onAdjust?: (payload: PayloadType) => void } = $props()`.
+2. For each parent component that consumes events from these 4 components:
+   - Replace `on:adjust={(e) => handler(e.detail)}` with `onAdjust={(payload) => handler(payload)}`.
+   - This depends on P1-13 (event directive migration) being done for the parent components.
+3. Run `npm run lint`, `npm run build`, `npm run test`.
+
+### Out of scope
+
+- `export let` migration (P1-11).
+- `$:` migration (P1-12).
+- `on:event` migration (P1-13 — but parent components need it for consuming the old events).
+- `<slot>` migration (P1-14).
+- `writable()` store migration — not deprecated, modernize opportunistically.
+
+### Acceptance criteria
+
+- `grep -r 'createEventDispatcher' apps/web/src/ --include='*.svelte'` returns zero results.
+- `grep -r 'dispatch(' apps/web/src/ --include='*.svelte'` returns zero results (excluding non-event dispatch like `window.dispatchEvent`).
+- `npm run lint` passes with no new errors.
+- `npm run test` passes with no new failures.
+- `npm run build` passes with no errors.
+
+### Targeted validation
+
+```bash
+cd apps/web && grep -r 'createEventDispatcher\|dispatch(' src/ --include='*.svelte' || echo 'No event dispatcher patterns found' && npm run lint && npm run test && npm run build
+```
+
+### Commit
+
+```bash
+git add apps/web/src/
+git commit -m "refactor(web): migrate createEventDispatcher to callback props"
+```
+
+---
+
+## TASK P1-9: Backend full verification gate
+
+**Status:** TODO
+**Priority:** P1
+**Depends on:** P0-1, P0-2, P1-1, P1-2, P1-3, P1-4, P1-5, P1-6, P1-7
 
 **Exact scope:**
 
@@ -991,7 +1413,7 @@ The backend passes `./mvnw verify` with all dependencies updated and no regressi
 
 ### Outcome
 
-`./mvnw verify` passes cleanly: compilation, unit tests, JaCoCo coverage check, Checkstyle, PMD, and SpotBugs all succeed.
+`./mvnw verify` passes cleanly: compilation, unit tests, JaCoCo coverage check, Checkstyle 14.0.0, PMD 7.26.0, and SpotBugs 4.10.4.0 all succeed.
 
 ### Architectural decision
 
@@ -1011,8 +1433,8 @@ The backend `verify` goal is the single source of truth for backend quality. It 
 
 ### Out of scope
 
-- Web verification (P1-11).
-- Docker verification (P0-2).
+- Web verification (P1-10).
+- Docker verification (P0-3).
 
 ### Acceptance criteria
 
@@ -1038,15 +1460,15 @@ git commit -m "test(backend): verify full build after dependency updates"
 
 ---
 
-## TASK P1-11: Web full verification gate
+## TASK P1-10: Web full verification gate
 
 **Status:** TODO
 **Priority:** P1
-**Depends on:** P1-8, P1-9, P2-1, P2-2, P2-4
+**Depends on:** P1-8, P2-1, P2-2, P2-4, P1-11, P1-12, P1-13, P1-14, P1-15
 
 **Exact scope:**
 
-Run the complete web verification suite after all web dependency updates are applied. This includes lint, unit tests, production build, and E2E tests if UI behaviour could be affected by dependency changes.
+Run the complete web verification suite after all web dependency updates and Svelte 5 legacy code migrations are applied. This includes lint, unit tests, production build, and E2E tests. This gate validates that the Svelte 4→5 syntax migration (P1-11 through P1-15) combined with the dependency updates (P1-8, P2-1, P2-2) produces a working application.
 
 **Files:**
 
@@ -1063,7 +1485,7 @@ All web quality gates pass: ESLint, svelte-check, Vitest unit tests, Vite produc
 
 ### Architectural decision
 
-Per `AGENTS.md`, `npm run lint`, `npm run test`, and `npm run build` are always required. E2E tests are required when UI changes occur — dependency updates (especially Svelte, SvelteKit, Vite patches) can subtly affect rendering, so E2E validation is warranted. The E2E tests run against a preview server with a mock backend (`tests/e2e/e2eBackend.mjs`).
+Per `AGENTS.md`, `npm run lint`, `npm run test`, and `npm run build` are always required. E2E tests are required when UI changes occur — the Svelte 4→5 syntax migration (P1-11 through P1-15) changes every component's prop, event, and slot syntax, so E2E validation is critical to catch behavioural regressions.
 
 ### Required changes
 
@@ -1075,8 +1497,8 @@ Per `AGENTS.md`, `npm run lint`, `npm run test`, and `npm run build` are always 
 
 ### Out of scope
 
-- Backend verification (P1-10).
-- Docker verification (P0-2).
+- Backend verification (P1-9).
+- Docker verification (P0-3).
 
 ### Acceptance criteria
 
@@ -1101,11 +1523,11 @@ git commit -m "test(web): verify full build after dependency updates"
 
 ---
 
-## TASK P0-2: Full-stack Docker Compose verification
+## TASK P0-3: Full-stack Docker Compose verification
 
 **Status:** TODO
 **Priority:** P0
-**Depends on:** P1-10, P1-11, P2-3
+**Depends on:** P1-9, P1-10, P2-3
 
 **Exact scope:**
 
@@ -1125,7 +1547,7 @@ The full stack (web + backend + PostgreSQL) builds and runs in Docker Compose wi
 
 ### Architectural decision
 
-Docker Compose is the final integration environment. It validates that the updated Maven dependencies package correctly into the Quarkus uber-jar, the updated npm dependencies build correctly into the SvelteKit production bundle, and the updated base images are compatible. Per `AGENTS.md`, `docker compose config` must pass when compose changes are made — run it first to catch env drift. Both JVM and native compose files should be validated.
+Docker Compose is the final integration environment. It validates that the updated Maven dependencies package correctly into the Quarkus uber-jar, the updated npm dependencies build correctly into the SvelteKit production bundle, and the updated base images are compatible. Both JVM and native compose files should be validated.
 
 ### Required changes
 
@@ -1133,7 +1555,7 @@ Docker Compose is the final integration environment. It validates that the updat
 2. Run `docker compose -f docker-compose.native.yml config` — fix any env drift.
 3. Run `docker compose --profile db up -d --build` — verify all images build.
 4. Wait for health checks to pass (`docker compose ps` shows all healthy).
-5. Verify the web service can reach the backend: `curl -s http://localhost:${WEB_PORT}/healthz` and `curl -s http://localhost:${WEB_PORT}/api/openapi.yaml` (proxied to backend).
+5. Verify the web service can reach the backend: `curl -s http://localhost:${WEB_PORT}/healthz`.
 6. Run `docker compose down` to clean up.
 7. If the native build is part of the verification scope: run `docker compose -f docker-compose.native.yml --profile db up -d --build` and verify. If native build fails due to a dependency incompatibility with GraalVM/native-image, document the issue and mark the native verification as a separate follow-up.
 

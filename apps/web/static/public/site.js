@@ -57,7 +57,7 @@ export function enhancePublicSite(documentRef, windowRef, fetchImpl) {
   }
   documentRef.querySelectorAll("[data-language]").forEach((link) => {
     const href = publicLanguageHref(windowRef.location.pathname, link.dataset.language, windowRef.location.origin);
-    if (href) link.href = href;
+    if (href) link.href = `${href}?lang=${encodeURIComponent(link.dataset.language)}`;
     link.addEventListener("click", () => {
       document.cookie = `locale=${encodeURIComponent(link.dataset.language)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
     });

@@ -57,7 +57,10 @@ describe('static public-site i18n', () => {
                 expect(html).toMatch(/<link rel="canonical" href="https?:\/\/[^"]+\/(?:ru\/)?[^"]*">/);
                 expect(html.match(/<link rel="alternate"[^>]+href="https?:\/\/[^"]+\/[^"]*">/g)).toHaveLength(3);
                 expect(html).not.toMatch(/<link rel="alternate"[^>]+href="\/public\//);
-                expect(html).not.toContain('?lang=');
+                expect(html).not.toMatch(/<link rel="alternate"[^>]+href="[^"]*\?lang=/);
+                expect(html.match(/<a[^>]*data-language="(?:en|ru)"[^>]*>/g)).toHaveLength(2);
+                expect(html.match(/data-language="en"[^>]*>\s*EN\s*<\//g)).toHaveLength(1);
+                expect(html.match(/data-language="ru"[^>]*>\s*RU\s*<\//g)).toHaveLength(1);
             }
         }
     });

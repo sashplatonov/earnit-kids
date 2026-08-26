@@ -56,6 +56,8 @@ async function generateLocale(locale) {
             CANONICAL: publicLanguageHref(englishPath, locale, publicOrigin),
             EN_URL: publicLanguageHref(englishPath, 'en', publicOrigin),
             RU_URL: publicLanguageHref(englishPath, 'ru', publicOrigin),
+            EN_SWITCH_URL: `${publicLanguageHref(englishPath, 'en', publicOrigin)}?lang=en`,
+            RU_SWITCH_URL: `${publicLanguageHref(englishPath, 'ru', publicOrigin)}?lang=ru`,
             EN_CURRENT: locale === 'en' ? ' aria-current="page"' : '',
             RU_CURRENT: locale === 'ru' ? ' aria-current="page"' : '',
             HOME_URL: locale === 'ru' ? '/ru/' : '/',

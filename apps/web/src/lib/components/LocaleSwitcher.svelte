@@ -1,6 +1,6 @@
 <script lang="ts">
     import { page } from '$app/stores';
-    import { LOCALES, LOCALE_COOKIE_NAME, stripLocaleFromPath, type Locale } from '$lib/i18n';
+    import { LOCALES, DEFAULT_LOCALE, LOCALE_COOKIE_NAME, stripLocaleFromPath, type Locale } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
     import { updateFamilyLocale } from '$lib/services/api';
 
@@ -17,6 +17,22 @@
 
     function labelFor(locale: Locale): string {
         return compact ? locale.toUpperCase() : $i18n.t(`common.locale.${locale}`);
+    }
+
+    // EXPLAIN: In route mode with no custom callback, render real <a> links
+    // with ?lang= so the switcher works without JavaScript (Telegram WebView
+    // CSP can block inline scripts and prevent hydration). The server hook
+    // intercepts ?lang=, sets the locale cookie, and redirects.
+    function routeHref(locale: Locale): string | null {
+        if (mode !== 'route' || onLocaleChange || (familyManaged && !readOnly)) {
+            return null;
+        }
+        const localizedPath = $i18n.swapLocale($page.url.pathname, locale);
+        const nextPath = locale === DEFAULT_LOCALE ? stripLocaleFromPath(localizedPath) : localizedPath;
+        const search = $page.url.search
+            ? `${$page.url.search}&lang=${encodeURIComponent(locale)}`
+            : `?lang=${encodeURIComponent(locale)}`;
+        return `${nextPath}${search}${$page.url.hash}`;
     }
 
     async function handleChange(nextLocale: Locale) {
@@ -53,29 +69,54 @@
     <span class="locale-switcher__label">{$i18n.t(familyManaged ? 'common.locale.familyLabel' : 'common.locale.label')}</span>
     <div class="locale-switcher__options">
         {#each LOCALES as locale (locale)}
-            <button
-                class="locale-switcher__option"
-                class:locale-switcher__option--active={$i18n.locale === locale}
-                type="button"
-                aria-label={$i18n.t(`common.locale.select.${locale}`)}
-                aria-pressed={$i18n.locale === locale}
-                disabled={busy || readOnly || $i18n.locale === locale}
-                on:click={() => handleChange(locale)}
-            >
-                <svg class="locale-switcher__flag" viewBox="0 0 24 16" aria-hidden="true" focusable="false">
-                    {#if locale === 'ru'}
-                        <rect width="24" height="5.34" fill="#fff" />
-                        <rect y="5.33" width="24" height="5.34" fill="#2456a6" />
-                        <rect y="10.66" width="24" height="5.34" fill="#d52b1e" />
-                    {:else}
-                        <rect width="24" height="16" fill="#fff" />
-                        <path d="M0 0h24v2H0zm0 4h24v2H0zm0 4h24v2H0zm0 4h24v2H0z" fill="#b22234" />
-                        <rect width="10.5" height="8.7" fill="#3c3b6e" />
-                        <path d="M1.2 1.5h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zM2.3 3.4h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zM1.2 5.3h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1z" fill="#fff" />
-                    {/if}
-                </svg>
-                <span>{labelFor(locale)}</span>
-            </button>
+            {@const href = routeHref(locale)}
+            {#if href}
+                <a
+                    class="locale-switcher__option"
+                    class:locale-switcher__option--active={$i18n.locale === locale}
+                    href={href}
+                    aria-label={$i18n.t(`common.locale.select.${locale}`)}
+                    aria-current={$i18n.locale === locale ? 'true' : undefined}
+                >
+                    <svg class="locale-switcher__flag" viewBox="0 0 24 16" aria-hidden="true" focusable="false">
+                        {#if locale === 'ru'}
+                            <rect width="24" height="5.34" fill="#fff" />
+                            <rect y="5.33" width="24" height="5.34" fill="#2456a6" />
+                            <rect y="10.66" width="24" height="5.34" fill="#d52b1e" />
+                        {:else}
+                            <rect width="24" height="16" fill="#fff" />
+                            <path d="M0 0h24v2H0zm0 4h24v2H0zm0 4h24v2H0zm0 4h24v2H0z" fill="#b22234" />
+                            <rect width="10.5" height="8.7" fill="#3c3b6e" />
+                            <path d="M1.2 1.5h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zM2.3 3.4h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zM1.2 5.3h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1z" fill="#fff" />
+                        {/if}
+                    </svg>
+                    <span>{labelFor(locale)}</span>
+                </a>
+            {:else}
+                <button
+                    class="locale-switcher__option"
+                    class:locale-switcher__option--active={$i18n.locale === locale}
+                    type="button"
+                    aria-label={$i18n.t(`common.locale.select.${locale}`)}
+                    aria-pressed={$i18n.locale === locale}
+                    disabled={busy || readOnly || $i18n.locale === locale}
+                    on:click={() => handleChange(locale)}
+                >
+                    <svg class="locale-switcher__flag" viewBox="0 0 24 16" aria-hidden="true" focusable="false">
+                        {#if locale === 'ru'}
+                            <rect width="24" height="5.34" fill="#fff" />
+                            <rect y="5.33" width="24" height="5.34" fill="#2456a6" />
+                            <rect y="10.66" width="24" height="5.34" fill="#d52b1e" />
+                        {:else}
+                            <rect width="24" height="16" fill="#fff" />
+                            <path d="M0 0h24v2H0zm0 4h24v2H0zm0 4h24v2H0zm0 4h24v2H0z" fill="#b22234" />
+                            <rect width="10.5" height="8.7" fill="#3c3b6e" />
+                            <path d="M1.2 1.5h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zM2.3 3.4h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zM1.2 5.3h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1z" fill="#fff" />
+                        {/if}
+                    </svg>
+                    <span>{labelFor(locale)}</span>
+                </button>
+            {/if}
         {/each}
     </div>
     {#if failedLocale}
@@ -161,6 +202,7 @@
         justify-content: center;
         gap: 0.35rem;
         cursor: pointer;
+        text-decoration: none;
     }
 
     .locale-switcher__option:disabled {
