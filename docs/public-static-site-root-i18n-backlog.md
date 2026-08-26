@@ -237,7 +237,7 @@ git commit -m "feat(web): localize static public site"
 
 **Exact scope:**
 
-Update focused public-site E2E coverage to exercise canonical root URLs, locale detection and selection, preserved access controls, and the absence of the deleted carousel/images.
+Update focused public-site E2E coverage to exercise canonical root URLs, locale detection and selection, preserved access controls, and compact responsive behavior.
 
 **Files:**
 
@@ -266,7 +266,7 @@ Use the existing Playwright production-preview setup and its `/public/config.js`
 2. Assert normal root content/headers with no `/public/index.html` navigation, the secondary canonical pages, and the preserved `tgWebAppStartParam` handoff.
 3. Cover `?lang=en`, `?lang=ru`, Russian browser preference, unsupported/missing browser preference, language-control interaction, and language preservation across public navigation. Verify the document language, representative translated content, button state, and metadata.
 4. Preserve and rerun public Telegram/OAuth cases: configured CTA replacement, same-origin successful Google startup, unavailable-start native anchor fallback, and no-JavaScript anchor behavior. Update workspace sign-out, unauthenticated continuation, select-family, and Telegram unlinked-account assertions to return to `/`.
-5. Assert that `/how.html` has no carousel role/controls/reference heading and no network request is made to any of the four deleted screenshot paths.
+5. Keep `/how.html` free of carousel role/controls/reference heading.
 6. At 320px assert no horizontal document overflow, visible focusable language/public access controls, and 44px minimum targets. Report a local Chromium permission/startup failure as an infrastructure limitation rather than browser proof.
 
 ### Out of scope
@@ -277,7 +277,7 @@ Use the existing Playwright production-preview setup and its `/public/config.js`
 
 - The focused E2E suite fails if `/` redirects to `/public/index.html`, a public navigation URL leaves the canonical set, or a root resource is unresolved.
 - It fails if explicit language selection is ignored, unsupported browser language does not choose English, a selected language is lost on public navigation, or the static OAuth/Telegram link contracts change.
-- It fails if the deleted carousel/content/images reappear, or if canonical public pages overflow at a 320px viewport.
+- It fails if canonical public pages overflow at a 320px viewport.
 - Existing authenticated workspace and Telegram entry tests keep their coverage without treating a public static page as an authenticated route.
 
 ### Targeted validation

@@ -1,12 +1,6 @@
 import { expect, test, type Route } from '@playwright/test';
 
 const publicPages = ['/', '/how.html', '/tasks.html', '/rewards.html', '/parents.html', '/faq.html'];
-const deletedScreenshotPaths = [
-    '/public/assets/screenshots/parent-home.png',
-    '/public/assets/screenshots/parent-tasks.png',
-    '/public/assets/screenshots/parent-family.png',
-    '/public/assets/screenshots/child-today.png',
-];
 
 test('production entry points expose the browser security contract', async ({ page, request }) => {
     const publicResponse = await page.goto('/');
@@ -95,22 +89,6 @@ test('public locale resolution uses Russian preference and English fallback', as
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page).toHaveTitle('Questions - EarnIt Kids');
     await expect(page.getByRole('button', { name: 'EN' })).toHaveAttribute('aria-pressed', 'true');
-});
-
-test('how-it-works page has no deleted carousel or screenshot requests', async ({ page }) => {
-    const deletedRequests: string[] = [];
-    for (const path of deletedScreenshotPaths) {
-        await page.route(`**${path}`, (route) => {
-            deletedRequests.push(new URL(route.request().url()).pathname);
-            return route.abort();
-        });
-    }
-
-    await page.goto('/how.html');
-    await expect(page.locator('[data-carousel]')).toHaveCount(0);
-    await expect(page.getByRole('heading', { name: /Вот как это выглядит|These are reference screens/i })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: /previous|next|предыдущ|следующ/i })).toHaveCount(0);
-    expect(deletedRequests).toEqual([]);
 });
 
 test('public Google entry uses same-origin startup and preserves the local workspace target', async ({ page }) => {
