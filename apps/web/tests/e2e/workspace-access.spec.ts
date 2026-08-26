@@ -95,7 +95,7 @@ test('an authenticated family admin sees language only inside Family settings', 
     await page.route('**/api/data**', (route) => route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ isAdmin: true, role: 'parent', childId: 10, children: [{ id: 10, nickname: 'Alex', balance: 0 }], tasks: [], shop: [], requests: [] }),
+        body: JSON.stringify({ isAdmin: true, permission: 'family_admin', role: 'parent', childId: 10, children: [{ id: 10, nickname: 'Alex', balance: 0 }], tasks: [], shop: [], requests: [] }),
     }));
     await page.route('**/api/base-data', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ tasks: [], products: [] }) }));
     await page.route('**/api/data/details**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
@@ -104,4 +104,20 @@ test('an authenticated family admin sees language only inside Family settings', 
     await page.getByRole('tab', { name: /Family|Семья/ }).click();
     await expect(page.getByRole('button', { name: /Family language|Язык семьи/ })).toBeVisible();
     await expect(page.locator('.workspace-parent > .family-locale')).toHaveCount(0);
+});
+
+test('editor and viewer do not see family language in Family settings', async ({ page }) => {
+    await authenticate(page, 'parent');
+    for (const permission of ['editor', 'viewer']) {
+        await page.route('**/api/data**', (route) => route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({ isAdmin: true, permission, role: 'parent', childId: 10, children: [{ id: 10, nickname: 'Alex', balance: 0 }], tasks: [], shop: [], requests: [] }),
+        }));
+        await page.route('**/api/base-data', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ tasks: [], products: [] }) }));
+        await page.route('**/api/data/details**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
+        await page.goto('/workspace');
+        await page.getByRole('tab', { name: /Family|Семья/ }).click();
+        await expect(page.getByRole('button', { name: /Family language|Язык семьи/ })).toHaveCount(0);
+    }
 });

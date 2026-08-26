@@ -19,7 +19,7 @@ test('localized coin adjustment keeps the family number format on a narrow viewp
     await page.route('**/api/telegram/auth/exchange', (route) => route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ role: 'parent', familyId: 'family-1', locale: familyLocale }),
+        body: JSON.stringify({ role: 'parent', permission: 'family_admin', familyId: 'family-1', locale: familyLocale }),
     }));
     await page.route('**/api/base-data', (route) => route.fulfill({
         status: 200,
@@ -80,13 +80,13 @@ test('family admins change the family language from Family settings', async ({ p
     await page.route('**/api/telegram/auth/exchange', (route) => route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ role: 'parent', familyId: 'family-1', locale: familyLocale }),
+        body: JSON.stringify({ role: 'parent', permission: 'family_admin', familyId: 'family-1', locale: familyLocale }),
     }));
     await page.route('**/api/base-data', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ tasks: [], products: [] }) }));
     await page.route('**/api/data**', (route) => route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ isAdmin: true, balance: 0, childId: 10, children: [{ id: 10, nickname: 'Alex', balance: 0 }], tasks: [], shop: [], requests: [] }),
+        body: JSON.stringify({ isAdmin: true, permission: 'family_admin', balance: 0, childId: 10, children: [{ id: 10, nickname: 'Alex', balance: 0 }], tasks: [], shop: [], requests: [] }),
     }));
     await page.route('**/api/data/details**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
     let updateCount = 0;

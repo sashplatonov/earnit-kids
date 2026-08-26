@@ -2,6 +2,7 @@ package com.sashplatonov.earnit.kids.telegram.application.bot;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.membership.FamilyParentMembershipRepository;
 import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 import com.sashplatonov.earnit.kids.telegram.api.response.TelegramQuickActionResponse;
 import com.sashplatonov.earnit.kids.telegram.application.connection.TelegramFeatureGate;
@@ -28,6 +29,7 @@ final class TelegramMessageUpdateHandler {
                                  TelegramMenuBuilder menuBuilder,
                                  TelegramFeatureGate featureGate,
                                  FamilyRepository families,
+                                 FamilyParentMembershipRepository memberships,
                                  TelegramReplyKeyboardNavigator replyKeyboardNavigator) {
         this.identities = identities;
         this.apiClient = apiClient;
@@ -67,7 +69,7 @@ final class TelegramMessageUpdateHandler {
                     String homeText = TelegramMenuFlow.startText(loaded);
                     BotKeyboardFactory kb = new BotKeyboardFactory(publicSiteUrl);
                     TelegramReplyKeyboard replyKeyboard = "child".equals(loaded.role())
-                        ? kb.childMain() : kb.parentMain();
+                        ? kb.childMain() : kb.parentMain(replyKeyboardNavigator.canManageLanguage(telegramUserId));
                     int keyboardVersion = config.replyKeyboardVersion();
                     if (identities.needsReplyKeyboardReset(telegramUserId, keyboardVersion)) {
                         apiClient.removeReplyKeyboard(chatId);

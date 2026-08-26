@@ -11,6 +11,8 @@ import com.sashplatonov.earnit.kids.family.api.response.RequestDto;
 import com.sashplatonov.earnit.kids.family.domain.model.request.PurchaseRequestStatus;
 import com.sashplatonov.earnit.kids.family.domain.model.request.PurchaseRequestType;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.membership.FamilyParentMembershipRepository;
+import com.sashplatonov.earnit.kids.family.domain.model.membership.FamilyParentMembershipEntity;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import org.junit.jupiter.api.Test;
 
@@ -268,6 +270,35 @@ class TelegramBotServiceImplTest {
                 && kb.rows().get(2).buttons().get(0).label().equals(TelegramCopy.language(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru))
             )
         );
+    }
+
+    @Test
+    void parentStartOmitsLanguageForEditorMembership() throws Exception {
+        TelegramIdentityService identities = mock(TelegramIdentityService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramCallbackService callbacks = mock(TelegramCallbackService.class);
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramMenuBuilder menuBuilder = mock(TelegramMenuBuilder.class);
+        TelegramConfig config = mock(TelegramConfig.class);
+        FamilyRepository families = mock(FamilyRepository.class);
+        FamilyParentMembershipRepository memberships = mock(FamilyParentMembershipRepository.class);
+        FamilyParentMembershipEntity membership = mock(FamilyParentMembershipEntity.class);
+        when(identities.recordWebhookUpdate(17L, Instant.parse("2026-08-13T12:00:00Z"))).thenReturn(true);
+        when(identities.findActiveByTelegramUserId(77L)).thenReturn(Optional.of(
+            new TelegramIdentityService.TelegramIdentity(1, 2, null, 77L, "parent", 9)));
+        when(memberships.findByParentAndFamily(9, 2)).thenReturn(Optional.of(membership));
+        when(membership.getPermission()).thenReturn(FamilyParentMembershipEntity.Permission.editor);
+        when(quickActions.load(77L, null)).thenReturn(Optional.of(new TelegramQuickActionResponse(
+            "family", "parent", 1, "Alex", 20, List.of(), List.of(), List.of(), List.of(), List.of())));
+        when(config.publicSiteUrl()).thenReturn(Optional.empty());
+        TelegramBotServiceImpl service = new TelegramBotServiceImpl(identities, apiClient, callbacks, config,
+            () -> Instant.parse("2026-08-13T12:00:00Z"), quickActions, menuBuilder, null, families, memberships);
+
+        service.handleUpdate(new ObjectMapper().readTree(
+            "{\"update_id\":17,\"message\":{\"chat\":{\"id\":44},\"from\":{\"id\":77},\"text\":\"/start\"}}"));
+
+        verify(apiClient).sendMessageWithReplyKeyboard(eq(44L), org.mockito.ArgumentMatchers.anyString(),
+            argThat(keyboard -> keyboard.rows().size() == 2));
     }
 
     @Test

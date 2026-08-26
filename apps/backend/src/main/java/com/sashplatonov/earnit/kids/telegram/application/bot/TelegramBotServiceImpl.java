@@ -2,6 +2,7 @@ package com.sashplatonov.earnit.kids.telegram.application.bot;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.membership.FamilyParentMembershipRepository;
 import com.sashplatonov.earnit.kids.telegram.application.callback.TelegramCallbackService;
 import com.sashplatonov.earnit.kids.telegram.application.connection.TelegramFeatureGate;
 import com.sashplatonov.earnit.kids.telegram.application.identity.TelegramIdentityService;
@@ -23,7 +24,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                                   TelegramCallbackService callbacks,
                                   TelegramConfig config,
                                   TimeProvider timeProvider) {
-        this(identities, apiClient, callbacks, config, timeProvider, null, null, null, null);
+        this(identities, apiClient, callbacks, config, timeProvider, null, null, null, null, null);
     }
 
     @Inject
@@ -35,13 +36,15 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                                   TelegramQuickActionService quickActions,
                                   TelegramMenuBuilder menuBuilder,
                                   TelegramFeatureGate featureGate,
-                                  FamilyRepository families) {
+                                  FamilyRepository families,
+                                  FamilyParentMembershipRepository memberships) {
         this.identities = identities;
         this.timeProvider = timeProvider;
         TelegramReplyKeyboardNavigator navigator =
-            new TelegramReplyKeyboardNavigator(quickActions, menuBuilder, config, apiClient, families);
+            new TelegramReplyKeyboardNavigator(quickActions, menuBuilder, config, apiClient, families, memberships,
+                memberships == null ? null : identities);
         this.messageHandler = new TelegramMessageUpdateHandler(identities, apiClient, config,
-            quickActions, menuBuilder, featureGate, families, navigator);
+            quickActions, menuBuilder, featureGate, families, memberships, navigator);
         this.callbackHandler = new TelegramCallbackUpdateHandler(identities, apiClient, callbacks,
             config, quickActions, menuBuilder, featureGate, families);
     }
@@ -53,7 +56,20 @@ public class TelegramBotServiceImpl implements TelegramBotService {
                                   TimeProvider timeProvider,
                                   TelegramQuickActionService quickActions,
                                   TelegramMenuBuilder menuBuilder) {
-        this(identities, apiClient, callbacks, config, timeProvider, quickActions, menuBuilder, null, null);
+        this(identities, apiClient, callbacks, config, timeProvider, quickActions, menuBuilder, null, null, null);
+    }
+
+    public TelegramBotServiceImpl(TelegramIdentityService identities,
+                                  TelegramBotApiClient apiClient,
+                                  TelegramCallbackService callbacks,
+                                  TelegramConfig config,
+                                  TimeProvider timeProvider,
+                                  TelegramQuickActionService quickActions,
+                                  TelegramMenuBuilder menuBuilder,
+                                  TelegramFeatureGate featureGate,
+                                  FamilyRepository families) {
+        this(identities, apiClient, callbacks, config, timeProvider, quickActions, menuBuilder,
+            featureGate, families, null);
     }
 
     @Override

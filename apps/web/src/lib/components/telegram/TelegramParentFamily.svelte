@@ -259,7 +259,7 @@
 
     <h2 class="section-title">{$i18n.t('app.telegram.family.familySettings')}</h2>
     <div class="settings">
-        {#if $appStore.isAdmin}
+        {#if $appStore.permission === 'family_admin'}
             <div class="setting-group">
                 <button class="setting" type="button" aria-expanded={familyLocaleOpen} aria-controls="family-language-panel" on:click={() => familyLocaleOpen = !familyLocaleOpen}>
                     <span class="setting-icon"><TelegramIcon name="languages" size={20} label={$i18n.t('app.telegram.family.familyLanguage')} /></span>

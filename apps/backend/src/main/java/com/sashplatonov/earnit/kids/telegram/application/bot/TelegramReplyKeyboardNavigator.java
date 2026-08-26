@@ -2,6 +2,8 @@ package com.sashplatonov.earnit.kids.telegram.application.bot;
 import com.sashplatonov.earnit.kids.telegram.application.connection.TelegramFeatureSupport;
 import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.membership.FamilyParentMembershipRepository;
+import com.sashplatonov.earnit.kids.telegram.application.identity.TelegramIdentityService;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.sashplatonov.earnit.kids.telegram.config.TelegramConfig;
@@ -16,13 +18,15 @@ public class TelegramReplyKeyboardNavigator {
     private final TelegramMenuBuilder menuBuilder;
     private final TelegramConfig config;
     private final Supplier<FamilyRepository> families;
+    private final Supplier<FamilyParentMembershipRepository> memberships;
+    private final Supplier<TelegramIdentityService> identities;
     private final Supplier<TelegramBotApiClient> apiClient;
 
     public TelegramReplyKeyboardNavigator(TelegramQuickActionService quickActions,
                                           TelegramMenuBuilder menuBuilder,
                                           TelegramConfig config,
                                           TelegramBotApiClient apiClient) {
-        this(quickActions, menuBuilder, config, apiClient, null);
+        this(quickActions, menuBuilder, config, apiClient, null, null, null);
     }
 
     public TelegramReplyKeyboardNavigator(TelegramQuickActionService quickActions,
@@ -30,10 +34,31 @@ public class TelegramReplyKeyboardNavigator {
                                           TelegramConfig config,
                                           TelegramBotApiClient apiClient,
                                           FamilyRepository families) {
+        this(quickActions, menuBuilder, config, apiClient, families, null, null);
+    }
+
+    public TelegramReplyKeyboardNavigator(TelegramQuickActionService quickActions,
+                                          TelegramMenuBuilder menuBuilder,
+                                          TelegramConfig config,
+                                          TelegramBotApiClient apiClient,
+                                          FamilyRepository families,
+                                          FamilyParentMembershipRepository memberships) {
+        this(quickActions, menuBuilder, config, apiClient, families, memberships, null);
+    }
+
+    public TelegramReplyKeyboardNavigator(TelegramQuickActionService quickActions,
+                                          TelegramMenuBuilder menuBuilder,
+                                          TelegramConfig config,
+                                          TelegramBotApiClient apiClient,
+                                          FamilyRepository families,
+                                          FamilyParentMembershipRepository memberships,
+                                          TelegramIdentityService identities) {
         this.quickActions = quickActions;
         this.menuBuilder = menuBuilder;
         this.config = config;
         this.families = () -> families;
+        this.memberships = () -> memberships;
+        this.identities = () -> identities;
         this.apiClient = () -> apiClient;
     }
 
@@ -62,7 +87,7 @@ public class TelegramReplyKeyboardNavigator {
             return;
         }
         var view = quickActions.load(telegramUserId, null);
-        if (view.isEmpty() || !"parent".equals(view.get().role())) {
+        if (view.isEmpty() || !"parent".equals(view.get().role()) || !canManageLanguage(telegramUserId)) {
             sendLanguageError(chatId, FamilyLocale.en);
             return;
         }
@@ -77,8 +102,9 @@ public class TelegramReplyKeyboardNavigator {
             return;
         }
         var view = quickActions.load(telegramUserId, null);
-        if (view.isEmpty() || !"parent".equals(view.get().role())
-            || view.get().familyId() == null || view.get().familyId().isBlank() || families.get() == null) {
+        var identity = languageManager(telegramUserId);
+        if (view.isEmpty() || !"parent".equals(view.get().role()) || identity.isEmpty()
+            || families.get() == null) {
             sendLanguageError(chatId, view.map(value -> value.locale()).orElse(FamilyLocale.en));
             return;
         }
@@ -86,7 +112,10 @@ public class TelegramReplyKeyboardNavigator {
         boolean updateSucceeded = selected == current;
         if (!updateSucceeded) {
             try {
-                updateSucceeded = families.get().updateLocale(view.get().familyId(), selected);
+                String familyId = identity.get().familyId() == null ? view.get().familyId()
+                    : String.valueOf(identity.get().familyId());
+                updateSucceeded = familyId != null && !familyId.isBlank()
+                    && families.get().updateLocale(familyId, selected);
             } catch (RuntimeException exception) {
                 updateSucceeded = false;
             }
@@ -100,11 +129,36 @@ public class TelegramReplyKeyboardNavigator {
             if (updated) {
                 String publicSiteUrl = TelegramFeatureSupport.normalizePublicSiteUrl(config.publicSiteUrl().orElse(""));
                 apiClient.get().sendMessageWithReplyKeyboard(chatId, response,
-                    new BotKeyboardFactory(publicSiteUrl).parentMain());
+                    new BotKeyboardFactory(publicSiteUrl).parentMain(canManageLanguage(telegramUserId)));
             } else {
                 apiClient.get().sendMessage(chatId, response, List.of());
             }
         });
+    }
+
+    boolean canManageLanguage(long telegramUserId) {
+        return languageManager(telegramUserId).isPresent();
+    }
+
+    private java.util.Optional<TelegramIdentityService.TelegramIdentity> languageManager(long telegramUserId) {
+        if (memberships.get() == null) {
+            return identities.get() == null ? (quickActions == null ? java.util.Optional.empty()
+                : quickActions.load(telegramUserId, null)
+                    .filter(view -> "parent".equals(view.role()))
+                    .map(view -> new TelegramIdentityService.TelegramIdentity(null, null, null, telegramUserId,
+                        "parent", null))) : identities.get().findActiveByTelegramUserId(telegramUserId)
+                        .filter(identity -> "parent".equals(identity.role()));
+        }
+        if (identities.get() == null) {
+            return java.util.Optional.empty();
+        }
+        return identities.get().findActiveByTelegramUserId(telegramUserId)
+            .filter(identity -> "parent".equals(identity.role()))
+            .filter(identity -> identity.parentAccountId() != null && identity.familyId() != null)
+            .filter(identity -> memberships.get().findByParentAndFamily(identity.parentAccountId(), identity.familyId())
+                .map(membership -> membership.getPermission()
+                    == com.sashplatonov.earnit.kids.family.domain.model.membership.FamilyParentMembershipEntity.Permission.family_admin)
+                .orElse(false));
     }
 
     private FamilyLocale languageChoice(String label) {
