@@ -15,12 +15,14 @@
     import type { TelegramAsyncState as AsyncState } from './ui/telegramUi';
     import type { TelegramTab } from './ui/telegramTabBar';
     import { parseTelegramWorkspaceContext, type ParentTab } from './telegramWorkspaceContext';
+    import type { MembershipPermission } from '$lib/types/auth';
 
     const i18n = useI18n();
 
     export let publicOrigin = '';
     export let onViewAsChild: () => void = () => {};
     export let showSessionActions = false;
+    export let permission: MembershipPermission | null = null;
 
     // EXPLAIN: Bot deep links pass ?context= so the exact Mini App context opens.
     const context = typeof window === 'undefined'
@@ -68,7 +70,7 @@
         {:else if view === 'rewards'}
             <TelegramParentRewards />
         {:else}
-            <TelegramParentFamily />
+            <TelegramParentFamily {permission} />
         {/if}
     </div>
     <TelegramConfirmModal />

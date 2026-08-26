@@ -9,6 +9,7 @@ export type TelegramBootstrapState = 'ready' | 'retry' | 'unavailable' | 'unlink
 export type TelegramBootstrapResult = {
     state: TelegramBootstrapState;
     role?: string;
+    permission?: 'viewer' | 'editor' | 'family_admin' | null;
     locale?: 'en' | 'ru';
     languageSetupRequired?: boolean;
     message?: string;
@@ -41,10 +42,12 @@ export async function bootstrapTelegramWorkspace(): Promise<TelegramBootstrapRes
     }
 
     try {
-        const payload = await response.clone().json() as { role?: unknown; locale?: unknown; languageSetupRequired?: unknown };
+        const payload = await response.clone().json() as { role?: unknown; permission?: unknown; locale?: unknown; languageSetupRequired?: unknown };
         return {
             state: 'ready',
             role: typeof payload.role === 'string' ? payload.role : '',
+            permission: payload.permission === 'family_admin' || payload.permission === 'editor' || payload.permission === 'viewer'
+                ? payload.permission : null,
             locale: payload.locale === 'ru' ? 'ru' : 'en',
             languageSetupRequired: payload.languageSetupRequired === true,
         };

@@ -17,6 +17,7 @@
     let state: State = 'loading';
     let message = '';
     let verifiedRole = '';
+    let verifiedPermission: 'viewer' | 'editor' | 'family_admin' | null = null;
     let parentInviteToken = '';
     let inviteBusy = false;
 
@@ -50,6 +51,7 @@
             if (result.state === 'ready') {
                 state = 'ready';
                 verifiedRole = result.role ?? '';
+                verifiedPermission = result.permission ?? null;
                 if (result.locale) {
                     updateI18n(i18n, await getI18nPayloadForPath('/telegram', result.locale));
                 }
@@ -97,7 +99,7 @@
 </svelte:head>
 
 {#if state === 'ready' && verifiedRole}
-    <TelegramRoleResolver role={verifiedRole} publicOrigin={data.publicOrigin ?? ''} />
+    <TelegramRoleResolver role={verifiedRole} permission={verifiedPermission} publicOrigin={data.publicOrigin ?? ''} />
 {:else}
     <main class="telegram-page" aria-live="polite">
         <div class="telegram-card">

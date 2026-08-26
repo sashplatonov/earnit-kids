@@ -24,8 +24,11 @@
     import TelegramEmailSettings from './TelegramEmailSettings.svelte';
     import TelegramLimits from './TelegramLimits.svelte';
     import TelegramImport from './TelegramImport.svelte';
+    import type { MembershipPermission } from '$lib/types/auth';
 
     const i18n = useI18n();
+
+    export let permission: MembershipPermission | null = null;
 
     let inviteOpen = false;
     let newChildName = '';
@@ -259,7 +262,7 @@
 
     <h2 class="section-title">{$i18n.t('app.telegram.family.familySettings')}</h2>
     <div class="settings">
-        {#if $appStore.permission === 'family_admin'}
+        {#if permission === 'family_admin' || $appStore.permission === 'family_admin'}
             <div class="setting-group">
                 <button class="setting" type="button" aria-expanded={familyLocaleOpen} aria-controls="family-language-panel" on:click={() => familyLocaleOpen = !familyLocaleOpen}>
                     <span class="setting-icon"><TelegramIcon name="languages" size={20} label={$i18n.t('app.telegram.family.familyLanguage')} /></span>
