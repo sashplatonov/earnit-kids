@@ -1,54 +1,84 @@
-# EarnIt Kids Svelte Web Runtime
+# EarnIt Kids web app
 
-This workspace serves as the primary SvelteKit web edge/runtime for the project.
+<a name="top"></a>
 
-## Local Commands
+`apps/web` is the SvelteKit edge for public pages, the Telegram Mini App, and
+the anonymous live demo. It serves the browser, keeps API calls same-origin,
+and proxies them to the backend.
+
+## Table of contents
+
+- [🚀 Work locally](#-work-locally)
+- [⚙️ Configuration](#️-configuration)
+- [🧪 Tests](#-tests)
+- [🧭 Important routes](#-important-routes)
+
+## 🚀 Work locally
 
 ```bash
 cd apps/web
-npm install
-npm run lint
-npm test
+npm ci
+npm run dev
+```
+
+The dev server listens on `http://localhost:4173`. Build and run the production
+preview on `http://localhost:4174` with:
+
+```bash
 npm run build
-npm run start
+npm run preview
+```
+
+[↑ Back to top](#top)
+
+## ⚙️ Configuration
+
+Use the root `.env.example` as the configuration shape. The web runtime reads:
+
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `BACKEND_ORIGIN` | Quarkus base URL | `http://localhost:8080` |
+| `APP_URL` | Public site origin used in generated links | `http://localhost:4174` |
+| `TELEGRAM_MINI_APP_URL` | Optional public Mini App deep link | unset |
+| `SESSION_PATH` | Backend session snapshot path | `/api/page-data/session` |
+| `WS_PATH` | Backend WebSocket path | `/ws` |
+| `DEV_PORT` | Vite development port | `4173` |
+| `PREVIEW_PORT` | Preview and Playwright port | `4174` |
+
+Docker Compose provides the service-to-service backend URL. Do not put secrets
+in frontend variables or commit local configuration.
+
+[↑ Back to top](#top)
+
+## 🧪 Tests
+
+```bash
+npm run lint
+npm run test
+npm run build
 npm run test:e2e
 ```
 
-## Local Topology
+Use the focused demo check when changing the public demo:
 
-- SvelteKit dev: `http://localhost:4173`
-- SvelteKit preview and Playwright: `http://localhost:4174`
-- Backend: `http://localhost:8080`
+```bash
+npm run test:e2e -- --project=chromium tests/e2e/live-coin-shop-demo.spec.ts
+```
 
-## Environment Variables
+⚠️ Playwright needs a working preview server and its mock backend. A connection
+refusal is an environment problem, not evidence about the UI.
 
-- `BACKEND_ORIGIN`: preferred backend base URL. Default: `http://localhost:8080`
-- `BACKEND_URL`: compatibility alias for the backend base URL, used by existing Compose/runtime wiring.
-- `APP_URL`: preferred public origin for generated links and proxy context. Default: `http://localhost:3000`
-- `FRONTEND_URL` and `PUBLIC_BASE_URL`: compatibility aliases for the public origin.
-- `TELEGRAM_MINI_APP_URL`: optional Telegram deep-link override; `PUBLIC_TELEGRAM_MINI_APP_URL` remains a compatibility alias.
-- `SESSION_PATH`: server-side session snapshot endpoint. Default: `/api/page-data/session`
-- `WS_PATH`: backend websocket path reserved for the migration seam. Default: `/ws`
-- `DEV_PORT`: local dev port for SvelteKit. Default: `4173`
-- `PREVIEW_PORT`: local preview port for SvelteKit and Playwright. Default: `4174`
+[↑ Back to top](#top)
 
-Compose owns the web container's `PORT` and injects the service-DNS backend URL; operators normally only need the variables retained in the root `.env.example`.
+## 🧭 Important routes
 
-## Current Scope
+- `/` and `/ru/`: public site
+- `/demo` and `/ru/demo`: anonymous in-memory workspace demo
+- `/telegram`: Telegram Mini App entrypoint
+- `/api/*`: same-origin backend proxy
+- `/healthz`: container health endpoint
 
-Completed in this pass:
+Read [the web architecture guide](docs/ARCHITECTURE.md) before changing routes,
+stores, or the proxy boundary.
 
-- SvelteKit 2 workspace with TypeScript and `adapter-node`
-- Primary Node edge runtime for `/healthz`, `/api/*`, `/login-child/*`, and `/ws`
-- Docker runtime image for the compose `web` service
-- Server-side session bootstrap helper for the root route
-- Local blog markdown under `data/blog/`
-- Static verification endpoints under `static/` and `static/.well-known/`
-- Legacy-compatible security headers and gzip handling in the edge runtime
-- Service worker registration, install CTA, offline banner, and pull-to-refresh wiring
-- `lint`, `build`, `test`, and `test:e2e` commands
-
-Still pending before parity:
-
-- Wider authenticated E2E coverage against live backend data
-- Wider production-like smoke coverage for mobile deep-link and platform association endpoints
+[↑ Back to top](#top)

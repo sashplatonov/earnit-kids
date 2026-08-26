@@ -1,205 +1,114 @@
-# EarnIt Kids Web Architecture
+# EarnIt Kids web architecture
 
 <a name="top"></a>
 
-## Table of Contents
-- [🧭 Scope](#-scope)
-- [🗺️ Routing Structure](#️-routing-structure)
-- [🧠 State Management](#-state-management)
-- [🔌 API Integration Pattern](#-api-integration-pattern)
+`apps/web` is one SvelteKit application. It serves the public site, opens the
+Telegram workspace, hosts the anonymous demo, and keeps browser API traffic on
+the same origin.
+
+## Table of contents
+
+- [🧭 Routes](#-routes)
+- [🧠 State and actions](#-state-and-actions)
+- [🔌 Backend boundary](#-backend-boundary)
 - [🌍 Localization](#-localization)
-- [🧩 Component Conventions](#-component-conventions)
-- [🎨 Styling Approach](#-styling-approach)
-- [🛡️ Security and Diagnostics](#️-security-and-diagnostics)
-- [🌱 Environment Variables](#-environment-variables)
+- [🎨 UI rules](#-ui-rules)
+- [🛡️ Browser security](#️-browser-security)
 - [🧪 Verification](#-verification)
 
-## 🧭 Scope
+## 🧭 Routes
 
-`apps/web` is the single active web frontend for EarnIt Kids.
+| Route | Purpose |
+| --- | --- |
+| `/` and `/ru/` | Public website |
+| `/demo` and `/ru/demo` | Public in-memory family workspace |
+| `/telegram` | Telegram Mini App entrypoint |
+| `/api/*` | Same-origin proxy to Quarkus |
+| `/healthz` | Container health response |
 
-- Public marketing and content pages live in SvelteKit routes.
-- Authenticated parent and child experiences render in the Telegram Mini App.
-- Same-origin proxy endpoints keep browser traffic pointed at the web edge rather than directly at Quarkus.
+Keep page composition in `src/routes`. Shared public components belong in
+`src/lib/components`; Mini App components belong in
+`src/lib/components/telegram`. Route-specific loading, redirects, and headers
+belong in the route’s server files.
 
-[↩ Back to toc](#table-of-contents)
+[↑ Back to top](#top)
 
-## 🗺️ Routing Structure
+## 🧠 State and actions
 
-The routing model is split between public pages, authentication, the Telegram Mini App, and edge endpoints.
+`src/lib/stores/app.ts` holds the current family, selected child, and loaded
+catalog data. `modal.ts` and `toasts.ts` hold shared transient UI state.
 
-- `src/routes/+page.*`: root page and session bootstrap entrypoint
-- `src/routes/blog/**`: blog list and article pages sourced from `data/blog/`
-- `src/routes/login/**`: email and child authentication entrypoints
-- `src/routes/telegram/**`: authenticated Telegram Mini App entrypoint and parent/child workspace
-- `src/routes/telegram/dashboard/**`: Telegram admin dashboard
-- `src/routes/api/**`: same-origin proxy endpoints to the backend
-- `src/routes/healthz/+server.ts`: lightweight container health endpoint
-- `src/routes/[...path]/+page.server.ts`: legacy-compatible route fallback handling
+Interactive family actions go through the focused services in
+`src/lib/telegram/services`. They choose a production API action or the
+in-memory demo action and return the same visible result. Components show busy,
+error, confirmation, and focus-restoration states; they do not carry their own
+copy of family business rules.
 
-Rule of thumb:
+The demo owns its fixture for the current browser tab. It never sends `/api/`
+requests, writes browser storage, or changes production data. Reload or Reset
+starts it from a fresh fixture.
 
-- Page composition belongs in `src/routes/`.
-- Reusable public UI belongs in `src/lib/components/`; Telegram Mini App UI belongs in `src/lib/components/telegram/`.
-- Route-local fetch/redirect logic belongs in `+page.server.ts` or `+layout.server.ts`.
+[↑ Back to top](#top)
 
-[↩ Back to toc](#table-of-contents)
+## 🔌 Backend boundary
 
-## 🧠 State Management
+`src/lib/services/api.ts` is the shared browser fetch layer. It includes
+credentials and CSRF handling. `serverContract.ts` normalizes backend payloads
+once before they reach components or stores.
 
-Shared stores provide session, catalog, and transient UI state to the Telegram surface.
+Keep new browser calls behind this boundary. A response change must update the
+backend DTO, normalizer, and the test that proves the visible result. Do not
+work around a contract mismatch with field aliases scattered across components.
 
-- `src/lib/stores/app.ts`: canonical family/child runtime and catalog state
-- `src/lib/stores/modal.ts`: shared modal host state
-- `src/lib/stores/toasts.ts`: transient UI notifications
-
-### Parent Access State
-
-Session state includes membership permission for UI gating:
-
-- `permission`: `viewer`, `editor`, or `family_admin` from active family membership
-- `familyChoices`: available families when login returns multiple memberships
-- `selectionRequired`: boolean flag when family chooser is needed before app entry
-
-State lifecycle:
-
-1. `initializeFromServer()` loads the backend snapshot.
-2. `buildInitialState()` normalizes server payloads into UI-friendly shape.
-3. User actions update the store and call the centralized service layer.
-4. Server responses are normalized back into the store to keep identifiers and derived state aligned.
-
-[↩ Back to toc](#table-of-contents)
-
-## 🔌 API Integration Pattern
-
-The frontend intentionally uses one fetch wrapper and one normalization seam.
-
-- `src/lib/services/api.ts`: shared fetch wrapper with CSRF handling and same-origin credentials
-- `src/lib/services/save.ts`: generic save payload builder and flush path for `/api/data`
-- `src/lib/services/bootstrap.ts`: initial load, refresh, and child switch handling
-- `src/lib/services/serverContract.ts`: normalization layer between backend DTO names and UI expectations
-
-Current convention:
-
-- Keep browser calls behind the shared service layer.
-- Normalize backend DTO shape once instead of spreading field aliases across components.
-- Preserve the existing `src/lib/services/` layout unless a repo-wide rename to `src/lib/api/` is done in one pass.
-- Keep normal catalog edits on the existing snapshot save path, but model bulk actions and CSV import as explicit command endpoints with server-returned snapshots.
-- Use a shared confirm modal for destructive actions instead of the native `confirm(...)` API.
-
-[↩ Back to toc](#table-of-contents)
+[↑ Back to top](#top)
 
 ## 🌍 Localization
 
-The web catalog is typed, SSR-safe, and owned by the web application; keep it
-instead of adding another i18n runtime. Public pages use `/{locale}/...` and
-resolve locale as URL, cookie, `Accept-Language`, then `en`. Authenticated
-workspace and Telegram Mini App pages use the saved family locale, which wins
-over every client hint; an unconfigured family uses `en` for non-admin access
-until its administrator completes setup. Normalize `en-US`/`ru-RU` to `en`/`ru`
-and map unsupported values to `en`.
+Public pages use the URL locale. The family locale controls authenticated
+workspace and Telegram presentation. The typed catalogs under
+`src/lib/i18n/messages/` own web copy; backend resource bundles own server and
+bot copy.
 
-Future locale work must add lazy catalog-domain loading, locale-parity
-validation, typed interpolation contracts, and `Intl.PluralRules`/
-`Intl.DateTimeFormat` coverage. Keep user-created task, reward, and catalog
-values as text data, never translation keys. Public URL and API error details
-are defined in [ADR 0001](../../../docs/adr/0001-internationalization-strategy.md).
+When adding copy, update English and Russian together, retain every named
+placeholder, and use `Intl` for dates and plural forms. User-created task and
+reward text is data, never a translation key.
 
-When changing copy, update the typed web catalog or the owning backend
-resource bundle, keep named placeholders identical across locales, and run
-the focused catalog/unit checks plus the public and Mini App E2E checks. Add a
-new locale by copying the complete key and placeholder contract, registering
-normalization and controlled fallback, then adding parity coverage. Local
-checks do not cover deployment cache invalidation or real Telegram/device
-rendering; those remain release checks.
+[↑ Back to top](#top)
 
-## 🧩 Component Conventions
+## 🎨 UI rules
 
-The component tree is role-aware and intentionally organized around the active public and Telegram surfaces.
+Use the existing compact Telegram-style shells and semantic controls. Icon-only
+controls need a text label and a 44px touch target. Prefer component-scoped
+styles for a local layout and `src/app.css` for shared tokens and layout rules.
+Keep keyboard focus visible, use native buttons and labels where possible, and
+announce asynchronous results with the existing status patterns.
 
-- `src/lib/components/PublicTopNav.svelte`: public navigation
-- `src/lib/components/telegram/TelegramParentShell.svelte`: parent Mini App frame
-- `src/lib/components/telegram/TelegramChildShell.svelte`: child Mini App frame
-- `src/lib/components/telegram/TelegramParentHome.svelte` and `TelegramParentTasks.svelte`: parent workspace surfaces
-- `src/lib/components/telegram/TelegramChildTasks.svelte`: child task surface
-- `src/lib/components/telegram/ui/TelegramBottomSheet.svelte`: shared Telegram modal surface
+[↑ Back to top](#top)
 
-Naming rules:
+## 🛡️ Browser security
 
-- Use `PascalCase.svelte` for components.
-- Keep Telegram Mini App components under `components/telegram/` and shared Telegram primitives under `components/telegram/ui/`.
-- Avoid putting long-lived business logic inside page components when it can live in a service or store.
+The edge sets the browser security-header contract and forwards trace IDs to
+the backend. Diagnostics contain bounded event codes and safe metadata; never
+log cookies, request bodies, raw query strings, or unfiltered error objects.
 
-[↩ Back to toc](#table-of-contents)
+⚠️ HSTS belongs only on HTTPS deployments. A local browser check cannot prove
+deployment headers, provider configuration, or Telegram-client behavior.
 
-## 🎨 Styling Approach
-
-Styling is a mix of app-wide CSS tokens and local component styles.
-
-- `src/app.css` owns global tokens, layout primitives, and shared visual rules.
-- Component-scoped `<style>` blocks are preferred for one-off layout rules.
-- Inline styles should be avoided for persistent UI; promote them into scoped CSS or shared tokens.
-
-Practical guidance:
-
-- Keep touch targets large for child-facing actions.
-- Preserve semantic structure and labels for accessibility.
-- Let the relevant Telegram shell own layout rhythm; keep workspace components focused on content.
-
-[↩ Back to toc](#table-of-contents)
-
-## 🛡️ Security and Diagnostics
-
-The SvelteKit edge applies the browser security-header contract to rendered
-responses and the custom preview server applies the same contract to proxied
-responses. Content Security Policy and Permissions Policy are explicit; HSTS
-is emitted only for HTTPS or the production deployment environment.
-
-Server-side failures use bounded diagnostic events with a stable event code,
-route template, status/category, trace ID, and safe timing/error fields. The
-edge forwards the trace ID across the backend boundary and never treats raw
-console arguments, request bodies, cookies, or query strings as operational
-log data. Structured backend stdout and deployment logging are documented in
-the [monitoring runbook](../../../docs/monitoring/newrelic.md).
-
-[↩ Back to toc](#table-of-contents)
-
-## 🌱 Environment Variables
-
-Server-side config is resolved through `src/lib/server/config.ts`.
-
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `BACKEND_ORIGIN` | `http://localhost:8080` | Preferred backend origin for the edge proxy |
-| `BACKEND_URL` | `http://localhost:8080` | Compatibility alias used by existing Compose/runtime wiring |
-| `APP_URL` | `http://localhost:3000` | Preferred public origin for the web runtime and generated links |
-| `FRONTEND_URL` | `http://localhost:3000` | Compatibility alias for the public origin |
-| `PUBLIC_BASE_URL` | `http://localhost:3000` | Compatibility alias for the public origin |
-| `TELEGRAM_MINI_APP_URL` | — | Optional Telegram deep-link override |
-| `PUBLIC_TELEGRAM_MINI_APP_URL` | — | Compatibility alias for the Telegram deep-link override |
-| `SESSION_PATH` | `/api/page-data/session` | Session snapshot route |
-| `WS_PATH` | `/ws` | WebSocket path forwarded by the edge |
-| `DEV_PORT` | `4173` | Local SvelteKit dev port |
-| `PREVIEW_PORT` | `4174` | Local preview and Playwright port |
-
-[↩ Back to toc](#table-of-contents)
+[↑ Back to top](#top)
 
 ## 🧪 Verification
 
-Use these commands from `apps/web/`:
-
 ```bash
+cd apps/web
 npm run lint
 npm run test
-npm run test:coverage
 npm run build
-npm run test:e2e
 ```
 
-Failure modes to watch:
+For UI changes, run the relevant Playwright spec. For the public demo:
 
-- Browser-visible API drift usually means the normalization layer was skipped.
-- Child switching bugs usually mean scoped data was not reloaded from the backend.
-- Preview-only failures often come from stale build assets or an already-running local preview process.
+```bash
+npm run test:e2e -- --project=chromium tests/e2e/live-coin-shop-demo.spec.ts
+```
 
 [↑ Back to top](#top)

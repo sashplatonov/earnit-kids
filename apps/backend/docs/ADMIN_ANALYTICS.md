@@ -1,194 +1,88 @@
-# Admin Analytics — Metric Definitions
+# Admin analytics
 
-This document is the single source of truth for how each admin dashboard metric is defined and computed. Every metric must be defined here exactly once. If a metric appears in multiple queries, those queries must use the same definition.
+<a name="top"></a>
 
-## Architecture
+This guide defines what the super-admin dashboard measures. The API is under
+`/api/admin/dashboard` and `/api/admin/analytics/*`; only a super-admin session
+may read it.
 
-The admin analytics layer follows the project's standard layering. Because the
-dashboard is an administrative tool inside the Telegram Mini App, the admin
-analytics code lives in the Telegram-scoped packages:
+## Table of contents
 
-```text
-resource/telegram/admin/  →  service/telegram/admin/  →  repository/
+- [🧭 Time periods](#-time-periods)
+- [📊 Core measures](#-core-measures)
+- [👨‍👩‍👧 Activity and behaviour](#-activity-and-behaviour)
+- [⚠️ Reading the data](#️-reading-the-data)
+- [🧪 Change a metric safely](#-change-a-metric-safely)
+
+## 🧭 Time periods
+
+Analytics endpoints accept `period`:
+
+| Value | Window |
+| --- | --- |
+| `7d` | last seven days |
+| `30d` | last thirty days; default |
+| `90d` | last ninety days |
+| `all` | all recorded time |
+
+The window starts at the server’s current time minus the selected number of
+days. Measures described as current state are not period-filtered.
+
+[↑ Back to top](#top)
+
+## 📊 Core measures
+
+| Measure | Meaning |
+| --- | --- |
+| Families | Non-deleted family count |
+| Children | Child count |
+| Coins earned | Positive task or balance-history amounts in the window |
+| Coins spent | Absolute reward-spend amounts in the window |
+| Spend rate | Coins spent divided by coins earned; zero when nothing was earned |
+| Rewards completed | Approved reward requests in the window |
+| Tasks completed | Completed-task history records in the window |
+| Pending requests | Requests currently awaiting a decision |
+| Median balance | Median current child balance |
+
+The dashboard is for product operations, not accounting. It reports the state
+stored by the application and should not be used as a payment ledger.
+
+[↑ Back to top](#top)
+
+## 👨‍👩‍👧 Activity and behaviour
+
+An active family or child has at least one history record in the selected
+window. Opening the app alone is not activity. The remaining analytics views
+describe trends, task and coin economy, reward use, parent behaviour, child
+behaviour, retention, and the activation funnel.
+
+The activation funnel is cumulative: registered family, added child, created a
+task, completed a task, earned coins, created a reward, then received a reward.
+It is a current-state funnel, not a cohort report.
+
+[↑ Back to top](#top)
+
+## ⚠️ Reading the data
+
+- Current-state counts can change after cleanup or correction of stored data.
+- A short period can show zero without meaning a feature is broken.
+- Dashboard values are cached for short periods. A mutation is not guaranteed
+  to appear in every card immediately.
+- Never expose dashboard data to family users or put personal data in a metric
+  label, URL, or client-side log.
+
+[↑ Back to top](#top)
+
+## 🧪 Change a metric safely
+
+Keep the definition, query, response field, dashboard label, and focused test
+in sync. Use one repository query per metric group; do not introduce a query
+per visible card. Test period boundaries, empty data, authorization, and any
+new current-state versus period distinction.
+
+```bash
+cd apps/backend
+JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw verify
 ```
 
-- `resource/telegram/admin/Admin*Resource.java` — HTTP endpoints, admin role enforcement, period parsing.
-- `service/telegram/admin/Admin*Service.java` — orchestration, period calculation, response assembly.
-- `repository/AdminAnalyticsRepository.java` — all aggregation queries live here. No per-card queries are executed from the UI or controller.
-
-## Period semantics
-
-All period-dependent metrics accept a `period` query parameter:
-
-| Value | Meaning |
-| --- | --- |
-| `7d` | last 7 days |
-| `30d` | last 30 days (default) |
-| `90d` | last 90 days |
-| `all` | lifetime (from epoch) |
-
-Period start is computed as `now - N days`. Lifetime totals (e.g. total registered families) are always lifetime and are clearly labeled in the UI.
-
-## Metric definitions
-
-### `total_families`
-
-- **Definition:** Count of non-deleted `FamilyEntity` rows.
-- **Query:** `SELECT COUNT(f) FROM FamilyEntity f`.
-- **Lifetime:** yes.
-
-### `total_children`
-
-- **Definition:** Count of `ChildEntity` rows.
-- **Query:** `SELECT COUNT(c) FROM ChildEntity c`.
-- **Lifetime:** yes.
-
-### `active_family`
-
-- **Definition:** A family with at least one meaningful product action during the period. Meaningful actions are any `HistoryEntryEntity` row created in the period (task completion, approval/rejection, reward, balance change). Merely opening the app is not counted.
-- **Query:** `SELECT COUNT(DISTINCT h.familyDbId) FROM HistoryEntryEntity h WHERE h.createdAt >= :periodStart`.
-- **Period:** yes.
-
-### `active_child`
-
-- **Definition:** A child with at least one `HistoryEntryEntity` row in the period.
-- **Query:** `SELECT COUNT(DISTINCT h.childId) FROM HistoryEntryEntity h WHERE h.createdAt >= :periodStart`.
-- **Period:** yes.
-
-### `coins_earned`
-
-- **Definition:** Sum of positive `HistoryEntryEntity.amount` where `type = earn` in the period.
-- **Query:** `SELECT COALESCE(SUM(h.amount),0) FROM HistoryEntryEntity h WHERE h.type = earn AND h.amount > 0 AND h.createdAt >= :periodStart`.
-- **Period:** yes.
-
-### `coins_spent`
-
-- **Definition:** Sum of absolute `HistoryEntryEntity.amount` where `type = spend` in the period.
-- **Query:** `SELECT COALESCE(SUM(ABS(h.amount)),0) FROM HistoryEntryEntity h WHERE h.type = spend AND h.createdAt >= :periodStart`.
-- **Period:** yes.
-
-### `spend_rate`
-
-- **Definition:** `coins_spent / coins_earned`, expressed as a percentage. Zero denominator yields `0`.
-- **Period:** yes.
-
-### `reward_completed`
-
-- **Definition:** A `PurchaseRequestEntity` with `request_type IN (shop, shop_purchase)` and `status = approved` created in the period. Task approvals (`request_type = earn`) are not counted as rewards.
-- **Query:** `SELECT COUNT(p) FROM PurchaseRequestEntity p WHERE p.requestType IN (shop, shop_purchase) AND p.status = approved AND p.createdAt >= :periodStart`.
-- **Period:** yes.
-
-### `task_completed`
-
-- **Definition:** A `HistoryEntryEntity` with `type = TASK_COMPLETED` created in the period.
-- **Query:** `SELECT COUNT(h) FROM HistoryEntryEntity h WHERE h.type = TASK_COMPLETED AND h.createdAt >= :periodStart`.
-- **Period:** yes.
-
-### `first_reward_at`
-
-- **Definition:** Time from family/child activation to first successful reward redemption. Computed as median across families.
-- **Period:** lifetime.
-
-### `median_balance`
-
-- **Definition:** Median of current `ChildEntity.balance` across non-test children. Median is preferred over mean because a few large balances distort the mean.
-- **Period:** current state (lifetime).
-
-### `zero_balance_child`
-
-- **Definition:** Child with current `balance = 0`.
-- **Period:** current state.
-
-### `high_balance_child`
-
-- **Definition:** Child with current `balance >= 20` (v1 explicit threshold).
-- **Period:** current state.
-
-### `families_with_reward`
-
-- **Definition:** Families with at least one `PurchaseRequestEntity` with `request_type IN (shop, shop_purchase)` and `status = approved` in the period.
-- **Period:** yes.
-
-### `families_using_catalog`
-
-- **Definition:** Active families with at least one history entry whose `groupName` is non-empty and not `custom`.
-- **Period:** yes.
-
-### `families_using_custom_content`
-
-- **Definition:** Active families with at least one history entry whose `groupName` is empty or `custom`.
-- **Period:** yes.
-
-### `approval_delay`
-
-- **Definition:** Median duration between `PurchaseRequestEntity.createdAt` and `updatedAt` for requests with `status = approved` or `rejected` in the period.
-- **Period:** yes.
-
-### `pending_request`
-
-- **Definition:** A `PurchaseRequestEntity` with `status = pending` (current state).
-- **Period:** current state.
-
-### `active_days_per_child`
-
-- **Definition:** Median number of distinct calendar days with activity per active child in the period.
-- **Period:** yes.
-
-### `tasks_before_reward`
-
-- **Definition:** Median number of approved task completions before each successful reward redemption in the period.
-- **Period:** yes.
-
-### `children_earning_not_spending`
-
-- **Definition:** Active children who earned coins in the period but had no approved reward redemption.
-- **Period:** yes.
-
-### `children_requested_not_received`
-
-- **Definition:** Children with a reward request in the period but no approved reward completion.
-- **Period:** yes.
-
-### `activation_funnel`
-
-- **Definition:** Current-state (ever-completed) funnel, not cohort-based. Stages:
-  1. Registered families
-  2. Added a child
-  3. Has ≥1 task
-  4. Child completed a task
-  5. Earned coins
-  6. Has ≥1 reward
-  7. Received first reward
-- **Period:** lifetime (current state).
-
-### `new_family`
-
-- **Definition:** A `FamilyEntity` with `createdAt >= :periodStart`.
-- **Period:** yes.
-
-### `returning_family`
-
-- **Definition:** A family active in the period that registered before it (`createdAt < :periodStart`).
-- **Period:** yes.
-
-### `active_7d` / `active_30d`
-
-- **Definition:** Families with activity in the last 7 / 30 days (rolling activity, distinct from cohort retention).
-- **Period:** rolling window.
-
-## Trend points
-
-`getTrendPoints` aggregates the following per calendar day:
-
-- `active_families` — distinct families with history in that day.
-- `coins_earned` / `coins_spent` — sum of earn/spend amounts that day.
-- `reward_redemptions` — approved requests that day.
-- `task_completions` — `TASK_COMPLETED` history entries that day.
-
-## Rules
-
-- Do not define the same metric differently in multiple queries.
-- Do not execute per-card queries directly from the UI/controller; route through `AdminAnalyticsRepository`.
-- Aggregate in the database; never load all families/tasks/rewards into application memory.
-- Handle zero denominators safely (return `0` or `—`).
-- Lifetime metrics must be clearly labeled in the UI.
+[↑ Back to top](#top)

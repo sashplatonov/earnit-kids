@@ -1,10 +1,45 @@
-# Public site generator
+# Public-site generator
 
-The public marketing pages are static HTML artifacts generated from one shared template.
+<a name="top"></a>
 
-- Edit shared head, header, CTA, footer, or navigation markup in `template.html`.
-- Edit page-specific content in `pages/*.html`.
-- Run `npm run generate:public` to update `static/public/*.html`.
-- `npm run build` runs the generator before building the web app.
+The generator builds static public pages from the SvelteKit public-site source.
+It does not build the Telegram workspace or the live demo; those remain normal
+SvelteKit routes.
 
-Do not edit generated files in `static/public/*.html` directly; they are kept in the repository as the deployable static entry points.
+## Table of contents
+
+- [🚀 Generate pages](#-generate-pages)
+- [🧭 Inputs and output](#-inputs-and-output)
+- [🧪 Verify a change](#-verify-a-change)
+
+## 🚀 Generate pages
+
+```bash
+cd apps/web
+npm run generate:public
+```
+
+Run `npm run build:static` when you need the complete static build.
+
+[↑ Back to top](#top)
+
+## 🧭 Inputs and output
+
+The generator reads its templates and data from this directory and writes the
+public build output used by the static adapter. Keep public URLs, titles, and
+locale links in the generator data so the sitemap and pages agree.
+
+✅ Treat generated output as build output. Change the source files, then run
+the generator; do not hand-edit generated pages.
+
+[↑ Back to top](#top)
+
+## 🧪 Verify a change
+
+```bash
+cd apps/web
+npm run test
+npm run build:static
+```
+
+[↑ Back to top](#top)

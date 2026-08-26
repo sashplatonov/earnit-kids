@@ -1,266 +1,117 @@
-# EarnIt Kids Backend Architecture
+# EarnIt Kids backend architecture
 
 <a name="top"></a>
 
-## Table of Contents
-- [🧭 Scope](#-scope)
-- [📦 Package Structure](#-package-structure)
-- [🧩 Layer Responsibilities](#-layer-responsibilities)
-- [🗄️ Database Overview](#️-database-overview)
-- [🔐 Authentication and Authorization](#-authentication-and-authorization)
-- [🧾 API Versioning Strategy](#-api-versioning-strategy)
-- [🌍 Localization and API boundary](#-localization-and-api-boundary)
-- [📘 Runtime API Docs](#-runtime-api-docs)
-- [🧪 Verification](#-verification)
+The backend is a Quarkus service and the source of truth for every family. It
+owns access decisions, family state, migrations, Telegram verification, and
+outgoing delivery records.
 
-## 🧭 Scope
+## Table of contents
 
-`apps/backend` is a Quarkus service that owns the authoritative business state for EarnIt Kids.
+- [🧭 Module map](#-module-map)
+- [🔐 Access rules](#-access-rules)
+- [🗄️ Data and transactions](#️-data-and-transactions)
+- [🌍 Language boundary](#-language-boundary)
+- [📘 API and health](#-api-and-health)
+- [🧪 Verify backend work](#-verify-backend-work)
 
-- Authentication, cookies, CSRF, and role scope
-- Parent, child, and super-admin API flows
-- Catalog, history, requests, analytics, and super-admin operations
-- Flyway migrations and database integration
-
-[↩ Back to toc](#table-of-contents)
-
-## 📦 Package Structure
-
-The production source uses semantic modules for feature ownership and keeps
-only genuinely cross-cutting packages at the service root:
+## 🧭 Module map
 
 ```text
-com.sashplatonov.earnit.kids/
-  identity/{api,application,domain,infrastructure}
-  family/{api,application,domain,infrastructure}
-  admin/{api,application,infrastructure}
-  telegram/
-    api/{resource,request,response}
-    application/{auth,bot,callback,connection,identity,invitation,notification}
-    config/
-    domain/model/
-    infrastructure/persistence/
-  platform/{api,application,domain,infrastructure,realtime}
-  shared/api/response/
-  config/ exception/ i18n/ util/
-  dto/response/ resource/common/ service/event/
+identity/   account login, cookies, sessions, Google sign-in
+family/     families, children, tasks, rewards, requests, history, access
+admin/      super-admin analytics
+telegram/   Mini App authentication, bot, webhooks, invitations, delivery
+platform/   outbox, push, WebSocket delivery, health, metrics, diagnostics
+config/     filters and application configuration
+shared/     HTTP response contracts
 ```
 
-`identity`, `family`, `admin`, `telegram`, and `platform` own their API,
-application, domain, and infrastructure code as shown above. The final root
-packages are limited to security/configuration, exception and locale support,
-dependency-free utilities, shared response contracts, and a small set of
-cross-feature compatibility types. No Telegram or admin production class is
-owned by the obsolete global feature packages.
+Each feature follows the same direction:
 
-The package map changes Java ownership and imports only. REST routes, JSON,
-CDI, persistence, migrations, callback encoding, signed init-data, cookies,
-and CSRF contracts remain unchanged.
+```text
+resource -> application service -> repository -> database
+```
 
-Boundary ownership decisions:
+Resources handle HTTP and role checks. Services own transactions and business
+rules. Repositories query and persist data. Do not add family business rules to
+a resource or make Telegram mutate entities directly.
 
-- `identity` owns authentication/session lifecycle, parent accounts, Google
-  sign-in, and identity-only token utilities. Cookie/JWT filters remain in
-  root `config` as transport/security infrastructure.
-- `family` owns family, child, membership, notification preference, friend,
-  task, shop, request, and history state and their APIs. Telegram calls these
-  established business services rather than duplicating ownership or balance
-  rules.
-- `telegram` owns Telegram identity, invitations, callbacks, delivery, audit,
-  and webhook-update state; its resources, orchestration, entities, and
-  repositories stay separated by API, application, domain, and infrastructure
-  layers.
-- `admin` owns super-admin HTTP, application, and analytics query
-  infrastructure. It is not a Telegram integration.
-- `platform` owns database health/base data, outbox publishing, HTTP metrics,
-  bounded application diagnostics, push, WebSocket delivery, and structured
-  operational logging. Root `exception`, `i18n`, and dependency-free `util`
-  remain genuinely cross-cutting.
+[↑ Back to top](#top)
 
-The existing thin `FamilyServiceImpl` facade remains a compatibility boundary.
-The bounded `TelegramQuickActionServiceImpl`,
-`TelegramAccountConnectionServiceImpl`, and `TelegramOutboxProcessor` also
-remain intact. The only confirmed SRP extractions are the multi-metric admin
-analytics repository and the multi-workflow family and Telegram Bot resources.
+## 🔐 Access rules
 
-### Characterized observable contracts
+Authentication is cookie-based. `AuthFilter` turns a valid session into an
+`AuthContext`, which every protected resource uses.
 
-The pre-move test safety net covers the following public boundaries:
+- A parent account can be a member of more than one family.
+- Parent permissions are `viewer`, `editor`, and `family_admin`.
+- `viewer` reads; `editor` changes family data; `family_admin` also manages
+  parents and family settings.
+- A child session can access only that child’s family-owned data.
+- Super-admin APIs live under `/api/admin/*` and are separate from family APIs.
 
-| Boundary | Characterization | Existing focused coverage |
-| --- | --- | --- |
-| Identity | Successful and rejected parent/child login, family selection, session cookies, logout, password and auth configuration responses | `identity/api/resource/auth/AuthResourceTest`, `config/auth/*Test` |
-| Family | Family-scoped reads and mutations, validation failures, child ownership, parent membership permissions, and websocket response behavior | `family/api/resource/*Test`, `family/application/*Test` |
-| Admin | Super-admin authorization, period normalization, invalid input status, and dashboard response contract | `admin/api/resource/AdminDashboardResourceTest`, `admin/application/*Test` |
-| Telegram auth | Feature gating, signed init-data authentication, scoped session creation, and rejected verification | `telegram/api/resource/TelegramMiniAppAuthResourceTest`, `telegram/application/auth/TelegramMiniAppAuthServiceTest`, `telegram/application/identity/TelegramInitDataVerifierTest` |
-| Telegram webhook and callbacks | Webhook route/secret, duplicate update suppression, invalid or expired callback rejection, and callback acknowledgement before processing failures | `telegram/api/resource/TelegramWebhookResourceTest`, `telegram/infrastructure/persistence/TelegramWebhookUpdateRepositoryTest`, `telegram/application/bot/TelegramBotServiceImplTest`, `telegram/application/callback/TelegramCallbackServiceTest` |
-| Cross-channel state | Web and Telegram share family ownership, request status, balances, history, and outbox state across fresh reads | `integration/TelegramCrossChannelIntegrationTest` |
-| Platform errors | Stable expected error mapping and operational filter/readiness contracts | `platform/api/ClientErrorResourceTest`, `config/observability/*Test` |
+⚠️ Never take a family or child ID from a request as permission. Derive the
+allowed scope from the authenticated session, then validate ownership before
+every read or mutation.
 
-These tests intentionally assert paths, statuses, payload fields, ownership,
-and state transitions rather than current Java package names.
+[↑ Back to top](#top)
 
-## 🧩 Layer Responsibilities
+## 🗄️ Data and transactions
 
-The runtime contract is resource → service → repository.
+PostgreSQL is the production database. Flyway migrations live in
+`src/main/resources/db/migration`; H2 test migrations live in
+`src/test/resources/db/migration`. Add a new sequential migration for a schema
+change—never edit a migration that has already run elsewhere.
 
-- Resources parse the request, verify role/scope, and map the result to HTTP.
-- Services enforce family ownership, transactional rules, and business invariants.
-- Repositories own entity persistence and query composition.
+The main family data includes families, children, parent memberships, tasks,
+shop items, requests, history, notification settings, Telegram identities, and
+outbox records. Services keep a state change and its outbox event in the same
+transaction. Workers deliver Telegram or push notifications later, with their
+own retry and claim logic.
 
-Practical rules:
+Use database locking where concurrent actions could spend coins twice, decide a
+request twice, consume an invitation, or send one delivery more than once.
 
-- Do not trust child scope from frontend body or query values.
-- Prefer DTO records for request and response payloads.
-- Keep persistence mutations behind service methods rather than resource classes.
-- Keep OpenAPI annotations updated when public endpoint behavior changes.
+[↑ Back to top](#top)
 
-Current split notes:
+## 🌍 Language boundary
 
-- Dashboard query uses a thin facade plus `FamilyDashboardScopeLoader`, `FamilyDashboardCatalogLoader`, `FamilyDashboardHydrator`, `FamilyDashboardMapper`, and `FamilyDashboardResponseAssembler`.
-- Auth uses a thin facade plus `AuthSupportService`, `AuthMembershipService`, `AuthAdminAuthService`, `AuthChildAuthService`, and `AuthLifecycleService`.
-- Telegram Bot update dispatch, callbacks, identity, invitations, account
-  connections, and notifications are separate application subdomains under
-  `telegram/application/`.
-- Admin analytics is split into metric-specific repositories under
-  `admin/infrastructure/persistence/`, consumed by admin application services.
-- Platform owns WebSocket delivery, push, database health, HTTP metrics, and
-  bounded operational diagnostics under its semantic layers. Application logs
-  are structured stdout collected by the deployment logging platform; the
-  backend does not expose a local log-file feed through the family API.
-- File size, method count, and cyclomatic complexity guardrails now live in Checkstyle, while class-level design debt checks are enforced through PMD for the refactored facade classes.
+The backend normalizes supported locales to `en` and `ru`. The family locale is
+the presentation locale for authenticated family screens and Telegram messages.
+It is not a personal profile setting.
 
-[↩ Back to toc](#table-of-contents)
+API contracts stay language-neutral: clients use `errorCode`, safe `params`,
+and `traceId`, not translated message text. Validation and server-generated
+copy live in `messages*.properties` and `telegram_messages*.properties`.
+Keep placeholders identical in both languages and never expose raw keys,
+exception details, or SQL errors to a user.
 
-## 🗄️ Database Overview
+[↑ Back to top](#top)
 
-Core tables:
+## 📘 API and health
 
-- `families`: family identity, admin credentials, verification flags, last selected child, family rules
-- `children`: per-child profile, token, balance, limits, theme
-- `tasks`: child-scoped task catalog
-- `shop_items`: child-scoped reward catalog
-- `history`: earned and spent balance events
-- `requests`: approval queue for child actions
-- `friends`: child-to-child friend relations
-- `device_push_tokens`: web or mobile push registrations
+Quarkus generates the API description from resource annotations:
 
-Migration model:
-
-- PostgreSQL migrations live in `src/main/resources/db/migration/`.
-- Test-specific H2 migrations live in `src/test/resources/db/migration/`.
-- Add new sequential migrations instead of modifying merged migration history.
-
-Composite indexes are added only for measured repository predicates. The current
-set covers child/family paging, analytics windows, and pending-request limit
-checks; when adding a new index, keep the predicate shape and the expected
-query plan documented together.
-
-[↩ Back to toc](#table-of-contents)
-
-## 🔐 Authentication and Authorization
-
-Auth is cookie-based and handled centrally.
-
-- `AuthResource` manages login, logout, registration, reset, and verification flows.
-- `CookieBuilder` and `JwtService` mint and validate auth cookies.
-- `AuthFilter` converts cookies into `AuthContext` for downstream resources.
-- Roles are `admin`, `child`, and `super_admin`.
-
-### Parent Access Model
-
-Parent identity is account-based, not family-row-based. A parent email can belong to multiple families through membership rows.
-
-- `parent_accounts` table stores unique email, password hash, verification state, and reset token state.
-- `family_parent_memberships` table links parent accounts to families with permission levels.
-- Permission levels: `viewer` (read-only), `editor` (read/write family data), `family_admin` (full access including membership management).
-- At least one `family_admin` must remain in every family.
-- Login with multiple memberships triggers a family chooser before entering the app.
-- Session state carries both parent account identity and active family membership permission.
-
-Authorization rules:
-
-- Family data must always remain isolated by family ownership.
-- Child sessions are restricted to the authenticated child server-side.
-- Super-admin endpoints live under `/api/super/*` and must not bleed into family endpoints.
-- `viewer` can read family data but cannot mutate it.
-- `editor` can read and write family data but cannot manage parent memberships.
-- `family_admin` can read/write family data and manage parent memberships.
-
-### Bulk actions and import contract
-
-The current dashboard save path remains snapshot-based for everyday edits, but
-bulk actions and CSV import should be modeled as explicit commands instead of
-overloading `POST /api/data`.
-
-- Bulk task/shop actions should accept an explicit action plus a list of entity IDs.
-- Bulk mutations must validate `family_id` and `child_id` before applying any write.
-- Delete flows should continue to use soft-delete semantics where the entity model already supports them.
-- CSV import should validate required columns and return line-level validation errors instead of silently skipping invalid rows.
-- Command endpoints should return a refreshed family snapshot so the web client can rehydrate its store from server truth.
-
-[↩ Back to toc](#table-of-contents)
-
-## 🧾 API Versioning Strategy
-
-The current API surface is intentionally unversioned under `/api/*`.
-
-- Rationale: the app currently has one primary first-party client behind a same-origin web edge.
-- Policy: non-breaking additions may extend the current surface in place.
-- Future breaking changes should introduce `/api/v2/*` in parallel instead of rewriting existing routes in place.
-
-[↩ Back to toc](#table-of-contents)
-
-## 🌍 Localization and API boundary
-
-The backend owns locale normalization, request-locale handling, Bean
-Validation bundles, and server-generated Telegram delivery text. Supported
-values are normalized to `en` or `ru`; `en-US`/`ru-RU` resolve to their base
-language and unsupported values resolve to `en`. A family locale is the one
-source of truth for authenticated family surfaces and bot delivery; do not
-persist personal parent, child, or Telegram locales.
-
-REST errors remain language-neutral at the domain boundary. The stable error
-payload contains `errorCode`, safe `params`, `traceId`, and the existing
-RFC-7807 fields. A bounded localized `detail` may remain temporarily for old
-clients, but new clients must not use it as logic input. Never localize API
-enums or display labels, expose exception/SQL data, or turn user-created task,
-reward, and catalog values into translation keys. See [ADR 0001](../../../docs/adr/0001-internationalization-strategy.md).
-
-Server-generated copy belongs in `messages*.properties` or
-`telegram_messages*.properties`, not in service logic. Keep named placeholders
-identical across `en` and `ru`; `TelegramCatalogContractTest` and the focused
-resolver tests enforce that contract. Unknown Telegram keys use a localized
-generic fallback so a backend/frontend skew cannot expose a raw key. Local
-tests do not prove deployment cache invalidation or Telegram client/device
-rendering; verify those manually during release.
-
-## 📘 Runtime API Docs
-
-OpenAPI is generated at runtime from Quarkus annotations.
-
-- OpenAPI document: `/api/openapi.yaml`
+- OpenAPI: `/api/openapi.yaml`
 - Swagger UI: `/q/swagger-ui`
+- Health: `/q/health`
 
-The service currently exposes runtime docs rather than committing a generated OpenAPI artifact into the repository.
+The web app is the browser-facing edge. Browser calls go through its same-origin
+proxy; do not loosen backend CORS to work around an edge configuration issue.
 
-[↩ Back to toc](#table-of-contents)
+[↑ Back to top](#top)
 
-## 🧪 Verification
+## 🧪 Verify backend work
 
-Use these commands from `apps/backend/`:
+Run the full gate from `apps/backend`:
 
 ```bash
-export JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn"
-export PATH="$JAVA_HOME/bin:$PATH"
-./mvnw verify
+JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw verify
 ```
 
-Failure modes to watch:
-
-- `test` passing without `verify` is not sufficient because static analysis runs later.
-- `verify` now includes Checkstyle, PMD, JaCoCo, and SpotBugs. PMD is scoped to the SRP facade classes, and SpotBugs runs in fail-fast mode.
-- If a frontend payload changes, verify the backend DTO names before assuming data corruption.
-- After migration work, validate both PostgreSQL migrations and the H2 test baseline.
+`verify` runs tests plus Checkstyle, PMD, JaCoCo, and SpotBugs. `./mvnw test`
+is useful while working, but it is not the final backend check. After a
+migration change, make sure both PostgreSQL and the H2 test baseline pass.
 
 [↑ Back to top](#top)

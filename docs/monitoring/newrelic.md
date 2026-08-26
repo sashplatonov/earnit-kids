@@ -1,69 +1,64 @@
-# New Relic monitoring
+# New Relic metrics runbook
 
-## Diagnostic event contract
+<a name="top"></a>
 
-The server is authoritative for operational logs. The web tier emits only
-bounded exceptional events: `severity`, `eventCode`, route template, HTTP
-`status`, failure `category`, `traceId`, optional `durationMs`, and a safe
-`errorClass`. Query strings, URLs, headers, cookies, authorization values,
-family scope, roles, payloads, exception messages, and user-agent data are not
-logged. Newlines are removed and free-text fields are length-limited.
+The backend can export metrics to New Relic through OTLP. The integration is
+off by default, so local development does not need an account or license key.
 
-Alert on `web.proxy_failure`/`web.session_failure` upstream-unavailable events
-and elevated `web.server_error` render failures. Successful session and
-bootstrap requests produce no info-level diagnostic event. Local container
-stdout and test-captured logs prove only local behavior; deployed telemetry
-requires verification in the configured New Relic account. Retain logs under
-the deployment's approved policy and treat trace IDs as operational metadata,
-not customer identifiers.
+## Table of contents
 
-EarnIt Kids keeps New Relic observability on the backend. The JVM agent owns
-backend APM and application-log forwarding; Quarkus Micrometer exports backend
-metrics over OTLP/HTTP. The web app does not embed a New Relic Browser agent or
-read public browser-monitoring build settings.
+- [⚙️ Configure it](#️-configure-it)
+- [🔍 Check it safely](#-check-it-safely)
+- [🚨 Troubleshoot](#-troubleshoot)
+- [🧪 Release proof](#-release-proof)
 
-## Supported log retrieval path
+## ⚙️ Configure it
 
-The supported operator path is the backend container's structured stdout, which
-is collected by the deployment logging platform and optionally forwarded by the
-New Relic JVM agent. Operators retrieve logs from that platform using the
-deployment's authenticated operator access; the Quarkus process does not own a
-log file or expose application logs through the family API. Metrics and health
-endpoints remain the supported paths for aggregate service state and readiness.
+Set these deployment secrets or environment variables:
 
-The deployment owner defines retention and deletion under the approved logging
-policy. This repository does not promise a local log retention period. Local
-stdout and test-captured logs validate only local behavior; New Relic retention,
-availability, and access must be verified in the configured account.
+| Variable | Purpose |
+| --- | --- |
+| `NEW_RELIC_METRICS_ENABLED` | Enables OTLP metric export |
+| `NEW_RELIC_LICENSE_KEY` | New Relic ingest credential |
+| `NEW_RELIC_OTLP_METRICS_ENDPOINT` | OTLP endpoint; defaults to New Relic |
+| `NEW_RELIC_OTLP_METRICS_PROTOCOL` | OTLP protocol; defaults to `http/protobuf` |
 
-Operational correlation uses the bounded diagnostic fields `severity`,
-`eventCode`, route template, HTTP `status`, failure `category`, `traceId`,
-optional `durationMs`, and safe `errorClass`. Secrets, authorization data,
-cookies, family scope, roles, payloads, query strings, and unbounded exception
-text are excluded by the diagnostic contract.
+Keep the license key only in the deployment secret manager. The backend exports
+metrics only through this OTLP pipeline; traces and logs use their own runtime
+configuration.
 
-## Backend runtime settings
+[↑ Back to top](#top)
 
-- `NEW_RELIC_AGENT_ENABLED` enables the Java agent.
-- `NEW_RELIC_LICENSE_KEY` and `NEW_RELIC_APP_NAME` identify the backend.
-- `NEW_RELIC_METRICS_ENABLED` enables OTLP metrics export.
-- `NEW_RELIC_OTLP_METRICS_ENDPOINT` and `NEW_RELIC_OTLP_METRICS_PROTOCOL` select
-  the metrics destination and protocol.
-- `NEW_RELIC_APPLICATION_LOGGING_FORWARDING_ENABLED`,
-  `NEW_RELIC_APPLICATION_LOGGING_FORWARDING_MAX_SAMPLES_STORED`, and
-  `NEW_RELIC_APPLICATION_LOGGING_LOCAL_DECORATING_ENABLED` control optional
-  agent log forwarding.
+## 🔍 Check it safely
 
-All settings default to the safe local-development mode in `.env.example`.
-Backend values are injected by the Compose backend service and are independent
-of the web build.
+After deployment, check:
 
-## Validation
+1. `/q/health` reports the service ready.
+2. The `new-relic-metrics-config` readiness entry is up when metrics are enabled.
+3. Structured logs contain no exporter configuration or authentication error.
+4. New Relic receives service metrics after normal application traffic.
 
-```bash
-docker compose --env-file .env.example --profile db config --quiet
-```
+Do not paste the license key into a shell transcript, log query, issue, or chat.
 
-When enabled, verify the backend entity and metrics in New Relic. Browser
-entities, browser logs, and client-side JavaScript error events are not part of
-the supported observability contract.
+[↑ Back to top](#top)
+
+## 🚨 Troubleshoot
+
+| Symptom | Check first |
+| --- | --- |
+| Readiness fails | `NEW_RELIC_METRICS_ENABLED`, endpoint, protocol, and license key are present |
+| No metrics arrive | network egress to the OTLP endpoint and the correct New Relic account |
+| Local startup tries an OTLP endpoint | metrics should be disabled locally unless intentionally testing export |
+| Logs expose a secret | rotate the key immediately and remove the leaked value from retained logs where possible |
+
+⚠️ A green application health check does not prove New Relic ingestion. Confirm
+the metric in the New Relic account after deployment.
+
+[↑ Back to top](#top)
+
+## 🧪 Release proof
+
+Record the deployed version, checked origin, readiness result, and one received
+metric. This is deployment evidence, separate from `./mvnw verify`.
+
+[↑ Back to top](#top)
