@@ -29,6 +29,7 @@ const BYPASS_PREFIXES = [
     // its Mini App bootstrap can run.
     '/telegram',
     '/workspace',
+    '/app',
 ] as const;
 
 function normalisePath(pathname: string): string {
@@ -149,7 +150,8 @@ export function resolveDomainsForPath(pathname: string): MessageDomain[] {
     }
 
     if (internalPath === '/telegram' || internalPath.startsWith('/telegram/')
-        || internalPath === '/workspace' || internalPath.startsWith('/workspace/')) {
+        || internalPath === '/workspace' || internalPath.startsWith('/workspace/')
+        || internalPath === '/app' || internalPath.startsWith('/app/')) {
         return ['common', 'app', 'tasks', 'admin', 'errors'];
     }
 

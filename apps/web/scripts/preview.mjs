@@ -239,7 +239,13 @@ const server = createServer((req, res) => {
                 return;
             }
 
-            const publicPath = publicDocumentPath(url);
+            // Keep authenticated application paths outside the public static
+            // resolver, including their locale-prefixed reroute inputs.
+            const applicationPath = pathname.startsWith('/ru/') ? pathname.slice(3) : pathname;
+            const publicPath = applicationPath === '/app' || applicationPath.startsWith('/app/')
+                || applicationPath === '/workspace' || applicationPath.startsWith('/workspace/')
+                ? null
+                : publicDocumentPath(url);
             if (publicPath) {
                 req.url = `${publicPath}${url.search}`;
             }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { loadAppConfig } from '../../src/lib/server/config';
-import { normalizeLocale, shouldCanonicalizePath } from '../../src/lib/i18n/config';
+import { normalizeLocale, resolveDomainsForPath, shouldCanonicalizePath } from '../../src/lib/i18n/config';
 
 describe('locale normalization', () => {
     it.each([
@@ -21,6 +21,14 @@ describe('locale path handling', () => {
     it('keeps bare app entry points stable for client bootstrap', () => {
         expect(shouldCanonicalizePath('/telegram')).toBe(false);
         expect(shouldCanonicalizePath('/workspace')).toBe(false);
+        expect(shouldCanonicalizePath('/app')).toBe(false);
+        expect(shouldCanonicalizePath('/ru/app')).toBe(false);
+    });
+
+    it('loads the browser application catalogs for both route segments', () => {
+        expect(resolveDomainsForPath('/app')).toEqual(['common', 'app', 'tasks', 'admin', 'errors']);
+        expect(resolveDomainsForPath('/ru/app')).toEqual(['common', 'app', 'tasks', 'admin', 'errors']);
+        expect(resolveDomainsForPath('/workspace')).toEqual(['common', 'app', 'tasks', 'admin', 'errors']);
     });
 });
 

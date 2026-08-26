@@ -519,7 +519,7 @@ git commit -m "docs(web): document public locale indexing checks"
 
 ## PSS-APP-001: Move the authenticated browser route to `/app`
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** PSS-SEO-001
 
