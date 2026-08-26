@@ -22,7 +22,7 @@ Make the ready task and reward catalog a database-owned, Flyway-seeded resource.
 
 ## CAT-DB-001: Create and seed the localized catalog migration
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** -
 
