@@ -33,13 +33,12 @@ calls the same family application services as the web path.
 
 | Surface | What it demonstrates |
 | --- | --- |
-| [Parent workspace](apps/web/static/public/assets/screenshots/parent-home.png) | Review requests, award coins, inspect history, and switch family areas |
-| [Task management](apps/web/static/public/assets/screenshots/parent-tasks.png) | Parent-owned task catalog with groups and coin values |
-| [Child Today view](apps/web/static/public/assets/screenshots/child-today.png) | Child-scoped work and explicit completion states |
 | [Telegram Mini App](apps/web/static/public/assets/screenshots/miniapp-home.png) | The same family workflow hosted inside Telegram |
 
-Screenshots use demo data. No production account, family, child, payment, or
-credential data is part of the public assets.
+Live demo: [earnit-kids.freeddns.org](https://earnit-kids.freeddns.org/)
+
+The screenshot uses demo data. No production account, family, child, payment,
+or credential data is part of the public assets.
 
 ## Engineering decisions with evidence
 
@@ -80,13 +79,13 @@ credential data is part of the public assets.
 
 ## Internationalization
 
-EarnIt Kids supports `en` and `ru` initially. Public pages are visitor-owned
-and use `/{locale}/...` canonical URLs, resolved in this order: URL, cookie,
-`Accept-Language`, then `en`. Authenticated workspace, Telegram Mini App, and
-Telegram Bot presentation use one normalized family locale (`en` or `ru`)
-chosen by a family administrator; it overrides browser and Telegram hints.
-Unconfigured families fall back to `en` for non-administrators while their
-administrator completes setup. See [ADR 0001](docs/adr/0001-internationalization-strategy.md)
+EarnIt Kids supports `en` and `ru` initially. Public pages use the root for
+English and `/ru/...` for Russian, with language preference resolved from the
+URL, cookie, `Accept-Language`, then `en`. Authenticated workspace, Telegram
+Mini App, and Telegram Bot presentation use one normalized family locale
+(`en` or `ru`) chosen by a family administrator; it overrides browser and
+Telegram hints. Unconfigured families fall back to `en` for non-administrators
+while their administrator completes setup. See [ADR 0001](docs/adr/0001-internationalization-strategy.md)
 for the API error contract, translation ownership, normalization rules, and
 the extension workflow for future locales.
 
@@ -143,7 +142,7 @@ For deeper contracts, read the [backend architecture](apps/backend/docs/ARCHITEC
 
 ## Privacy and release boundaries
 
-The repository contains demo screenshots and local-safe fixtures only. Never
+The repository contains demo assets and local-safe fixtures only. Never
 commit `.env`, OAuth or Telegram credentials, or VAPID private keys. Provider
 secrets belong in the deployment secret manager. A local build proves source
 and test behavior; it does not prove provider delivery, a deployed
