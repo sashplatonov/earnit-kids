@@ -1,138 +1,165 @@
-# Database Catalog Migration - Implementation Backlog
+# Normalized Database Catalog - Remediation Backlog
 
 ## Goal
 
-Make the ready task and reward catalog a database-owned, Flyway-seeded resource. The authenticated `GET /api/base-data` response must retain its localized catalog shape for the Telegram Mini App, but no runtime, build, or test path may depend on `catalog-seed-reference.json`, `baseData.json`, or the generator script.
+Make catalog localization extensible without adding language-specific database columns or fields to `CatalogItemEntity`. A catalog item owns language-neutral metadata; every display string lives in normalized translation rows. The existing `GET /api/base-data` response remains compatible with the Telegram Mini App.
+
+## Confirmed current state
+
+- `V53__seed_localized_catalog.sql` and its `catalog_items.title_en`, `title_ru`, `comment_en`, `comment_ru`, `group_name_en`, and `group_name_ru` columns are committed in `a3e7a85c`.
+- `CatalogItemEntity`, `CatalogItemRepository`, and `LocalizedCatalogServiceImpl` using those columns are committed in `f553ec32`.
+- This design is not extensible: every new locale would require a schema migration, entity fields, mapping branches, seed columns, and tests. The tasks below supersede it.
 
 ## Architectural decisions
 
-- The global ready catalog is application reference data, distinct from the user-editable family `tasks` and `shop_items` copies.
-- Use one typed catalog-item table. `item_type` distinguishes tasks from rewards; SQL constraints enforce the appropriate amount column. This avoids duplicate localization and ordering implementations.
-- Store English and Russian title, comment, and group name in the Flyway seed. A catalog service selects the family locale and returns scalar strings in the current `catalog.tasks` and `catalog.rewards` API contract.
-- Keep `/api/base-data`, its authorization behavior, existing external IDs, all metadata, and `sourceCatalogItemId` copy semantics. Do not change web bootstrap, Telegram catalog UI, or `TelegramReplyKeyboardNavigator`.
-- The migration must work on PostgreSQL and the H2 PostgreSQL-mode test database. Do not add a replacement JSON, Java, or frontend fixture source of truth.
+- `catalog_items` owns only language-neutral data: external ID, kind, group key, graphics, frequency, age limits, difficulty, active state, ordering, and task/reward amount.
+- `catalog_item_translations` owns display text: `catalog_item_id`, `locale_code`, `title`, nullable `comment`, and `group_name`. Its unique key is `(catalog_item_id, locale_code)`; locale is data, not a Java field or item-table column.
+- `CatalogItemTranslationEntity` has one `localeCode` field. Adding catalog copy for a future language changes translation rows only, never the catalog-item entity or schema.
+- The existing `FamilyLocale` enum and `families.locale` constraint still limit selectable family languages to `en`/ `ru`. Enabling a third selected family locale is separate central locale-policy work; it must not recreate per-language catalog columns.
+- Do not modify committed V53. V54 creates and backfills translations while retaining V53 columns for old deployed binaries. V55 removes obsolete columns only after the application reads translations in production.
+- `FamilyReadResource` remains the authorization and family-locale boundary. `LocalizedCatalogService` remains the single projection path; retain `GET /api/base-data`, its `tasks: []` compatibility field, IDs, ordering, and `sourceCatalogItemId` semantics.
+- `TelegramReplyKeyboardNavigator`, web bootstrap, and the ready-catalog UI need no route, resolver, or fallback implementation.
 
 ## Recommended implementation order
 
 | Order | Task | Priority | Depends on | Reason |
 | ---: | --- | --- | --- | --- |
-| 1 | CAT-DB-001 | P1 | - | Establish the persisted source of truth and seed every current template. |
-| 2 | CAT-DB-002 | P1 | CAT-DB-001 | Add a single localized read model for the existing API. |
-| 3 | CAT-DB-003 | P1 | CAT-DB-002 | Switch the endpoint and delete the complete file-based chain. |
+| 1 | CAT-DB-001 | P1 | - | Completed but superseded V53 seed; retain immutable Flyway history. |
+| 2 | CAT-DB-002 | P1 | CAT-DB-001 | Completed but superseded denormalized read model. |
+| 3 | CAT-DB-004 | P0 | CAT-DB-001 | Add normalized translations without breaking an old deployed binary. |
+| 4 | CAT-DB-005 | P0 | CAT-DB-004 | Make reads use normalized rows and prove no new entity field is needed. |
+| 5 | CAT-DB-006 | P1 | CAT-DB-005 | Switch the endpoint and remove JSON sources. |
+| 6 | CAT-DB-007 | P2 | CAT-DB-006 | Drop legacy V53 columns after rollout proof. |
 
-## CAT-DB-001: Create and seed the localized catalog migration
+## CAT-DB-001: Seed the initial database catalog
 
 **Status:** DONE
-**Priority:** P1  
+**Priority:** P1
 **Depends on:** -
+
+Completed in `a3e7a85c`. Its language-specific V53 columns are superseded; do not edit or delete this committed migration.
+
+## CAT-DB-002: Add the initial database catalog read model
+
+**Status:** DONE
+**Priority:** P1
+**Depends on:** CAT-DB-001
+
+Completed in `f553ec32`. Its `en`/ `ru` entity fields are superseded; CAT-DB-005 replaces them.
+
+## CAT-DB-004: Normalize catalog translations and backfill V53 data
+
+**Status:** TODO
+**Priority:** P0
+**Depends on:** CAT-DB-001
 
 **Exact scope:**
 
-Create the next Flyway migration after `V52__add_family_locale.sql`, migrate every Russian task/reward from `catalog-seed-reference.json`, and seed a complete reviewed English counterpart for each item. The attached seed is Russian-only; English strings must not be generated from generic category templates.
+Create forward-only V54, normalizing every V53 catalog item into translation rows. Keep V53 locale columns so an existing deployed binary stays compatible during rollout.
 
 **Files:**
 
-- Create `apps/backend/src/main/resources/db/migration/V53__seed_localized_catalog.sql`.
-- Create `apps/backend/src/test/java/com/sashplatonov/earnit/kids/family/infrastructure/persistence/LocalizedCatalogMigrationTest.java`.
-- Read-only source while executing: `catalog-seed-reference.json` is the canonical Russian task/reward list; `apps/backend/src/main/resources/baseData.json` supplies current IDs and metadata only. Both are deleted by CAT-DB-003.
+- Create `apps/backend/src/main/resources/db/migration/V54__normalize_catalog_item_translations.sql`.
+- Create `apps/backend/src/test/java/com/sashplatonov/earnit/kids/family/infrastructure/persistence/CatalogItemTranslationMigrationTest.java`.
+- Read-only source: `apps/backend/src/main/resources/db/migration/V53__seed_localized_catalog.sql`.
 
 **Goal:**
 
-The database contains a deterministic complete task and reward catalog with English and Russian copy immediately after Flyway runs.
+Every catalog item has normalized `en` and `ru` rows, while V53 remains compatible.
 
 ### Outcome
 
-Fresh PostgreSQL and H2 databases contain every current `ct-*` and `cr-*` item with the same external ID, order, and business metadata, plus meaningful Russian and English copy.
+`catalog_item_translations` contains complete English and Russian catalog copy, a foreign key to language-neutral items, item/locale uniqueness, and an index for batched locale reads.
 
 ### Architectural decision
 
-Create a catalog reference table with a surrogate primary key, a unique existing external ID, item type, localized text columns, and the current group/graphic/frequency/age/difficulty/active/sort metadata. Enforce type, positive frequency, valid age range, and task-versus-reward amount invariants in SQL. Derive `tags` from `group_key` later unless the source data proves it requires independent storage.
+Create `catalog_item_translations(catalog_item_id, locale_code, title, comment, group_name)`. Do not add a locale enum/check limited to `en` and `ru`: a valid `de` or `sr` row must need no schema change. Preserve V53 columns until CAT-DB-007.
 
 ### Required changes
 
-1. Define portable schema and ordering indexes for active rows by `item_type` and `sort_order`; do not seed family `tasks` or `shop_items`.
-2. Translate every Russian title, comment, and group label into natural English with the same action/result meaning, age appropriateness, emoji, and frequency intent. Do not reuse current generic strings such as `Complete a ... goal` with an ID suffix as catalog copy.
-3. Insert all task and reward templates with stable IDs, reviewed English/Russian text, group/graphic keys, frequency, age range, difficulty, active state, and sort order.
-4. Add an H2 migration test that asserts schema constraints, unique IDs, complete locale fields, task/reward counts for ages 6–8, 9–11, and 12–14, and representative English/Russian items of each kind.
+1. Create the normalized table with foreign-key ownership, unique `(catalog_item_id, locale_code)`, non-blank locale/title/group checks, and an index for item-ID plus locale lookup.
+2. Backfill every `en` and `ru` V53 value. Replace generic English placeholder copy with natural translations of paired Russian tasks/rewards.
+3. Test completeness and constraints: 138 items have two translations, duplicates/orphans fail, and representative English/Russian copy is meaningful.
+4. Assert V53 columns remain present and unchanged after V54; do not drop or rename them.
 
 ### Out of scope
 
-- Reading the new table from HTTP.
-- Altering family catalog copies, history, or `source_catalog_item_id`.
-- Catalog copy editing or an admin catalog editor.
+- JPA mapping or HTTP reads from translations.
+- Changing `FamilyLocale` or adding a user-selectable third language.
+- Rewriting V53, family item records, or UI behavior.
 
 ### Acceptance criteria
 
-- A clean migration creates every current catalog template with its stable external ID.
-- Each row has non-blank English and Russian title and group name; each English title is a meaningful translation of its paired Russian task/reward, not an ID-bearing or category-only template.
-- A task has positive `coins` and no price; a reward has positive `price` and no coins.
-- Each supported age bucket yields at least 20 task and 20 reward templates under the current overlap rule.
-- The migration executes in PostgreSQL and H2 PostgreSQL mode.
+- Every item has exactly one `en` and one `ru` translation.
+- A valid third-locale translation (`de` or `sr`) can be inserted without changing catalog schema, migration, or `CatalogItemEntity`.
+- Title/group name are non-blank, comment is nullable, and orphan translations are rejected.
+- V54 works on PostgreSQL and H2 PostgreSQL mode while V53 columns remain available.
 
 ### Targeted validation
 
 ```bash
-cd apps/backend && ./mvnw -B -ntp -Dtest=LocalizedCatalogMigrationTest test
+cd apps/backend && ./mvnw -B -ntp -Dtest=CatalogItemTranslationMigrationTest test
 ```
 
 ### Commit
 
 ```bash
-git add apps/backend/src/main/resources/db/migration/V53__seed_localized_catalog.sql apps/backend/src/test/java/com/sashplatonov/earnit/kids/family/infrastructure/persistence/LocalizedCatalogMigrationTest.java
-git commit -m "feat(backend): seed localized catalog in database"
+git add apps/backend/src/main/resources/db/migration/V54__normalize_catalog_item_translations.sql apps/backend/src/test/java/com/sashplatonov/earnit/kids/family/infrastructure/persistence/CatalogItemTranslationMigrationTest.java
+git commit -m "fix(backend): normalize catalog translations"
 ```
 
-## CAT-DB-002: Add a localized database catalog read model
+## CAT-DB-005: Replace language-specific catalog mappings
 
-**Status:** DONE
-**Priority:** P1  
-**Depends on:** CAT-DB-001
+**Status:** TODO
+**Priority:** P0
+**Depends on:** CAT-DB-004
 
 **Exact scope:**
 
-Add the entity, repository, service, and mapping that read the reference table and emit the current catalog object for a requested `FamilyLocale`.
+Replace all `titleEn`, `titleRu`, `commentEn`, `commentRu`, `groupNameEn`, and `groupNameRu` access with batched normalized translation lookup. Make the catalog entity language-neutral.
 
 **Files:**
 
-- Create `apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/domain/model/catalog/CatalogItemEntity.java`.
-- Create `apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/domain/model/catalog/CatalogItemType.java`.
-- Create `apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/infrastructure/persistence/catalog/CatalogItemRepository.java`.
-- Create `apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/application/catalog/LocalizedCatalogService.java`.
-- Create `apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/application/catalog/LocalizedCatalogServiceImpl.java`.
-- Create `apps/backend/src/test/java/com/sashplatonov/earnit/kids/family/application/catalog/LocalizedCatalogServiceImplTest.java`.
-- Search anchor: `normalizeCatalogTemplate` in `apps/web/src/lib/services/serverContract.ts` defines the existing response field names.
+- Modify `apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/domain/model/catalog/CatalogItemEntity.java`.
+- Create `apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/domain/model/catalog/CatalogItemTranslationEntity.java`.
+- Modify `apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/infrastructure/persistence/catalog/CatalogItemRepository.java`.
+- Create `apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/infrastructure/persistence/catalog/CatalogItemTranslationRepository.java`.
+- Modify `apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/application/catalog/LocalizedCatalogServiceImpl.java`.
+- Modify `apps/backend/src/test/java/com/sashplatonov/earnit/kids/family/application/catalog/LocalizedCatalogServiceImplTest.java`.
 
 **Goal:**
 
-The backend returns deterministic, locale-projected catalog templates from the database.
+The read model selects catalog text by `locale_code`; adding a language never changes `CatalogItemEntity` or its schema.
 
 ### Outcome
 
-For a requested locale, the service produces `catalog.tasks` and `catalog.rewards` with the current scalar frontend fields.
+The service returns the same `catalog.tasks` and `catalog.rewards` shape, resolving requested locale then English fallback.
 
 ### Architectural decision
 
-Persistence belongs in `family.infrastructure.persistence.catalog`; locale projection belongs in one family application service. Neither the resource nor web code may reconstruct catalog localization or metadata independently.
+`CatalogItemEntity` maps only language-neutral columns. `CatalogItemTranslationEntity` maps one translation row. Load active items and all requested/fallback translations in two bounded repository queries, then resolve them in the service; do not produce N+1 queries or localization branches in resources/web code.
 
 ### Required changes
 
-1. Map the new reference table with dedicated entity and enum; do not overload `TaskEntity` or `ShopItemEntity`.
-2. Query active rows only in deterministic order by type, `sort_order`, and external-ID tie-breaker.
-3. Map the existing fields: `id`, `title`, `comment`, `coins` or `price`, `groupKey`, `groupName`, `semanticGraphicKey`, frequency, age, difficulty, `tags`, `active`, and `sortOrder`.
-4. Select the requested English/Russian columns and derive `tags` from `group_key`, retaining the UI duplicate-detection and family-copy flow.
-5. Cover both locales, kind separation, inactive filtering, stable order, null comment handling, amount mapping, and string external IDs.
+1. Remove every language-specific member from `CatalogItemEntity`; no `*_en` or `*_ru` Java field may remain.
+2. Add a translation entity with one `localeCode`, `title`, nullable `comment`, and `groupName`; it must not contain per-locale fields.
+3. Query active items in existing stable order and translations for requested plus `en` fallback, then preserve IDs, kinds, amounts, metadata, tags, and the `tasks: []` wrapper.
+4. Remove the existing `@SuppressWarnings("unchecked")` test helper by using typed extraction.
+5. Test `en`, `ru`, fallback, and a third locale code passed to the translation resolver. The third-locale test must require no catalog entity source change.
 
 ### Out of scope
 
-- New REST routes, public catalog access, CRUD, or cache-policy changes.
-- Frontend type changes or changes to family task/reward repositories.
+- Dropping V53 columns; CAT-DB-007 owns that.
+- User-facing third-language selection or changes to `FamilyLocale`.
+- New REST routes, cache changes, or frontend rewrites.
 
 ### Acceptance criteria
 
-- English and Russian outputs have identical IDs and metadata but selected localized title, comment, and group name.
-- Inactive rows are absent; task and reward collections contain only their matching kind in source order.
-- Task templates expose positive `coins`; reward templates expose positive `price`.
-- The emitted shape is accepted unchanged by `normalizeCatalog` and has deterministic tags.
+- `CatalogItemEntity` contains no language-specific field; one translation entity represents all locales.
+- Existing English/Russian clients retain identical response field shape; only corrected English wording may change.
+- Missing requested copy falls back deterministically to English; missing English produces an explicit server-side data-integrity result rather than mislabeled output.
+- Reads use a bounded item query plus bounded translation query.
+- A third locale is selected by code without catalog entity/schema changes.
 
 ### Targeted validation
 
@@ -143,70 +170,56 @@ cd apps/backend && ./mvnw -B -ntp -Dtest=LocalizedCatalogServiceImplTest test
 ### Commit
 
 ```bash
-git add apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/domain/model/catalog/CatalogItemEntity.java apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/domain/model/catalog/CatalogItemType.java apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/infrastructure/persistence/catalog/CatalogItemRepository.java apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/application/catalog/LocalizedCatalogService.java apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/application/catalog/LocalizedCatalogServiceImpl.java apps/backend/src/test/java/com/sashplatonov/earnit/kids/family/application/catalog/LocalizedCatalogServiceImplTest.java
-git commit -m "feat(backend): read localized catalog from database"
+git add apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/domain/model/catalog/CatalogItemEntity.java apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/domain/model/catalog/CatalogItemTranslationEntity.java apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/infrastructure/persistence/catalog/CatalogItemRepository.java apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/infrastructure/persistence/catalog/CatalogItemTranslationRepository.java apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/application/catalog/LocalizedCatalogServiceImpl.java apps/backend/src/test/java/com/sashplatonov/earnit/kids/family/application/catalog/LocalizedCatalogServiceImplTest.java
+git commit -m "refactor(backend): resolve catalog text by locale"
 ```
 
-## CAT-DB-003: Switch the base-data endpoint and remove file catalog sources
+## CAT-DB-006: Serve normalized catalog data and remove file sources
 
 **Status:** TODO
 **Priority:** P1  
-**Depends on:** CAT-DB-002
+**Depends on:** CAT-DB-005
 
 **Exact scope:**
 
-Replace `BaseDataService` in `GET /api/base-data`, retain its HTTP contract, then delete the JSON source chain and tests that read it directly.
+Wire the normalized service into `GET /api/base-data`, then remove the obsolete file catalog chain without changing endpoint or frontend contract.
 
 **Files:**
 
 - Modify `apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/api/resource/FamilyReadResource.java`.
 - Modify `apps/backend/src/test/java/com/sashplatonov/earnit/kids/family/api/resource/FamilyResourceTest.java`.
-- Modify `apps/web/tests/unit/catalogContent.test.ts` to validate an API fixture, or delete it only after its substantive assertions are covered by CAT-DB-001 and CAT-DB-002 tests.
+- Modify or remove `apps/web/tests/unit/catalogContent.test.ts` only after migration/service tests retain its substantive content coverage.
 - Delete `apps/backend/src/main/java/com/sashplatonov/earnit/kids/platform/application/database/BaseDataService.java`.
 - Delete `apps/backend/src/test/java/com/sashplatonov/earnit/kids/platform/application/database/BaseDataServiceTest.java`.
 - Delete `apps/backend/src/main/resources/baseData.json`.
 - Delete `apps/backend/scripts/generate_catalog.py`.
 - Delete `catalog-seed-reference.json`.
-- Search anchors: `BaseDataService`, `baseData.json`, `generate_catalog`, and `catalog-seed-reference`.
 
 **Goal:**
 
-Every authenticated client receives the existing catalog contract from the database, with no file-based catalog dependency.
-
-### Outcome
-
-`GET /api/base-data` remains 401 without authentication, 404 for a missing family, and 200 with locale-specific catalogs for an existing family. It retains the legacy empty `tasks` list that `buildInitialState` currently normalizes.
-
-### Architectural decision
-
-`FamilyReadResource` remains the authentication and family-locale boundary and delegates all catalog construction to `LocalizedCatalogService`. Retain `/api/base-data`; do not add a compatibility route or a parallel resolver.
+The existing endpoint is database-backed and obsolete JSON catalog sources are gone.
 
 ### Required changes
 
-1. Replace the `BaseDataService` dependency/call while retaining English fallback for null locale and current status behavior.
-2. Update resource tests to mock the new service and assert locale selection and the full response wrapper (`tasks: []`, `catalog.tasks`, `catalog.rewards`).
-3. Relocate every substantive content assertion from the web test to migration/service coverage. Do not add a second static catalog fixture only for tests.
-4. Delete the service, service test, bundled JSON, generator, and seed JSON; remove dead imports, configuration, and references.
-5. Search tracked source after the switch. Keep existing web E2E route mocks because the API path and normalized contract are unchanged.
+1. Replace `BaseDataService` in `FamilyReadResource`, retaining authorization, missing-family 404, null-locale English fallback, `/api/base-data`, and `tasks: []`.
+2. Update resource tests for English/Russian selection and the unchanged wrapper.
+3. Move substantive static-content checks to migration/service tests; do not introduce a replacement JSON fixture.
+4. Delete sources and prove no live reference to `BaseDataService`, `baseData.json`, `generate_catalog`, or `catalog-seed-reference` remains.
 
 ### Out of scope
 
-- Renaming `/api/base-data`, deleting the legacy `tasks` response field, or changing SvelteKit bootstrap.
-- Modifying family data, `source_catalog_item_id`, Telegram reply keyboards, public demo HTML, or locale UI.
-- Editing already-applied Flyway migrations or deploying the change.
+- Dropping V53 columns, changing `FamilyLocale`, or modifying Telegram navigation/UI.
 
 ### Acceptance criteria
 
-- `en`, `ru`, and null family locales return English, Russian, and English-fallback catalog copy respectively; unauthorized and missing-family behavior is unchanged.
-- Web normalization accepts the response with no code change, and ready-catalog copy flows retain their IDs and metadata.
-- No live source reference remains to `BaseDataService`, `baseData.json`, `generate_catalog`, or `catalog-seed-reference`.
-- The deleted files are absent from the worktree and no generated JSON replacement is introduced.
-- Backend migration/static analysis and web contract tests pass without suppressions or exclusions.
+- Existing authenticated web and Telegram clients receive database catalog data through the same URL and contract.
+- Unauthorized and missing-family responses remain 401 and 404.
+- No runtime, build, or test source depends on catalog JSON.
 
 ### Targeted validation
 
 ```bash
-cd apps/backend && ./mvnw -B -ntp -Dtest=FamilyCommandResourceTest,LocalizedCatalogMigrationTest,LocalizedCatalogServiceImplTest test
+cd apps/backend && ./mvnw -B -ntp -Dtest=FamilyCommandResourceTest,LocalizedCatalogServiceImplTest,CatalogItemTranslationMigrationTest test
 cd apps/web && npm run test -- --run tests/unit/catalogContent.test.ts
 rg -n --hidden --glob '!.git' 'BaseDataService|baseData\.json|generate_catalog|catalog-seed-reference' .
 ```
@@ -216,7 +229,56 @@ rg -n --hidden --glob '!.git' 'BaseDataService|baseData\.json|generate_catalog|c
 ```bash
 git add apps/backend/src/main/java/com/sashplatonov/earnit/kids/family/api/resource/FamilyReadResource.java apps/backend/src/test/java/com/sashplatonov/earnit/kids/family/api/resource/FamilyResourceTest.java apps/web/tests/unit/catalogContent.test.ts
 git rm apps/backend/src/main/java/com/sashplatonov/earnit/kids/platform/application/database/BaseDataService.java apps/backend/src/test/java/com/sashplatonov/earnit/kids/platform/application/database/BaseDataServiceTest.java apps/backend/src/main/resources/baseData.json apps/backend/scripts/generate_catalog.py catalog-seed-reference.json
-git commit -m "refactor(backend): load catalog from database"
+git commit -m "refactor(backend): serve catalog translations from database"
+```
+
+## CAT-DB-007: Retire V53 language columns after rollout
+
+**Status:** TODO
+**Priority:** P2
+**Depends on:** CAT-DB-006
+
+**Exact scope:**
+
+After CAT-DB-006 is deployed and verified against PostgreSQL, drop obsolete language-specific V53 columns with a forward-only migration.
+
+**Files:**
+
+- Create `apps/backend/src/main/resources/db/migration/V55__drop_legacy_catalog_locale_columns.sql`.
+- Modify `apps/backend/src/test/java/com/sashplatonov/earnit/kids/family/infrastructure/persistence/CatalogItemTranslationMigrationTest.java` or create `LegacyCatalogLocaleColumnsRetirementMigrationTest.java`.
+
+**Goal:**
+
+The schema contains no `title_en`, `title_ru`, `comment_en`, `comment_ru`, `group_name_en`, or `group_name_ru` catalog column.
+
+### Required changes
+
+1. Record production rollout proof that no running binary reads V53 locale columns before applying V55.
+2. Drop only six obsolete columns; retain language-neutral data and all translation rows.
+3. Verify V55 on PostgreSQL and H2 and assert complete translations remain.
+
+### Out of scope
+
+- Dropping items, translations, or the V53 Flyway history row.
+- Adding a third UI language selector.
+
+### Acceptance criteria
+
+- Post-V55 has a normalized translation table and no per-language `catalog_items` columns.
+- English/Russian `/api/base-data` output is unchanged after migration.
+- A future locale remains translation data plus central locale-policy work, not a catalog schema/entity change.
+
+### Targeted validation
+
+```bash
+cd apps/backend && ./mvnw -B -ntp -Dtest=CatalogItemTranslationMigrationTest,LocalizedCatalogServiceImplTest test
+```
+
+### Commit
+
+```bash
+git add apps/backend/src/main/resources/db/migration/V55__drop_legacy_catalog_locale_columns.sql apps/backend/src/test/java/com/sashplatonov/earnit/kids/family/infrastructure/persistence/CatalogItemTranslationMigrationTest.java
+git commit -m "refactor(backend): remove legacy catalog locale columns"
 ```
 
 ## Final quality gates
@@ -228,4 +290,4 @@ git diff --check
 git status --short
 ```
 
-Local checks prove source, migration, and build behavior only. PostgreSQL deployment, Telegram Mini App client behavior, and physical-device behavior require separate post-deployment validation.
+Local checks prove source, migration, and build behavior only. PostgreSQL rollout proof is required before CAT-DB-007; Telegram Mini App client and physical-device checks remain separate validation levels.
