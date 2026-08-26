@@ -21,7 +21,8 @@ const template = await readFile(templatePath, 'utf8');
 const navigationFor = (activeFile) => pages.map((page) => {
     const active = page.file === activeFile ? ' active' : '';
     const current = page.file === activeFile ? ' aria-current="page"' : '';
-    return `<a class="tab${active}" href="${page.file}"${current}>${page.title}</a>`;
+    const href = page.file === 'index.html' ? '/' : `/${page.file}`;
+    return `<a class="tab${active}" href="${href}"${current}>${page.title}</a>`;
 }).join('');
 
 await mkdir(outputDirectory, { recursive: true });

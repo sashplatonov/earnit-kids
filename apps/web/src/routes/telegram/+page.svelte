@@ -111,7 +111,7 @@
                 <p>{message}</p>
             {:else if state === 'unlinked'}
                 <p>{$i18n.t('app.telegram.entry.unlinked')}</p>
-                <a class="telegram-action" href="/public/index.html">{$i18n.t('app.telegram.entry.signInLink')}</a>
+                <a class="telegram-action" href="/">{$i18n.t('app.telegram.entry.signInLink')}</a>
                 <p class="telegram-hint">{$i18n.t('app.telegram.entry.childHint')}</p>
             {:else if state === 'parent-invite'}
                 <p>{$i18n.t('app.telegram.entry.parentInviteHint')}</p>

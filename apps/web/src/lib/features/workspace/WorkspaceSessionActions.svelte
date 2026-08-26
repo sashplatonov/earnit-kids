@@ -13,7 +13,7 @@
         pending = true;
         error = false;
         if (await logout()) {
-            window.location.assign('/public/index.html');
+            window.location.assign('/');
             return;
         }
 

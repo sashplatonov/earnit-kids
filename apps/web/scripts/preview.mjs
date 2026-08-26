@@ -95,6 +95,23 @@ function isWebSocketRoute(pathname) {
     return pathname === '/ws';
 }
 
+const PUBLIC_DOCUMENTS = new Map([
+    ['/', '/public/index.html'],
+    ['/how.html', '/public/how.html'],
+    ['/tasks.html', '/public/tasks.html'],
+    ['/rewards.html', '/public/rewards.html'],
+    ['/parents.html', '/public/parents.html'],
+    ['/faq.html', '/public/faq.html'],
+]);
+
+function publicDocumentPath(url) {
+    if (url.pathname === '/' && url.searchParams.has('tgWebAppStartParam')) {
+        return null;
+    }
+
+    return PUBLIC_DOCUMENTS.get(url.pathname) || null;
+}
+
 function setSecurityHeaders(res) {
     res.setHeader('Cross-Origin-Resource-Policy', 'same-site');
     // SvelteKit emits the page CSP with a per-response nonce. Do not replace
@@ -229,6 +246,11 @@ const server = createServer((req, res) => {
             if (isBackendProxyRoute(pathname)) {
                 proxyRequest(req, res);
                 return;
+            }
+
+            const publicPath = publicDocumentPath(url);
+            if (publicPath) {
+                req.url = `${publicPath}${url.search}`;
             }
 
             handler(req, res);

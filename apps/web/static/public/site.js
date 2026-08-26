@@ -1,5 +1,5 @@
 
-export const GOOGLE_WORKSPACE_FALLBACK = "/public/index.html";
+export const GOOGLE_WORKSPACE_FALLBACK = "/";
 const GOOGLE_WORKSPACE_START = "/api/login-google/start?continue=%2Fworkspace";
 
 function isUsableAuthorizationUrl(value) {

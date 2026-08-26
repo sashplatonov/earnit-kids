@@ -12,10 +12,7 @@ function makeEvent(path = '/', authenticated = false) {
 
 describe('root page server load', () => {
     it('keeps the public root for authenticated users', async () => {
-        await expect(load(makeEvent('/', true))).rejects.toMatchObject({
-            status: 302,
-            location: '/public/index.html',
-        });
+        await expect(load(makeEvent('/', true))).resolves.toEqual({});
     });
 
     it('hands Telegram launch parameters to the Russian Mini App route', async () => {

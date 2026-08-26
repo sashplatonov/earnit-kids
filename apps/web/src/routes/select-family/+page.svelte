@@ -42,7 +42,7 @@
         <h1 id="chooser-title">{$i18n.t('auth.login.chooseFamilyTitle')}</h1>
         {#if data.expired}
             <p class="message" role="alert">{$i18n.t('auth.login.chooserNetworkError')}</p>
-            <a href="/public/index.html">{$i18n.t('auth.login.chooseFamilyUseAnother')}</a>
+            <a href="/">{$i18n.t('auth.login.chooseFamilyUseAnother')}</a>
         {:else}
             <p class="intro">{$i18n.t('auth.login.chooseFamilyIntro')}</p>
             {#if error}<p class="message" role="alert">{error}</p>{/if}

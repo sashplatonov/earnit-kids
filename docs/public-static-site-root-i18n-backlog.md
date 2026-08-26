@@ -92,7 +92,7 @@ git commit -m "refactor(web): remove public Mini App carousel"
 
 ## PSS-002: Serve canonical public pages at the root URL space
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** PSS-001
 

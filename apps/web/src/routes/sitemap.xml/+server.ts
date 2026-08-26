@@ -2,12 +2,12 @@ import { loadAppConfig } from '$lib/server/config';
 import type { RequestHandler } from './$types';
 
 const PUBLIC_PAGES = [
-    { path: '/public/index.html', priority: '1.0', changefreq: 'weekly' },
-    { path: '/public/how.html', priority: '0.8', changefreq: 'monthly' },
-    { path: '/public/tasks.html', priority: '0.8', changefreq: 'monthly' },
-    { path: '/public/rewards.html', priority: '0.8', changefreq: 'monthly' },
-    { path: '/public/parents.html', priority: '0.8', changefreq: 'monthly' },
-    { path: '/public/faq.html', priority: '0.6', changefreq: 'monthly' },
+    { path: '/', priority: '1.0', changefreq: 'weekly' },
+    { path: '/how.html', priority: '0.8', changefreq: 'monthly' },
+    { path: '/tasks.html', priority: '0.8', changefreq: 'monthly' },
+    { path: '/rewards.html', priority: '0.8', changefreq: 'monthly' },
+    { path: '/parents.html', priority: '0.8', changefreq: 'monthly' },
+    { path: '/faq.html', priority: '0.6', changefreq: 'monthly' },
 ] as const;
 
 export const GET: RequestHandler = async () => {

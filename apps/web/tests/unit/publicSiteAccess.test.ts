@@ -12,7 +12,7 @@ describe('public site browser access', () => {
             .mockResolvedValueOnce(jsonResponse({ url: 'https://accounts.google.com/o/oauth2/auth?state=signed' }));
 
         await expect(requestBrowserWorkspaceUrl(fetchMock, { redirectTo: '/workspace' })).resolves.toContain('accounts.google.com');
-        expect(GOOGLE_WORKSPACE_FALLBACK).toBe('/public/index.html');
+        expect(GOOGLE_WORKSPACE_FALLBACK).toBe('/');
         expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/login-google/url?redirect_to=%2Fworkspace', {
             credentials: 'same-origin',
             cache: 'no-store',
