@@ -315,7 +315,7 @@ Navigation entry — external-to-static route link; он не входит в PU
 
 ## LCD-006: Добавить browser proof demo и network isolation
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** LCD-004, LCD-005
 
