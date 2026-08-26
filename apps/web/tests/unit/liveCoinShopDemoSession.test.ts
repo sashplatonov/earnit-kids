@@ -18,9 +18,10 @@ describe('live coin shop demo session', () => {
 
         expect(state.currentChildId).toBe(liveCoinShopDemoFixture.childId);
         expect(state.balance).toBe(75);
-        expect(state.requests).toEqual([]);
-        expect(items.filter((item) => item.isActive !== false)).toHaveLength(2);
-        expect(items.map((item) => item.groupName)).toEqual(['Treats', 'Experiences', 'Treats']);
+        expect(state.children).toHaveLength(2);
+        expect(state.requests.map((request) => request.status)).toEqual(['pending', 'approved', 'rejected']);
+        expect(items.filter((item) => item.isActive !== false)).toHaveLength(3);
+        expect(items.map((item) => item.groupName)).toEqual(['Treats', 'Experiences', 'Treats', 'Learning']);
         expect(items.find((item) => item.id === liveCoinShopDemoFixture.affordableRewardId)?.price).toBeLessThan(state.balance);
         expect(items.find((item) => item.id === liveCoinShopDemoFixture.unaffordableRewardId)?.price).toBeGreaterThan(state.balance);
     });
@@ -30,19 +31,19 @@ describe('live coin shop demo session', () => {
 
         expect(result).toMatchObject({ ok: true });
         expect(get(appStore).balance).toBe(75);
-        expect(get(appStore).requests).toEqual([expect.objectContaining({
+        expect(get(appStore).requests).toContainEqual(expect.objectContaining({
             requestType: 'shop_purchase',
             itemId: liveCoinShopDemoFixture.affordableRewardId,
             itemName: 'Ice cream',
             note: 'Saturday afternoon',
             childId: liveCoinShopDemoFixture.childId,
             status: 'pending',
-        })]);
+        }));
 
         session.reset();
         const noNoteResult = await session.actions.request({ itemId: liveCoinShopDemoFixture.affordableRewardId, childId: liveCoinShopDemoFixture.childId, note: null });
         expect(noNoteResult).toMatchObject({ ok: true });
-        expect(get(appStore).requests[0].note).toBeNull();
+        expect(get(appStore).requests.at(-1)?.note).toBeNull();
     });
 
     it('rejects absent, inactive, unaffordable and duplicate requests without mutation', async () => {

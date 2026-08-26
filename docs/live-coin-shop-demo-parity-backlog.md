@@ -90,7 +90,7 @@ git commit -m "refactor(web): isolate workspace actions"
 
 ## LCDP-002: Создать полную каноническую fixture и in-memory семейный движок
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** LCDP-001
 
