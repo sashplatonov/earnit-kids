@@ -25,7 +25,7 @@ Bring the completed public parent demo into compliance with its localized static
 
 ## PSD-RVW-001: Localize every displayed demo fixture value through the static catalog
 
-**Status:** TODO
+**Status:** DONE
 
 **Priority:** P1
 

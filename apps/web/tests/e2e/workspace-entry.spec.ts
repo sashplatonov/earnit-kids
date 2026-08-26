@@ -323,6 +323,7 @@ test('public parent demo is localized, read-only, and keeps authenticated destin
 
     await page.goto('/demo.html?tab=not-a-tab');
     await expect(page.getByRole('tab', { name: 'Tasks', exact: true })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tabpanel', { name: 'Tasks' })).toContainText('Learning');
     await expect(page).toHaveURL('/demo.html?tab=not-a-tab');
     await expect(page.locator('.demo-actions').getByRole('link', { name: /sign in/i })).toHaveAttribute('href', '/api/login-google/start?continue=%2Fapp');
     await expect(page.locator('.demo-actions').getByRole('link', { name: /open the rewards shop/i })).toHaveAttribute('href', '/app?context=rewards');
@@ -336,6 +337,15 @@ test('Russian parent demo follows its document locale and preserves it in tab st
     await expect(page).toHaveTitle('Демо для родителя - EarnIt Kids');
     await expect(page.getByRole('heading', { name: 'Демо для родителя' })).toBeVisible();
     await expect(page.getByRole('tabpanel', { name: 'Запросы' }).getByText('Читать 15 минут')).toBeVisible();
+    await page.getByRole('tab', { name: 'Задания', exact: true }).click();
+    await expect(page.getByRole('tabpanel', { name: 'Задания' })).toContainText('Учёба');
+    await expect(page.getByRole('tabpanel', { name: 'Задания' })).toContainText('Ежедневно');
+    await page.getByRole('tab', { name: 'Награды', exact: true }).click();
+    await expect(page.getByRole('tabpanel', { name: 'Награды' })).toContainText('Время вместе');
+    await expect(page.getByRole('tabpanel', { name: 'Награды' })).toContainText('Доступно: Да');
+    await expect(page.getByRole('tabpanel', { name: 'Награды' })).toContainText('Доступно: Нет');
+    await expect(page.getByRole('tabpanel', { name: 'Награды' })).not.toContainText(/\b(Yes|No|Learning|Home|Daily|Weekdays|Weekly|Family time|Small joys)\b/);
+    await page.getByRole('tab', { name: 'Запросы', exact: true }).click();
     await expect(page.getByRole('tab', { name: 'Запросы', exact: true })).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('link', { name: /открыть магазин наград/i })).toHaveAttribute('href', '/ru/app?context=rewards');
     await page.getByRole('tab', { name: 'Задания', exact: true }).click();

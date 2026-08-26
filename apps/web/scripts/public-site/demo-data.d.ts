@@ -7,7 +7,7 @@ export type DemoHistoryEntry = {
     kind: 'earned' | 'spent';
     amount: number;
     date: string;
-    label: DemoLocalizedText;
+    labelKey: string;
 };
 
 export type DemoRequest = {
@@ -16,13 +16,13 @@ export type DemoRequest = {
     amount: number;
     date: string;
     status: 'pending' | 'approved' | 'rejected';
-    label: DemoLocalizedText;
+    labelKey: string;
 };
 
 export type DemoData = {
     child: { id: string; name: string; balance: number };
-    tasks: Array<{ id: string; name: DemoLocalizedText; group: string; repeat: string; coins: number }>;
-    rewards: Array<{ id: string; name: DemoLocalizedText; group: string; price: number; available: boolean }>;
+    tasks: Array<{ id: string; nameKey: string; groupKey: string; repeatKey: string; coins: number }>;
+    rewards: Array<{ id: string; nameKey: string; groupKey: string; price: number; available: boolean }>;
     history: DemoHistoryEntry[];
     requests: DemoRequest[];
 };

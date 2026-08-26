@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { DEMO_TABS, demoData, normalizeDemoTab } from '../../scripts/public-site/demo-data.js';
+import { messages } from '../../scripts/public-site/i18n.js';
 import { formatDemoAmount } from '../../scripts/public-site/demo.js';
 
 describe('public parent demo', () => {
@@ -20,6 +21,19 @@ describe('public parent demo', () => {
         expect(normalizeDemoTab('unknown')).toBe('tasks');
         expect(formatDemoAmount(12, 'en')).toContain('+12');
         expect(formatDemoAmount(12, 'ru')).toContain('+12');
+    });
+
+    it('keeps every fixture display value in the equal static locale catalogs', () => {
+        expect(messages.en.demo.fixture).toEqual({
+            taskNames: { reading: 'Read for 15 minutes', desk: 'Clear your desk', plants: 'Water the plants' },
+            rewardNames: { film: 'Choose the family film', game: 'Pick a board game', treat: 'Choose a weekend treat' },
+            groups: { learning: 'Learning', home: 'Home', familyTime: 'Family time', smallJoys: 'Small joys' },
+            repeats: { daily: 'Daily', weekdays: 'Weekdays', weekly: 'Weekly' },
+            availability: { yes: 'Yes', no: 'No' },
+        });
+        expect(Object.keys(messages.en.demo.fixture)).toEqual(Object.keys(messages.ru.demo.fixture));
+        expect(demoData.tasks.every((task) => task.nameKey && task.groupKey && task.repeatKey)).toBe(true);
+        expect(demoData.rewards.every((reward) => reward.nameKey && reward.groupKey)).toBe(true);
     });
 
     it('keeps the static module isolated from network, app, and mutation behavior', () => {
