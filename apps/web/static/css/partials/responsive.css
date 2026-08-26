@@ -36,8 +36,8 @@ html {
         max-height: var(--bottom-nav-height);
         padding: 0.35rem 0.45rem;
         padding-bottom: calc(0.35rem + var(--safe-bottom));
-        background: oklch(0.988 0.018 65);
-        border-top: 1px solid var(--color-warm-border);
+        background: oklch(0.988 0.012 245);
+        border-top: 1px solid var(--color-border-muted);
         border-bottom: none;
         z-index: var(--layer-nav);
         overflow: visible;
@@ -251,11 +251,11 @@ html {
     .main {
         overflow-x: clip;
         padding-bottom: calc(var(--bottom-nav-height, var(--mobile-main-bottom-offset, 132px)) + 1rem);
-        background: linear-gradient(180deg, oklch(0.988 0.01 80), oklch(0.978 0.015 70));
+        background: linear-gradient(180deg, oklch(0.988 0.008 250), oklch(0.978 0.014 245));
         border-radius: 24px 24px 0 0;
-        border: 1px solid var(--color-warm-border);
+        border: 1px solid var(--color-border-muted);
         border-bottom: none;
-        box-shadow: 0 -6px 20px rgba(180, 130, 80, 0.08);
+        box-shadow: 0 -6px 20px rgba(37, 99, 235, 0.08);
         padding-top: 1rem;
     }
 
@@ -267,14 +267,14 @@ html {
     }
 
     .card {
-        background: var(--color-warm-surface);
-        border: 1px solid var(--color-warm-border);
-        box-shadow: var(--shadow-warm);
+        background: var(--color-surface-muted);
+        border: 1px solid var(--color-border-muted);
+        box-shadow: var(--shadow-soft);
         filter: none;
     }
 
     .card:hover {
-        box-shadow: 0 8px 24px rgba(180, 130, 80, 0.14);
+        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.14);
         transform: translateY(-1px);
     }
 
@@ -494,7 +494,7 @@ html {
         display: block;
         width: 40px;
         height: 4px;
-        background: var(--color-warm-border);
+        background: var(--color-border-muted);
         border-radius: 2px;
         margin: -0.5rem auto 1rem;
     }
@@ -503,10 +503,10 @@ html {
     .modal__actions {
         position: sticky;
         bottom: -1.5rem;
-        background: var(--color-warm-surface);
+        background: var(--color-surface-muted);
         padding: 1rem 0 calc(1.5rem + var(--safe-bottom));
         margin: 1rem -1.5rem -1.5rem -1.5rem;
-        border-top: 1px solid var(--color-warm-border);
+        border-top: 1px solid var(--color-border-muted);
         z-index: 10;
         padding-inline: 1.5rem;
     }

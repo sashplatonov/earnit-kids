@@ -2,10 +2,10 @@
 :root {
     color-scheme: light;
 
-    /* Neutral app surfaces keep the public site and family workspace free of a warm cast. */
-    --color-primary: oklch(0.67 0.11 45);
-    --color-primary-dark: oklch(0.58 0.11 40);
-    --color-secondary: oklch(0.72 0.08 185);
+    /* The shared app palette is white and blue. */
+    --color-primary: oklch(0.61 0.16 258);
+    --color-primary-dark: oklch(0.51 0.16 258);
+    --color-secondary: oklch(0.68 0.12 236);
     --color-success: oklch(0.7 0.11 156);
     --color-success-dark: oklch(0.62 0.11 156);
     --color-danger: oklch(0.64 0.16 28);
@@ -78,21 +78,20 @@
     --catalog-status-locked-text: oklch(0.38 0.1 28);
     --catalog-surface-radius: clamp(1rem, 1.5vw, 1.35rem);
     --catalog-surface-border: color-mix(in oklch, var(--color-primary) 18%, transparent);
-    --catalog-surface-shadow: 0 12px 32px rgba(88, 72, 58, 0.08);
+    --catalog-surface-shadow: 0 12px 32px rgba(37, 99, 235, 0.1);
     --catalog-header-surface: linear-gradient(135deg, color-mix(in oklch, var(--color-primary) 7%, white), color-mix(in oklch, var(--color-secondary) 7%, white));
     --catalog-selected-surface: linear-gradient(135deg, color-mix(in oklch, var(--color-primary) 14%, white), color-mix(in oklch, var(--color-secondary) 12%, white));
 
-    --gradient-primary: linear-gradient(135deg, oklch(0.72 0.11 72) 0%, var(--color-primary) 55%, oklch(0.6 0.11 24) 100%);
-    --gradient-warm-cta: linear-gradient(135deg, oklch(0.8 0.11 76) 0%, oklch(0.69 0.12 44) 55%, oklch(0.62 0.11 24) 100%);
-    --gradient-admin-header: linear-gradient(135deg, oklch(0.33 0.02 48) 0%, oklch(0.44 0.03 34) 100%);
-    --gradient-gold: linear-gradient(135deg, oklch(0.9 0.11 92) 0%, oklch(0.82 0.13 72) 100%);
+    --gradient-primary: linear-gradient(135deg, oklch(0.7 0.13 235) 0%, var(--color-primary) 55%, oklch(0.5 0.17 270) 100%);
+    --gradient-action: linear-gradient(135deg, oklch(0.68 0.15 235) 0%, var(--color-primary) 55%, oklch(0.5 0.17 270) 100%);
+    --gradient-admin-header: linear-gradient(135deg, oklch(0.31 0.06 264) 0%, oklch(0.42 0.1 258) 100%);
+    --gradient-accent: linear-gradient(135deg, oklch(0.9 0.06 235) 0%, oklch(0.78 0.12 240) 100%);
     --gradient-success: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-dark) 100%);
     --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(241, 245, 249, 0.94) 100%);
 
-    /* Shared neutral surfaces for the app and public pages. */
-    --color-warm-surface: oklch(0.99 0.004 250);
-    --color-warm-border: rgba(71, 85, 105, 0.16);
-    --shadow-warm: 0 8px 20px rgba(51, 65, 85, 0.09);
+    --color-surface-muted: oklch(0.99 0.004 250);
+    --color-border-muted: rgba(71, 85, 105, 0.16);
+    --shadow-soft: 0 8px 20px rgba(37, 99, 235, 0.09);
 
     --shadow-sm: 0 10px 22px rgba(51, 65, 85, 0.08);
     --shadow-md: 0 18px 40px rgba(51, 65, 85, 0.1);

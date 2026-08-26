@@ -2,14 +2,14 @@
 :root {
     --ds-font-heading: 'Manrope', 'Nunito Sans', system-ui, sans-serif;
     --ds-focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.35);
-    --ds-border-muted: var(--color-warm-border);
-    --ds-surface-card-muted: var(--color-warm-surface);
-    --ds-shadow-soft: var(--shadow-warm);
+    --ds-border-muted: var(--color-border-muted);
+    --ds-surface-card-muted: var(--color-surface-muted);
+    --ds-shadow-soft: var(--shadow-soft);
     --ds-gap-inline: 0.65rem;
     --ds-gap-stack: 0.8rem;
     --ds-radius-pill: 999px;
 
-    /* State badges — readable on light warm background */
+    /* State badges — readable on light surfaces */
     --state-pending-bg: rgba(59, 130, 246, 0.1);
     --state-pending-text: #1d4ed8;
     --state-pending-border: rgba(59, 130, 246, 0.25);
@@ -52,7 +52,7 @@
 
 .ds-card:hover,
 .ds-card:focus-within {
-    box-shadow: 0 8px 20px rgba(180, 130, 80, 0.14);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.14);
     transform: translateY(-2px);
 }
 
