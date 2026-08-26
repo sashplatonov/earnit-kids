@@ -62,6 +62,21 @@ class CatalogItemTranslationMigrationTest {
             assertThat(columnExists(connection, "comment_ru")).isTrue();
             assertThat(columnExists(connection, "group_name_en")).isTrue();
             assertThat(columnExists(connection, "group_name_ru")).isTrue();
+
+            executeMigration(connection, "V55__drop_legacy_catalog_locale_columns.sql");
+
+            assertThat(count(connection, "SELECT COUNT(*) FROM catalog_items")).isEqualTo(138);
+            assertThat(count(connection, "SELECT COUNT(*) FROM catalog_item_translations")).isEqualTo(277);
+            assertThat(count(connection, "SELECT COUNT(*) FROM catalog_item_translations WHERE locale_code IN ('en', 'ru')")).isEqualTo(276);
+            assertThat(count(connection, "SELECT COUNT(*) FROM (SELECT catalog_item_id FROM catalog_item_translations WHERE locale_code IN ('en', 'ru') GROUP BY catalog_item_id HAVING COUNT(*) <> 2) violations")).isZero();
+            assertThat(columnExists(connection, "title_en")).isFalse();
+            assertThat(columnExists(connection, "title_ru")).isFalse();
+            assertThat(columnExists(connection, "comment_en")).isFalse();
+            assertThat(columnExists(connection, "comment_ru")).isFalse();
+            assertThat(columnExists(connection, "group_name_en")).isFalse();
+            assertThat(columnExists(connection, "group_name_ru")).isFalse();
+            assertThat(columnExists(connection, "group_key")).isTrue();
+            assertThat(columnExists(connection, "semantic_graphic_key")).isTrue();
         }
     }
 
