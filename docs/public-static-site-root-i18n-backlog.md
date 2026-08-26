@@ -162,7 +162,7 @@ git commit -m "feat(web): serve public site from root URLs"
 
 ## PSS-003: Localize the complete static public site and add language selection
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** PSS-001, PSS-002
 

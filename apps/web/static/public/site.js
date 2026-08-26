@@ -1,4 +1,6 @@
 
+import { applyLocale, getMessage, resolveLocale, withLanguage } from "./i18n.js";
+
 export const GOOGLE_WORKSPACE_FALLBACK = "/";
 const GOOGLE_WORKSPACE_START = "/api/login-google/start?continue=%2Fworkspace";
 
@@ -42,6 +44,13 @@ export async function requestBrowserWorkspaceUrl(fetchImpl, config = {}) {
 }
 
 export function enhancePublicSite(documentRef, windowRef, fetchImpl) {
+  const locale = resolveLocale(windowRef.location.search, windowRef.navigator);
+  applyLocale(documentRef, windowRef, locale);
+  documentRef.querySelectorAll("[data-language]").forEach((button) => {
+    button.addEventListener("click", () => {
+      windowRef.location.assign(withLanguage(windowRef.location.pathname, button.dataset.language, windowRef.location.origin));
+    });
+  });
   const cfg = windowRef.EARNIT_CONFIG || {};
   const url = String(cfg.telegramMiniAppUrl || "");
   const configured = url && url !== "#" && !/REPLACE_WITH_/i.test(url);
@@ -52,10 +61,10 @@ export function enhancePublicSite(documentRef, windowRef, fetchImpl) {
     } else {
       link.href = "#";
       link.setAttribute("aria-disabled", "true");
-      link.title = "Ссылка на Telegram Mini App пока не настроена";
+      link.title = getMessage(locale, "unavailableMiniApp");
       link.addEventListener("click", (event) => {
         event.preventDefault();
-        alert("Укажите реальную ссылку Telegram Mini App в config.js");
+        alert(getMessage(locale, "configureMiniApp"));
       });
     }
   });
@@ -67,9 +76,7 @@ export function enhancePublicSite(documentRef, windowRef, fetchImpl) {
   documentRef.body.append(status);
 
   if (new URL(windowRef.location.href).searchParams.get("error")) {
-    status.textContent = documentRef.documentElement.lang === "en"
-      ? "Google sign-in is temporarily unavailable. Use the browser sign-in link to try again."
-      : "Вход через Google временно недоступен. Используйте ссылку для входа в браузере и попробуйте ещё раз.";
+    status.textContent = getMessage(locale, "oauthError");
   }
 
   documentRef.querySelectorAll("[data-browser-workspace-link]").forEach((link) => {
@@ -83,9 +90,7 @@ export function enhancePublicSite(documentRef, windowRef, fetchImpl) {
         windowRef.location.assign(await requestBrowserWorkspaceUrl(fetchImpl, { redirectTo: "/workspace" }));
       } catch {
         link.href = GOOGLE_WORKSPACE_START;
-        status.textContent = documentRef.documentElement.lang === "en"
-          ? "Google sign-in is temporarily unavailable. Use the browser sign-in link to try again."
-          : "Вход через Google временно недоступен. Используйте ссылку для входа в браузере и попробуйте ещё раз.";
+        status.textContent = getMessage(locale, "oauthError");
       } finally {
         link.removeAttribute("aria-busy");
       }
