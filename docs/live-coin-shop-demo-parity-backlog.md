@@ -407,7 +407,7 @@ git commit -m "test(web): cover full live demo workspace"
 
 ## LCDP-008: Обновить discoverability, контракт и финальные quality gates
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** LCDP-007
 

@@ -393,3 +393,10 @@ Remote deployment/CI, native Telegram client, PWA offline cache и physical-devi
 Что осталось верным в бэклоге: текущие тесты ожидают 7 страниц / 14 sitemap URL, после LCD-001 должно стать 6 / 12; все файлы на удаление существуют; все якоря (`requestItem`, `applyDataSnapshot`, `DEMO_TABS`, `demoData`, `rewardRequestSent`, demo в sitemap/tests/runbook) присутствуют; новые директории `src/routes/demo/` и `src/lib/features/live-demo/` корректно отсутствуют.
 
 Локальные checks доказывают source, build и browser behavior. Они не являются proof deployment/CI, Telegram Mini App client или физического устройства; эти уровни проверяются отдельно после deploy.
+
+## LCDP-008 completion evidence
+
+- Public EN/RU navigation and rewards CTA link to `/demo` and `/ru/demo`; copy identifies the full temporary interactive family workspace and distinguishes it from signing in to a real shop.
+- `PUBLIC_PAGES` remains six entries. Generated `static/public/` contains no `demo.html` artifact, and the sitemap contract excludes both live-demo routes.
+- Local proof: `npm run generate:public`, focused public-site unit tests, web lint, full unit suite, production build, focused Chromium live-demo E2E (8 passed), no unexpected `/api/` requests, and `git diff --check` passed.
+- This evidence covers local source/build/browser checks only; it does not claim CI, deployment, Telegram client, or physical-device validation.
