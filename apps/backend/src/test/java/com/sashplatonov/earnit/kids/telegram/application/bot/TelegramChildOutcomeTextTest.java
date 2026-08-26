@@ -1,5 +1,6 @@
 package com.sashplatonov.earnit.kids.telegram.application.bot;
 
+import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 import com.sashplatonov.earnit.kids.family.domain.model.outbox.ApplicationOutboxEventEntity;
 import com.sashplatonov.earnit.kids.family.domain.model.outbox.ApplicationOutboxEventType;
 import com.sashplatonov.earnit.kids.family.domain.model.request.PurchaseRequestEntity;
@@ -42,12 +43,13 @@ class TelegramChildOutcomeTextTest {
     }
 
     @Test
-    void missingRequest_usesGenericOutcome() {
+    void missingRequest_usesGenericOutcome() throws Exception {
         PurchaseRequestRepository requests = mock(PurchaseRequestRepository.class);
         when(requests.findByIdOptional(9L)).thenReturn(java.util.Optional.empty());
         ApplicationOutboxEventEntity event = event(ApplicationOutboxEventType.REWARD_REJECTED, 9L, 0, null);
         TelegramChildOutcomeText text = new TelegramChildOutcomeText(requests, mock(ShopItemRepository.class));
-        assertThat(text.text(event)).contains("Reward rejected");
+        TelegramLocaleContext.with(FamilyLocale.en, () ->
+            assertThat(text.text(event)).contains("Reward rejected"));
     }
 
     @Test
