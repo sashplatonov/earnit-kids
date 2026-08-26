@@ -258,7 +258,7 @@ Marketing navigation, static generator, server load/auth, PWA caching и duplica
 
 ## LCD-005: Сделать новый demo доступным с marketing site
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** LCD-001, LCD-004
 

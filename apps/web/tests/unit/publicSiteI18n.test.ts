@@ -92,7 +92,18 @@ describe('static public-site i18n', () => {
                 expect(html).toContain('/api/login-google/start?continue=%2Fapp');
             }
             const rewards = readFileSync(resolve(directory, 'rewards.html'), 'utf8');
+            expect(rewards).toContain(locale === 'ru' ? 'href="/ru/demo"' : 'href="/demo"');
             expect(rewards).toContain(locale === 'ru' ? 'href="/ru/app?context=rewards"' : 'href="/app?context=rewards"');
+        }
+    });
+
+    it('links every navigation surface to the localized live demo route', () => {
+        const root = resolve(process.cwd(), 'static/public');
+        for (const locale of ['en', 'ru'] as const) {
+            const directory = locale === 'ru' ? resolve(root, 'ru') : root;
+            const html = readFileSync(resolve(directory, 'rewards.html'), 'utf8');
+            expect(html).toContain(locale === 'ru' ? '>Попробовать live demo<' : '>Try live demo<');
+            expect(html.match(locale === 'ru' ? /href="\/ru\/demo"/g : /href="\/demo"/g)).toHaveLength(2);
         }
     });
 

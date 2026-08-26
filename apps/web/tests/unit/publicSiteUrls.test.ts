@@ -55,4 +55,10 @@ describe('public-site URL contract', () => {
         expect(publicLanguageHref('/how.html', 'ru', 'https://example.test')).toBe('https://example.test/ru/how.html');
         expect(publicLanguageHref('/api/login-google/start', 'ru', 'https://example.test')).toBeNull();
     });
+
+    it('keeps the live demo outside the static public URL contract', () => {
+        expect(publicDocumentPath('/demo')).toBeNull();
+        expect(publicDocumentPath('/ru/demo')).toBeNull();
+        expect(canonicalPublicPath('/demo', 'ru')).toBeNull();
+    });
 });

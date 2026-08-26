@@ -20,12 +20,14 @@ const escapeAttribute = (value) => String(value).replaceAll('&', '&amp;').replac
 const replaceAll = (source, values) => Object.entries(values).reduce((result, [key, value]) => result.replaceAll(`{{${key}}}`, String(value)), source);
 
 function navigationFor(activeKey, locale) {
-    return PUBLIC_PAGES.map((page) => {
+    const pages = PUBLIC_PAGES.map((page) => {
         const active = page.key === activeKey ? ' active' : '';
         const current = page.key === activeKey ? ' aria-current="page"' : '';
         const href = locale === 'ru' ? `/ru${page.englishPath}` : page.englishPath;
         return `<a class="tab${active}" href="${href}"${current}>${messages[locale].pageTitles[page.key]}</a>`;
     }).join('');
+    const demoPath = locale === 'ru' ? '/ru/demo' : '/demo';
+    return `${pages}<a class="tab" href="${demoPath}">${messages[locale].demo}</a>`;
 }
 
 async function generateLocale(locale) {
