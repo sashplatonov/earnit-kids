@@ -8,12 +8,12 @@ import com.sashplatonov.earnit.kids.family.api.response.PaginatedRequests;
 import com.sashplatonov.earnit.kids.family.application.FamilyService;
 import com.sashplatonov.earnit.kids.family.api.request.UpdateFamilyLocaleRequest;
 import com.sashplatonov.earnit.kids.family.api.response.FamilyLocaleResponse;
+import com.sashplatonov.earnit.kids.family.application.catalog.LocalizedCatalogService;
 import com.sashplatonov.earnit.kids.family.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
 import com.sashplatonov.earnit.kids.i18n.BackendLocaleSupport;
 import com.sashplatonov.earnit.kids.i18n.BackendMessages;
-import com.sashplatonov.earnit.kids.platform.application.database.BaseDataService;
 import com.sashplatonov.earnit.kids.resource.common.ResourceAuthSupport;
 import com.sashplatonov.earnit.kids.shared.api.response.ErrorResponse;
 import com.sashplatonov.earnit.kids.util.OperationResult;
@@ -50,15 +50,15 @@ public class FamilyReadResource extends ResourceAuthSupport {
 
   private static final Logger LOG = Logger.getLogger(FamilyReadResource.class);
   private final Supplier<FamilyService> familyService;
-  private final BaseDataService baseDataService;
+  private final LocalizedCatalogService localizedCatalogService;
 
   @Inject
   FamilyRepository familyRepository;
 
   @Inject
-  public FamilyReadResource(FamilyService familyService, BaseDataService baseDataService) {
+  public FamilyReadResource(FamilyService familyService, LocalizedCatalogService localizedCatalogService) {
     this.familyService = () -> familyService;
-    this.baseDataService = baseDataService;
+    this.localizedCatalogService = localizedCatalogService;
   }
 
   @GET
@@ -288,6 +288,6 @@ public class FamilyReadResource extends ResourceAuthSupport {
     if (locale == null) {
       locale = FamilyLocale.en;
     }
-    return Response.ok(baseDataService.getBaseData(locale)).build();
+    return Response.ok(localizedCatalogService.getBaseData(locale)).build();
   }
 }

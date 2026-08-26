@@ -47,7 +47,7 @@ import com.sashplatonov.earnit.kids.family.domain.model.membership.MembershipSta
 import com.sashplatonov.earnit.kids.family.domain.model.FamilyEntity;
 import com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
-import com.sashplatonov.earnit.kids.platform.application.database.BaseDataService;
+import com.sashplatonov.earnit.kids.family.application.catalog.LocalizedCatalogService;
 import com.sashplatonov.earnit.kids.family.application.action.FamilyActionService;
 import com.sashplatonov.earnit.kids.family.application.membership.FamilyParentAccessService;
 import com.sashplatonov.earnit.kids.family.application.FamilyService;
@@ -81,7 +81,7 @@ class FamilyCommandResourceTest {
 
     @Mock FamilyActionService familyActionService;
     @Mock FamilyService familyService;
-    @Mock BaseDataService baseDataService;
+    @Mock LocalizedCatalogService localizedCatalogService;
     @Mock FamilyRepository familyRepository;
     @Mock WebSocketNotificationService webSocketNotificationService;
     @Mock FamilyParentAccessService familyParentAccessService;
@@ -109,7 +109,7 @@ class FamilyCommandResourceTest {
         importResource = new FamilyImportResource(familyActionService, familyService, webSocketNotificationService, familyParentAccessService);
         historyResource = new FamilyHistoryResource(familyActionService, familyService, webSocketNotificationService, familyParentAccessService);
         balanceResource = new FamilyBalanceResource(familyActionService, familyService, webSocketNotificationService, familyParentAccessService);
-        readResource = new FamilyReadResource(familyService, baseDataService);
+        readResource = new FamilyReadResource(familyService, localizedCatalogService);
         readResource.familyRepository = familyRepository;
         childResource = new FamilyChildSettingsResource(familyService, webSocketNotificationService, familyParentAccessService);
         socialResource = new FamilySocialResource(familyService, webSocketNotificationService, familyParentAccessService);
@@ -186,15 +186,15 @@ class FamilyCommandResourceTest {
 
         when(familyRepository.findById("fam-1")).thenReturn(Optional.of(FamilyEntity.builder()
             .familyId("fam-1").locale(FamilyLocale.en).build()));
-        when(baseDataService.getBaseData(FamilyLocale.en)).thenReturn(Map.of("tasks", List.of()));
+        when(localizedCatalogService.getBaseData(FamilyLocale.en)).thenReturn(Map.of("tasks", List.of()));
         Response ok = readResource.getBaseData(contextWithAuth(adminAuth()));
         assertThat(ok.getStatus()).isEqualTo(200);
     }
 
     @Test
     void getBaseData_usesPersistedFamilyLocaleAndDefaultsNullToEnglish() {
-        when(baseDataService.getBaseData(FamilyLocale.ru)).thenReturn(Map.of("locale", "ru"));
-        when(baseDataService.getBaseData(FamilyLocale.en)).thenReturn(Map.of("locale", "en"));
+        when(localizedCatalogService.getBaseData(FamilyLocale.ru)).thenReturn(Map.of("locale", "ru"));
+        when(localizedCatalogService.getBaseData(FamilyLocale.en)).thenReturn(Map.of("locale", "en"));
         FamilyEntity family = FamilyEntity.builder().familyId("fam-1").locale(FamilyLocale.ru).build();
         when(familyRepository.findById("fam-1")).thenReturn(Optional.of(family));
 

@@ -176,7 +176,7 @@ git commit -m "refactor(backend): resolve catalog text by locale"
 
 ## CAT-DB-006: Serve normalized catalog data and remove file sources
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** CAT-DB-005
 
