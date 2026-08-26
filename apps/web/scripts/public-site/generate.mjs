@@ -18,7 +18,6 @@ const publicOrigin = resolvePublicOrigin(process.env.APP_URL, {
 
 const escapeAttribute = (value) => String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 const replaceAll = (source, values) => Object.entries(values).reduce((result, [key, value]) => result.replaceAll(`{{${key}}}`, String(value)), source);
-const publicPath = (pathname, locale, origin) => new URL(publicLanguageHref(pathname, locale, origin)).pathname;
 
 function navigationFor(activeKey, locale) {
     return PUBLIC_PAGES.map((page) => {

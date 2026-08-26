@@ -4,6 +4,5 @@ export function normalizeLocale(value: unknown): 'en' | 'ru' | null;
 export function resolveDocumentLocale(documentRef: { documentElement?: { lang?: string } }): 'en' | 'ru';
 export function getMessage(locale: 'en' | 'ru', key: string): string;
 export function withLanguage(href: string, locale: 'en' | 'ru', currentOrigin?: string): string;
-export interface PublicSiteMessages extends Record<string, unknown> {
-}
+export type PublicSiteMessages = Record<string, unknown>;
 export const messages: Record<'en' | 'ru', PublicSiteMessages>;
