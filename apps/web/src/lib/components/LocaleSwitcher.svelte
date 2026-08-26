@@ -13,6 +13,10 @@
 
     const i18n = useI18n();
 
+    function labelFor(locale: Locale): string {
+        return compact ? locale.toUpperCase() : $i18n.t(`common.locale.${locale}`);
+    }
+
     async function handleChange(nextLocale: Locale) {
         if (familyManaged && !readOnly) {
             if (busy) return;
@@ -62,7 +66,7 @@
                         <path d="M1.2 1.5h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zM2.3 3.4h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zM1.2 5.3h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1zm2.2 0h1v1h-1z" fill="#fff" />
                     {/if}
                 </svg>
-                <span>{$i18n.t(`common.locale.${locale}`)}</span>
+                <span>{labelFor(locale)}</span>
             </button>
         {/each}
     </div>
@@ -90,7 +94,38 @@
     }
 
     .locale-switcher--compact {
+        width: 100%;
         font-size: 0.78rem;
+    }
+
+    .locale-switcher--compact .locale-switcher__options {
+        gap: 0;
+        overflow: hidden;
+        border: 1px solid rgba(125, 149, 187, 0.28);
+        border-radius: 999px;
+        background: #fff;
+    }
+
+    .locale-switcher--compact .locale-switcher__option {
+        min-width: 0;
+        min-height: 44px;
+        border: 0;
+        border-radius: 0;
+        padding: 0.35rem 0.7rem;
+    }
+
+    .locale-switcher--compact .locale-switcher__option + .locale-switcher__option {
+        border-left: 1px solid rgba(125, 149, 187, 0.2);
+    }
+
+    .locale-switcher--compact .locale-switcher__option--active {
+        border-color: transparent;
+        background: #202938;
+        color: #fff;
+    }
+
+    .locale-switcher--compact .locale-switcher__option--active + .locale-switcher__option {
+        border-left-color: transparent;
     }
 
     .locale-switcher__label {
