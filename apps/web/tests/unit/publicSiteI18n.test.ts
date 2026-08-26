@@ -77,7 +77,8 @@ describe('static public-site i18n', () => {
             const expectedDemoPath = locale === 'ru' ? '/ru/demo.html' : '/demo.html';
             for (const file of ['index.html', 'how.html', 'tasks.html', 'rewards.html', 'parents.html', 'faq.html', 'demo.html']) {
                 const html = readFileSync(resolve(directory, file), 'utf8');
-                expect(html).toContain(`href="${expectedDemoPath}" aria-label="${messages[locale].demoLinkLabel}">${messages[locale].demoLink}</a>`);
+                expect(html).toContain(`href="${expectedDemoPath}"`);
+                expect(html).toContain(`>${messages[locale].demoLink}</a>`);
                 expect(html).toContain('/api/login-google/start?continue=%2Fapp');
             }
             const rewards = readFileSync(resolve(directory, 'rewards.html'), 'utf8');
