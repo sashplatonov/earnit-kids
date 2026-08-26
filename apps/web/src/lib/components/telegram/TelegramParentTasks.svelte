@@ -1,10 +1,8 @@
 <script lang="ts">
     import { appStore, type Task } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
-    import { earnCoins, saveChildGroupOrder } from '$lib/telegram/services/shopApi';
-    import { applyDataSnapshot, refreshData } from '$lib/services/bootstrap';
+    import { useTaskActions } from '$lib/telegram/services/taskActions';
     import { confirmAction } from '$lib/services/confirm';
-    import { scheduleSave } from '$lib/services/save';
     import { orderGroups } from '$lib/telegram/services/groupOrder';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
@@ -21,6 +19,7 @@
     import { sortCatalogItems, type CatalogSortMode } from '$lib/telegram/services/catalogSort';
 
     const i18n = useI18n();
+    const taskActions = useTaskActions();
 
     $: rawGroups = [...new Set($appStore.tasks.map((task) => task.groupName).filter((group): group is string => Boolean(group)))];
     $: currentChild = $appStore.children.find((child) => String(child.id) === String($appStore.currentChildId)) ?? null;
@@ -63,7 +62,7 @@
         appStore.setState({
             tasks: $appStore.tasks.map((item) => item.id == task.id ? ({ ...item, isActive: nextActive } as typeof item) : item),
         });
-        void scheduleSave();
+        void taskActions.persist();
     }
     async function remove(task: Task) {
         closeMenu();
@@ -76,7 +75,7 @@
         });
         if (!confirmed) return;
         appStore.setState({ tasks: $appStore.tasks.filter((item) => item.id != task.id) });
-        void scheduleSave();
+        void taskActions.persist();
     }
     // EXPLAIN: Parent directly completes a task for the current child, awarding
     // EXPLAIN: coins without a child request. Reuses earnCoins (POST /complete).
@@ -89,19 +88,19 @@
         confirmComplete = null;
         completingId = task.id;
         completeError = '';
-        const result = await earnCoins(task.id, $appStore.currentChildId) as Record<string, unknown> | null;
+        const result = await taskActions.complete({ taskId: task.id, childId: $appStore.currentChildId }) as Record<string, unknown> | null;
         completingId = null;
         if (result) {
-            applyDataSnapshot(result);
+            taskActions.applySnapshot(result);
         } else {
             completeError = $i18n.t('app.telegram.tasks.completeError');
-            await refreshData();
+            await taskActions.refresh();
         }
     }
     async function saveGroups(event: CustomEvent<{ groups: string[]; hiddenGroups: string[] }>) {
         if ($appStore.currentChildId == null) return;
         groupSaving = true;
-        const result = await saveChildGroupOrder($appStore.currentChildId, 'tasks', event.detail.groups, event.detail.hiddenGroups);
+        const result = await taskActions.saveGroups($appStore.currentChildId, event.detail.groups, event.detail.hiddenGroups);
         groupSaving = false;
         groupMessage = result.ok ? $i18n.t('app.telegram.tasks.groupsSaved') : $i18n.t('app.telegram.tasks.groupsSaveError');
         if (result.ok) {
@@ -121,7 +120,7 @@
             task.groupName === group ? { ...task, groupName: moveTo ?? null } as typeof task : task
         );
         appStore.setState({ tasks: nextTasks });
-        void scheduleSave();
+        void taskActions.persist();
         const nextGroups = groups.filter((g) => g !== group);
         const nextHidden = hiddenGroups.filter((g) => g !== group);
         void saveGroups(new CustomEvent('save', { detail: { groups: nextGroups, hiddenGroups: nextHidden } }));

@@ -144,7 +144,7 @@ git commit -m "feat(web): add complete in-memory demo family"
 
 ## LCDP-003: Перевести production mutation components на узкие ports
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** LCDP-001, LCDP-002
 

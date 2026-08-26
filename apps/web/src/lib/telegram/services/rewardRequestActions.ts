@@ -4,7 +4,7 @@ import type { ApiActionResult } from '$lib/services/api';
 
 export type RewardRequestActionInput = {
     itemId: number | string;
-    childId: unknown;
+    childId: string | number | null;
     note: string | null;
 };
 

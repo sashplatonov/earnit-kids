@@ -4,7 +4,8 @@
     import type { CatalogRewardTemplate } from '$lib/telegram/stores/types';
     import { shopItems } from '$lib/telegram/stores/shopItems';
     import { catalogRewards } from '$lib/telegram/stores/rewards';
-    import { scheduleSave } from '$lib/services/save';
+    import { useTaskActions } from '$lib/telegram/services/taskActions';
+    import { useRewardActions } from '$lib/telegram/services/rewardActions';
     import { mapGroupKeyToFamily, templateToReward, templateToTask } from '$lib/telegram/services/catalogFilter';
     import { applyGroupOrderToChildren, getEffectiveGroupOrder, type GroupOrderSection } from '$lib/telegram/services/groupOrder';
     import { recordReadyCatalogEvent } from '$lib/telegram/services/readyCatalogTelemetry';
@@ -17,6 +18,8 @@
     export let onBack: () => void = () => {};
 
     const i18n = useI18n();
+    const taskActions = useTaskActions();
+    const rewardActions = useRewardActions();
 
     $: isAdmin = $appStore.isAdmin;
     $: resolvedChildId = $appStore.currentChildId ?? $appStore.children[0]?.id ?? null;
@@ -120,7 +123,7 @@
         }
 
         appStore.setState(patch);
-        void scheduleSave();
+        void (kind === 'task' ? taskActions.persist() : rewardActions.persist());
         detailsOpen = false;
         bulkSummaryOpen = false;
     }

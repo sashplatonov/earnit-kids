@@ -1,8 +1,7 @@
 <script lang="ts">
     import type { Request } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
-    import { approveRequest, rejectRequest } from '$lib/services/api';
-    import { refreshData } from '$lib/services/bootstrap';
+    import { useRequestActions } from '$lib/telegram/services/requestActions';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramListSurface from './ui/TelegramListSurface.svelte';
     import TelegramAsyncState from './ui/TelegramAsyncState.svelte';
@@ -11,6 +10,7 @@
     import { presentRequest } from './telegramRequestPresentation';
 
     const i18n = useI18n();
+    const requestActions = useRequestActions();
 
     export let requests: Request[] = [];
     export let canDecide = false;
@@ -31,9 +31,9 @@
     async function decide(id: string | number, action: 'approve' | 'reject') {
         busy = id;
         decisionError = '';
-        const result = action === 'approve' ? await approveRequest(id, childId) : await rejectRequest(id, childId);
+        const result = action === 'approve' ? await requestActions.approve(id, childId) : await requestActions.reject(id, childId);
         if (result == null) decisionError = $i18n.t('app.telegram.requests.updateError');
-        const refreshed = await refreshData();
+        const refreshed = await requestActions.refresh();
         if (!refreshed && result != null) decisionError = $i18n.t('app.telegram.requests.savedButRefreshFailed');
         busy = null;
     }

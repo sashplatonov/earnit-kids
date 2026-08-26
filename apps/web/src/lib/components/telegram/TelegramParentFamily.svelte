@@ -2,20 +2,9 @@
     import { onMount } from 'svelte';
     import { appStore, type Child } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
-    import { switchChild, refreshData } from '$lib/services/bootstrap';
+    import { useFamilyActions } from '$lib/telegram/services/familyActions';
     import LocaleSwitcher from '$lib/components/LocaleSwitcher.svelte';
-    import {
-        adminAddChild,
-        adminGetInactiveChildren,
-        adminSetChildActive,
-        adminGetChildTelegram,
-        adminCreateChildTelegramInvite,
-        adminUnlinkChildTelegram,
-        adminGetChildMagicLinkStatus,
-        adminIssueChildMagicLink,
-        adminRevokeChildMagicLink,
-        type ChildTelegramConnection,
-    } from '$lib/services/api';
+    import type { ChildTelegramConnection } from '$lib/services/api';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramParentAccess from './TelegramParentAccess.svelte';
@@ -27,6 +16,7 @@
     import type { MembershipPermission } from '$lib/types/auth';
 
     const i18n = useI18n();
+    const familyActions = useFamilyActions();
 
     export let permission: MembershipPermission | null = null;
 
@@ -69,7 +59,7 @@
         if ($appStore.currentChildId == id) return;
         switching = true;
         switchError = '';
-        await switchChild(id);
+        await familyActions.selectChild(id);
         switching = false;
         if ($appStore.currentChildId != id) switchError = $i18n.t('app.telegram.family.switchError');
     }
@@ -82,27 +72,27 @@
         }
         addChildBusy = true;
         addChildError = '';
-        const result = await adminAddChild(name);
+        const result = await familyActions.addChild(name);
         addChildBusy = false;
         if (result) {
             newChildName = '';
             inviteOpen = false;
-            await refreshData();
+            await familyActions.refresh();
         } else {
             addChildError = $i18n.t('app.telegram.family.addChildError');
         }
     }
 
     async function loadInactive() {
-        inactiveChildren = await adminGetInactiveChildren();
+        inactiveChildren = await familyActions.getInactive();
     }
 
     async function applyStatus(child: Child, active: boolean) {
         statusBusy = true;
         statusError = '';
-        const ok = await adminSetChildActive(child.id, active);
+        const ok = await familyActions.setChildActive(child.id, active);
         if (ok) {
-            await refreshData();
+            await familyActions.refresh();
             await loadInactive();
             manageChild = null;
             confirmChild = null;
@@ -128,7 +118,7 @@
     }
 
     async function loadTelegram(childId: string | number) {
-        telegram = await adminGetChildTelegram(childId);
+        telegram = await familyActions.getTelegram(childId);
     }
 
     async function createInvite() {
@@ -137,7 +127,7 @@
         telegramError = '';
         inviteLink = '';
         copied = false;
-        const result = await adminCreateChildTelegramInvite(manageChild.id);
+        const result = await familyActions.createTelegramInvite(manageChild.id);
         inviteBusy = false;
         if (result) inviteLink = result.launchUrl;
         else telegramError = $i18n.t('app.telegram.family.telegramError');
@@ -156,14 +146,14 @@
         if (!manageChild) return;
         telegramBusy = true;
         telegramError = '';
-        const ok = await adminUnlinkChildTelegram(manageChild.id);
+        const ok = await familyActions.unlinkTelegram(manageChild.id);
         if (ok) await loadTelegram(manageChild.id);
         else telegramError = $i18n.t('app.telegram.family.telegramError');
         telegramBusy = false;
     }
 
     async function loadMagicLinkStatus(childId: string | number) {
-        const links = await adminGetChildMagicLinkStatus(childId);
+        const links = await familyActions.getMagicLinkStatus(childId);
         magicLinkPending = Array.isArray(links) && links.some((link) => (
             typeof link === 'object' && link !== null && 'status' in link
             && String(link.status).toLowerCase() === 'pending'
@@ -174,7 +164,7 @@
         if (!manageChild) return;
         magicLinkBusy = true;
         magicLinkError = '';
-        const result = await adminIssueChildMagicLink(manageChild.id);
+        const result = await familyActions.issueMagicLink(manageChild.id);
         magicLinkBusy = false;
         if (result?.link) {
             magicLink = result.link;
@@ -186,7 +176,7 @@
         if (!manageChild) return;
         magicLinkBusy = true;
         magicLinkError = '';
-        const ok = await adminRevokeChildMagicLink(manageChild.id);
+        const ok = await familyActions.revokeMagicLink(manageChild.id);
         magicLinkBusy = false;
         if (ok) {
             magicLink = '';

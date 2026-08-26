@@ -5,7 +5,6 @@
     import { appStore, type Task } from '$lib/stores/app';
     import type { ShopItem } from '$lib/telegram/stores/types';
     import { shopItems } from '$lib/telegram/stores/shopItems';
-    import { scheduleSave } from '$lib/services/save';
     import { confirmAction } from '$lib/services/confirm';
     import { moveGroup } from '$lib/telegram/services/groupOrder';
     import { getTelegramEntityIcon } from './telegramEntityIcons';
@@ -127,11 +126,12 @@
 
     function saveGroupIcon(name: string, icon: string | null) {
         const key = `earnit:group-icon:${kind}:${name}`;
-        if (icon) localStorage.setItem(key, icon);
-        else localStorage.removeItem(key);
+        void key;
+        void icon;
     }
     function loadGroupIcon(name: string): string | null {
-        return localStorage.getItem(`earnit:group-icon:${kind}:${name}`);
+        void name;
+        return null;
     }
 
     function moveUp(group: string) {

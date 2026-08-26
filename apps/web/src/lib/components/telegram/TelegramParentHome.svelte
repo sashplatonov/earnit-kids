@@ -2,9 +2,8 @@
     import { onMount } from 'svelte';
     import { appStore } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
-    import { adminAwardCoins } from '$lib/services/api';
-    import { applyDataSnapshot } from '$lib/services/bootstrap';
-    import { loadTelegramHistory } from '$lib/services/telegramActivity';
+    import { useFamilyActions } from '$lib/telegram/services/familyActions';
+    import { useHistoryActions } from '$lib/telegram/services/historyActions';
     import type { HistoryEntry } from '$lib/stores/app';
     import TelegramCoinAdjust from './TelegramCoinAdjust.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
@@ -12,6 +11,8 @@
     import TelegramRequestList from './TelegramRequestList.svelte';
 
     const i18n = useI18n();
+    const familyActions = useFamilyActions();
+    const historyActions = useHistoryActions();
 
     // EXPLAIN: Bot deep links (history/coins) open the exact home sub-context.
     export let initialContext = '';
@@ -33,7 +34,7 @@
         historyLoading = true;
         historyError = '';
         try {
-            const page = await loadTelegramHistory($appStore.currentChildId, reset ? 1 : historyPage + 1, 10);
+            const page = await historyActions.load($appStore.currentChildId, reset ? 1 : historyPage + 1, 10);
             history = reset ? page.items : [...history, ...page.items];
             historyPage = page.page;
             historyHasMore = page.items.length === page.limit;
@@ -51,10 +52,10 @@
         }
         coinBusy = true;
         coinError = '';
-        const result = await adminAwardCoins(childId, event.detail.amount, event.detail.note ?? undefined);
+        const result = await familyActions.awardCoins(childId, event.detail.amount, event.detail.note ?? undefined);
         coinBusy = false;
         if (result) {
-            applyDataSnapshot(result as Record<string, unknown>);
+            // The production response is applied by the workspace lifecycle owner.
             coinSheetOpen = false;
         } else {
             coinError = $i18n.t('app.telegram.home.coinError');

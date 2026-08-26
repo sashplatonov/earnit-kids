@@ -3,7 +3,7 @@
     import type { MessageKey } from '$lib/i18n';
     import type { ShopItem } from '$lib/telegram/stores/types';
     import { shopItems } from '$lib/telegram/stores/shopItems';
-    import { scheduleSave } from '$lib/services/save';
+    import { useRewardActions } from '$lib/telegram/services/rewardActions';
     import { buildShopPayload } from '$lib/telegram/services/shopPayload';
     import { getSemanticGraphic } from './semanticGraphics';
     import { getTelegramEntityIcon } from './telegramEntityIcons';
@@ -19,6 +19,7 @@
     export let onSaved: () => void = () => {};
 
     const i18n = useI18n();
+    const rewardActions = useRewardActions();
 
     let title = '';
     let groupName = '';
@@ -60,17 +61,7 @@
             icon,
         });
 
-        if (item) {
-            const nextItems = $shopItems.map((entry) => entry.id == item.id ? ({ ...entry, ...payload } as typeof entry) : entry);
-            shopItems.set(nextItems);
-        } else {
-            const newItem = { ...payload, id: Date.now() };
-            const nextItems = [...$shopItems, newItem as unknown as typeof $shopItems[number]];
-            shopItems.set(nextItems);
-        }
-        void scheduleSave();
-        onSaved();
-        onClose();
+        void rewardActions.saveReward(item, payload as unknown as Partial<ShopItem>).then(() => { onSaved(); onClose(); });
     }
 </script>
 

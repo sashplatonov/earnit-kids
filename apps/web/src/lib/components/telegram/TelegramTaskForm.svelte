@@ -2,7 +2,7 @@
     import { useI18n } from '$lib/i18n/context';
     import type { MessageKey } from '$lib/i18n';
     import { appStore, type Task } from '$lib/stores/app';
-    import { scheduleSave } from '$lib/services/save';
+    import { useTaskActions } from '$lib/telegram/services/taskActions';
     import { buildTaskPayload } from '$lib/services/taskPayload';
     import { getSemanticGraphic } from './semanticGraphics';
     import { getTelegramEntityIcon } from './telegramEntityIcons';
@@ -18,6 +18,7 @@
     export let onSaved: () => void = () => {};
 
     const i18n = useI18n();
+    const taskActions = useTaskActions();
 
     let title = '';
     let groupName = '';
@@ -63,17 +64,7 @@
             icon,
         });
 
-        if (task) {
-            appStore.setState({
-                tasks: $appStore.tasks.map((item) => item.id == task.id ? ({ ...item, ...payload } as typeof item) : item),
-            });
-        } else {
-            const newTask = { ...payload, id: Date.now() };
-            appStore.setState({ tasks: [...$appStore.tasks, newTask as unknown as typeof $appStore.tasks[number]] });
-        }
-        void scheduleSave();
-        onSaved();
-        onClose();
+        void taskActions.saveTask(task, payload as unknown as Partial<Task>).then(() => { onSaved(); onClose(); });
     }
 </script>
 

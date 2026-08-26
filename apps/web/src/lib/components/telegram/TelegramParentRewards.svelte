@@ -3,10 +3,8 @@
     import { useI18n } from '$lib/i18n/context';
     import type { ShopItem } from '$lib/telegram/stores/types';
     import { shopItems } from '$lib/telegram/stores/shopItems';
-    import { buyItem, saveChildGroupOrder } from '$lib/telegram/services/shopApi';
-    import { applyDataSnapshot, refreshData } from '$lib/services/bootstrap';
+    import { useRewardActions } from '$lib/telegram/services/rewardActions';
     import { confirmAction } from '$lib/services/confirm';
-    import { scheduleSave } from '$lib/services/save';
     import { orderGroups } from '$lib/telegram/services/groupOrder';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
@@ -23,6 +21,7 @@
     import { sortCatalogItems, type CatalogSortMode } from '$lib/telegram/services/catalogSort';
 
     const i18n = useI18n();
+    const rewardActions = useRewardActions();
 
     $: rawGroups = [...new Set($shopItems.map((item) => item.groupName).filter((group): group is string => Boolean(group)))];
     $: currentChild = $appStore.children.find((child) => String(child.id) === String($appStore.currentChildId)) ?? null;
@@ -64,7 +63,7 @@
         const nextActive = item.isActive === false;
         const nextItems = $shopItems.map((entry) => entry.id == item.id ? ({ ...entry, isActive: nextActive } as typeof entry) : entry);
         shopItems.set(nextItems);
-        void scheduleSave();
+        void rewardActions.persist();
     }
     async function remove(item: ShopItem) {
         closeMenu();
@@ -78,7 +77,7 @@
         if (!confirmed) return;
         const nextItems = $shopItems.filter((entry) => entry.id != item.id);
         shopItems.set(nextItems);
-        void scheduleSave();
+        void rewardActions.persist();
     }
     // EXPLAIN: Parent directly grants a reward to the current child, spending
     // EXPLAIN: coins without a child request. Reuses buyItem (POST /purchase).
@@ -96,19 +95,19 @@
             grantError = $i18n.t('app.telegram.rewards.notEnoughCoins');
             return;
         }
-        const result = await buyItem(item.id, $appStore.currentChildId) as Record<string, unknown> | null;
+        const result = await rewardActions.buy({ itemId: item.id, childId: $appStore.currentChildId }) as Record<string, unknown> | null;
         grantingId = null;
         if (result) {
-            applyDataSnapshot(result);
+            rewardActions.applySnapshot(result);
         } else {
             grantError = $i18n.t('app.telegram.rewards.grantError');
-            await refreshData();
+            await rewardActions.refresh();
         }
     }
     async function saveGroups(event: CustomEvent<{ groups: string[]; hiddenGroups: string[] }>) {
         if ($appStore.currentChildId == null) return;
         groupSaving = true;
-        const result = await saveChildGroupOrder($appStore.currentChildId, 'shop', event.detail.groups, event.detail.hiddenGroups);
+        const result = await rewardActions.saveGroups($appStore.currentChildId, event.detail.groups, event.detail.hiddenGroups);
         groupSaving = false;
         groupMessage = result.ok ? $i18n.t('app.telegram.tasks.groupsSaved') : $i18n.t('app.telegram.tasks.groupsSaveError');
         if (result.ok) {
@@ -128,7 +127,7 @@
             item.groupName === group ? { ...item, groupName: moveTo ?? null } as typeof item : item
         );
         shopItems.set(nextItems);
-        void scheduleSave();
+        void rewardActions.persist();
         const nextGroups = groups.filter((g) => g !== group);
         const nextHidden = hiddenGroups.filter((g) => g !== group);
         void saveGroups(new CustomEvent('save', { detail: { groups: nextGroups, hiddenGroups: nextHidden } }));

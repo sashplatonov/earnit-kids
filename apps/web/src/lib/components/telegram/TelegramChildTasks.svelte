@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { requestCoins, requestCoinsWithNote } from '$lib/services/api';
-    import { applyDataSnapshot, refreshData } from '$lib/services/bootstrap';
+    import { useTaskActions } from '$lib/telegram/services/taskActions';
     import { appStore } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
     import { buildTodayTaskSummary } from '$lib/services/todayTaskViewModel';
@@ -18,6 +17,7 @@
     import { getEffectiveGroupOrder, orderGroups } from '$lib/telegram/services/groupOrder';
 
     const i18n = useI18n();
+    const taskActions = useTaskActions();
 
     let selectedGroup = '';
     let sortMode: CatalogSortMode = 'group';
@@ -39,10 +39,10 @@
     async function submit(note: string | null) {
         if (!selected || busy) return;
         busy = true; status = 'pending'; message = $i18n.t('app.telegram.childTasks.sendingRequest');
-        const result = note ? await requestCoinsWithNote(selected.id, note, $appStore.currentChildId) : await requestCoins(selected.id, $appStore.currentChildId);
+        const result = await taskActions.request({ taskId: selected.id, note, childId: $appStore.currentChildId ?? undefined });
         busy = false;
-        if (result.ok) { if (result.data && typeof result.data === 'object') applyDataSnapshot(result.data as Record<string, unknown>); status = 'success'; message = $i18n.t('app.telegram.childTasks.requestSent'); selected = null; }
-        else if (result.errorCode === 'STALE_STATE') { await refreshData(); status = 'stale'; message = $i18n.t('app.telegram.childTasks.taskChanged'); selected = null; }
+        if (result.ok) { if (result.data && typeof result.data === 'object') taskActions.applySnapshot(result.data as Record<string, unknown>); status = 'success'; message = $i18n.t('app.telegram.childTasks.requestSent'); selected = null; }
+        else if (result.errorCode === 'STALE_STATE') { await taskActions.refresh(); status = 'stale'; message = $i18n.t('app.telegram.childTasks.taskChanged'); selected = null; }
         else { status = 'error'; message = result.error; selected = null; }
     }
 </script>
