@@ -20,7 +20,7 @@ Make the family language an explicit family-admin setting in both the desktop wo
 
 ## TASK-FLANG-001: Move the family language control into Family settings
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** -
 

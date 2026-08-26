@@ -25,7 +25,7 @@
             <LocaleSwitcher familyManaged />
         </main>
     {:else}
-        <WorkspaceRoleResolver role={data.role} publicOrigin={data.publicOrigin} allowPreview showBrowserPush={false} showSessionActions showFamilyLocale familyAdmin={data.session?.permission === 'family_admin'} />
+        <WorkspaceRoleResolver role={data.role} publicOrigin={data.publicOrigin} allowPreview showBrowserPush={false} showSessionActions />
     {/if}
 
 <style>

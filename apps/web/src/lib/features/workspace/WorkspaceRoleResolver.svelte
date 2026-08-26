@@ -10,8 +10,6 @@
     export let showBrowserPush = true;
     export let showSessionActions = false;
     export let showAccessPanel = false;
-    export let showFamilyLocale = false;
-    export let familyAdmin = false;
     let viewAsChild = false;
 
     function showChildPreview() {
@@ -20,10 +18,10 @@
 </script>
 
 {#if resolveWorkspaceRole(role) === 'parent' && !viewAsChild}
-    <ParentWorkspaceShell {publicOrigin} {showAccessPanel} {showSessionActions} {showFamilyLocale} {familyAdmin} onViewAsChild={showChildPreview} />
+    <ParentWorkspaceShell {publicOrigin} {showAccessPanel} {showSessionActions} onViewAsChild={showChildPreview} />
 {:else if viewAsChild}
-    <ChildWorkspaceShell {publicOrigin} {showSessionActions} {showFamilyLocale} onExitPreview={() => viewAsChild = false} />
+    <ChildWorkspaceShell {publicOrigin} {showSessionActions} onExitPreview={() => viewAsChild = false} />
 {:else}
-    <ChildWorkspaceShell {publicOrigin} {showSessionActions} {showFamilyLocale} />
+    <ChildWorkspaceShell {publicOrigin} {showSessionActions} />
 {/if}
 {#if showBrowserPush}<BrowserPushControls />{/if}

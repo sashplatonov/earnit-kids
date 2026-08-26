@@ -3,6 +3,7 @@
     import { appStore, type Child } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
     import { switchChild, refreshData } from '$lib/services/bootstrap';
+    import LocaleSwitcher from '$lib/components/LocaleSwitcher.svelte';
     import {
         adminAddChild,
         adminGetInactiveChildren,
@@ -36,6 +37,7 @@
     let emailSettingsOpen = false;
     let limitsOpen = false;
     let importOpen = false;
+    let familyLocaleOpen = false;
     let limitsChild: Child | null = null;
     let switching = false;
     let switchError = '';
@@ -257,6 +259,20 @@
 
     <h2 class="section-title">{$i18n.t('app.telegram.family.familySettings')}</h2>
     <div class="settings">
+        {#if $appStore.isAdmin}
+            <div class="setting-group">
+                <button class="setting" type="button" aria-expanded={familyLocaleOpen} aria-controls="family-language-panel" on:click={() => familyLocaleOpen = !familyLocaleOpen}>
+                    <span class="setting-icon"><TelegramIcon name="languages" size={20} label={$i18n.t('app.telegram.family.familyLanguage')} /></span>
+                    <span class="grow"><span class="setting-title">{$i18n.t('app.telegram.family.familyLanguage')}</span><span class="setting-meta">{$i18n.t('app.telegram.family.familyLanguageMeta', { locale: $i18n.t(`common.locale.${$i18n.locale}`) })}</span></span>
+                    <TelegramIcon name="chevronDown" size={18} label={$i18n.t('common.actions.open')} />
+                </button>
+                {#if familyLocaleOpen}
+                    <div id="family-language-panel" class="family-locale-panel">
+                        <LocaleSwitcher familyManaged compact />
+                    </div>
+                {/if}
+            </div>
+        {/if}
         <button class="setting" type="button" on:click={() => accessOpen = true}><span class="setting-icon"><TelegramIcon name="shield" size={20} label={$i18n.t('app.telegram.parents.title')} /></span><span class="grow">{$i18n.t('app.telegram.parents.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         <button class="setting" type="button" on:click={() => myAccountOpen = true}><span class="setting-icon"><TelegramIcon name="users" size={20} label={$i18n.t('app.telegram.myAccount.title')} /></span><span class="grow">{$i18n.t('app.telegram.myAccount.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         <button class="setting" type="button" on:click={() => notificationsOpen = true}><span class="setting-icon"><TelegramIcon name="bell" size={20} label={$i18n.t('app.telegram.family.notifications')} /></span><span class="grow">{$i18n.t('app.telegram.family.notifications')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
@@ -372,6 +388,11 @@
     .setting:last-child { border-bottom:0; }
     button.setting { cursor:pointer; }
     .setting-icon { display:grid; place-items:center; width:2.1rem; height:2.1rem; flex:0 0 auto; border-radius:.6rem; background:#eef0ff; color:#5b63e9; }
+    .setting-group { border-bottom:1px solid #edf0f5; }
+    .setting-group > .setting { border-bottom:0; }
+    .family-locale-panel { padding:.35rem 0 .65rem 2.7rem; overflow:hidden; }
+    .family-locale-panel :global(.locale-switcher) { display:flex; flex-wrap:wrap; justify-content:space-between; }
+    .family-locale-panel :global(.locale-switcher__options) { flex-wrap:wrap; }
     .setting .grow { font-weight:600; }
     .muted { color:#66718a; }
     .error { color:#a33b3b; }

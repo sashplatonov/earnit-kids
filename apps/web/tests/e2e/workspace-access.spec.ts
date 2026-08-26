@@ -87,4 +87,21 @@ test('an authenticated child sees the child workspace and browser sign out', asy
 
     await expect(page.locator('.tabs-shell button.logout')).toBeVisible();
     await expect(page.locator('.child-workspace')).toBeVisible();
+    await expect(page.getByRole('button', { name: /Family language|Язык семьи/ })).toHaveCount(0);
+});
+
+test('an authenticated family admin sees language only inside Family settings', async ({ page }) => {
+    await authenticate(page, 'parent');
+    await page.route('**/api/data**', (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ isAdmin: true, role: 'parent', childId: 10, children: [{ id: 10, nickname: 'Alex', balance: 0 }], tasks: [], shop: [], requests: [] }),
+    }));
+    await page.route('**/api/base-data', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ tasks: [], products: [] }) }));
+    await page.route('**/api/data/details**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
+    await page.goto('/workspace');
+
+    await page.getByRole('tab', { name: /Family|Семья/ }).click();
+    await expect(page.getByRole('button', { name: /Family language|Язык семьи/ })).toBeVisible();
+    await expect(page.locator('.workspace-parent > .family-locale')).toHaveCount(0);
 });

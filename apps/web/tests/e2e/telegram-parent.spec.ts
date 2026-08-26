@@ -68,6 +68,64 @@ test('localized coin adjustment keeps the family number format on a narrow viewp
     }
 });
 
+test('family admins change the family language from Family settings', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.addInitScript(() => {
+        (window as Window & { Telegram?: unknown }).Telegram = {
+            WebApp: { initData: 'signed-init-data', ready: () => {}, expand: () => {} },
+        };
+    });
+
+    let familyLocale: 'en' | 'ru' = 'en';
+    await page.route('**/api/telegram/auth/exchange', (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ role: 'parent', familyId: 'family-1', locale: familyLocale }),
+    }));
+    await page.route('**/api/base-data', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ tasks: [], products: [] }) }));
+    await page.route('**/api/data**', (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ isAdmin: true, balance: 0, childId: 10, children: [{ id: 10, nickname: 'Alex', balance: 0 }], tasks: [], shop: [], requests: [] }),
+    }));
+    await page.route('**/api/data/details**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [], history: [], friends: [] }) }));
+    let updateCount = 0;
+    await page.route('**/api/family/locale', async (route) => {
+        updateCount += 1;
+        if (updateCount === 1) {
+            await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'temporary failure' }) });
+            return;
+        }
+        familyLocale = 'ru';
+        await route.fulfill({ status: 204 });
+    });
+
+    await page.goto('/telegram');
+    await page.getByRole('tab', { name: /Family|Семья/ }).click();
+    const languageEntry = page.getByRole('button', { name: /Family language|Язык семьи/ });
+    await expect(languageEntry).toBeVisible();
+    await expect(languageEntry).toHaveAttribute('aria-expanded', 'false');
+    await languageEntry.click();
+    await expect(languageEntry).toHaveAttribute('aria-expanded', 'true');
+    const russianOption = page.getByRole('button', { name: /Switch to Russian|Переключить на русский/i });
+    await expect(russianOption).toBeVisible();
+    await russianOption.click();
+    await expect(page.getByRole('alert')).toBeVisible();
+    const retry = page.getByRole('button', { name: /Try again|Повторить/ });
+    await expect(retry).toBeFocused();
+    await retry.click();
+    await expect(page).toHaveURL(/\/telegram/);
+    await page.getByRole('tab', { name: /Family|Семья/ }).click();
+    await expect(page.getByRole('heading', { name: /Семья|Family/ })).toBeVisible();
+    expect(updateCount).toBe(2);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+    for (const button of await page.locator('.family-locale-panel button').all()) {
+        const rect = await button.boundingBox();
+        expect(rect?.width).toBeGreaterThanOrEqual(44);
+        expect(rect?.height).toBeGreaterThanOrEqual(44);
+    }
+});
+
 async function expectCompactList(list: import('@playwright/test').Locator, count: number) {
     await expect(list).toBeVisible();
     await expect(list.locator(':scope > .entity-row')).toHaveCount(count);

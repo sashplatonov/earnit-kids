@@ -170,6 +170,8 @@ export const appMessages = {
             switchError: 'Не удалось переключить ребёнка. Попробуйте ещё раз.',
             chooseChildFirst: 'Сначала выберите ребёнка.',
             familySettings: 'Настройки семьи',
+            familyLanguage: 'Язык семьи',
+            familyLanguageMeta: 'Для всех членов семьи · Сейчас: {locale}',
             rolesAndAccess: 'Роли и доступы',
             invitations: 'Приглашения',
             notifications: 'Уведомления',

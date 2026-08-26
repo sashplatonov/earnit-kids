@@ -170,6 +170,8 @@ export const appMessages = {
             switchError: 'Could not switch child. Try again.',
             chooseChildFirst: 'Choose a child first.',
             familySettings: 'Family settings',
+            familyLanguage: 'Family language',
+            familyLanguageMeta: 'Used by everyone · Current: {locale}',
             rolesAndAccess: 'Roles and access',
             invitations: 'Invitations',
             notifications: 'Notifications',
