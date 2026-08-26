@@ -204,7 +204,7 @@ git commit -m "fix(auth): keep failure redirects canonical"
 
 ## PSS-REV-003: Emit absolute canonical and alternate public metadata
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** -
 

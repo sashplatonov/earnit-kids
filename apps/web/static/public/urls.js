@@ -1,5 +1,6 @@
 export const PUBLIC_LOCALES = ['en', 'ru'];
 export const DEFAULT_PUBLIC_LOCALE = 'en';
+export const DEFAULT_PUBLIC_ORIGIN = 'http://localhost:4174';
 
 const PUBLIC_PAGES = [
     { key: 'index', englishPath: '/', artifact: 'index.html' },
@@ -14,6 +15,47 @@ function normalizeLocale(value) {
     if (typeof value !== 'string') return null;
     const locale = value.trim().toLowerCase();
     return PUBLIC_LOCALES.includes(locale) ? locale : null;
+}
+
+export function resolvePublicOrigin(rawOrigin, { production = false } = {}) {
+    const value = typeof rawOrigin === 'string' && rawOrigin.trim() ? rawOrigin.trim() : null;
+    if (!value) {
+        if (production) throw new Error('APP_URL is required for a production public-site build');
+        return DEFAULT_PUBLIC_ORIGIN;
+    }
+
+    try {
+        const url = new URL(value);
+        if (!['http:', 'https:'].includes(url.protocol) || !url.hostname) throw new Error('unsupported origin');
+        return url.origin;
+    } catch {
+        throw new Error(`APP_URL must be a valid HTTP(S) URL: ${value}`);
+    }
+}
+
+function preferredPublicLocale(acceptLanguage) {
+    if (typeof acceptLanguage !== 'string') return DEFAULT_PUBLIC_LOCALE;
+
+    const preferences = acceptLanguage.split(',')
+        .map((part, index) => {
+            const [range, ...parameters] = part.trim().toLowerCase().split(';');
+            const qualityParameter = parameters.find((parameter) => parameter.trim().startsWith('q='));
+            const quality = qualityParameter ? Number(qualityParameter.trim().slice(2)) : 1;
+            return {
+                range: range.trim(),
+                quality: Number.isFinite(quality) ? Math.max(0, Math.min(1, quality)) : 0,
+                index,
+            };
+        })
+        .filter(({ range, quality }) => range && quality > 0)
+        .sort((left, right) => right.quality - left.quality || left.index - right.index);
+
+    const supportedPreference = preferences.find(({ range }) => {
+        const language = range.split('-')[0];
+        return PUBLIC_LOCALES.includes(language);
+    });
+
+    return supportedPreference?.range.split('-')[0] || DEFAULT_PUBLIC_LOCALE;
 }
 
 export function publicDocument(pathname, locale = DEFAULT_PUBLIC_LOCALE) {
@@ -52,26 +94,41 @@ export function canonicalPublicPath(pathname, locale) {
     return publicDocument(pathname, locale)?.path || null;
 }
 
-export function normalizePublicRequest(input) {
+export function normalizePublicRequest(input, { acceptLanguage } = {}) {
     const url = input instanceof URL ? new URL(input) : new URL(input, 'https://example.test');
     const current = publicDocument(url.pathname);
     if (!current || (url.pathname === '/' && url.searchParams.has('tgWebAppStartParam'))) {
-        return { url, redirect: null, document: current };
+        return { url, redirect: null, document: current, vary: false };
     }
 
-    const requestedLocale = normalizeLocale(url.searchParams.get('lang'));
-    if (!requestedLocale) return { url, redirect: null, document: current };
+    const queryLocale = url.searchParams.get('lang');
+    const requestedLocale = normalizeLocale(queryLocale);
+    if (queryLocale !== null && !requestedLocale) {
+        return { url, redirect: null, document: current, vary: false };
+    }
 
-    const target = publicDocument(current.englishPath, requestedLocale);
+    const negotiatedLocale = requestedLocale || (
+        current.locale === DEFAULT_PUBLIC_LOCALE ? preferredPublicLocale(acceptLanguage) : null
+    );
+    if (!negotiatedLocale || (!requestedLocale && negotiatedLocale === current.locale)) {
+        return { url, redirect: null, document: current, vary: !requestedLocale && current.locale === DEFAULT_PUBLIC_LOCALE && typeof acceptLanguage === 'string' };
+    }
+
+    const target = publicDocument(current.englishPath, negotiatedLocale);
     url.pathname = target.path;
     url.searchParams.delete('lang');
-    return { url, redirect: url.toString(), document: target };
+    return {
+        url,
+        redirect: url.toString(),
+        document: target,
+        vary: !requestedLocale,
+    };
 }
 
 export function publicLanguageHref(pathname, locale, origin = 'https://example.test') {
     const path = canonicalPublicPath(pathname.startsWith('/ru/') ? pathname.slice(3) || '/' : pathname, locale);
     if (!path) return null;
-    return new URL(path, origin).toString();
+    return new URL(path, resolvePublicOrigin(origin)).toString();
 }
 
 export { PUBLIC_PAGES };

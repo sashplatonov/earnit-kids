@@ -6,6 +6,9 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        APP_URL: ${APP_URL}
+        DEPLOYMENT_ENV: ${DEPLOYMENT_ENV:-production}
     env_file:
       - .env
     environment:

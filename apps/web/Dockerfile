@@ -3,11 +3,14 @@
 FROM node:24-alpine AS build
 WORKDIR /workspace/web
 
+ARG APP_URL
+ARG DEPLOYMENT_ENV=production
+
 COPY apps/web/package*.json ./
 RUN --mount=type=cache,target=/root/.npm,sharing=locked npm ci
 
 COPY apps/web ./
-RUN npm run build && npm prune --omit=dev --ignore-scripts
+RUN APP_URL="$APP_URL" DEPLOYMENT_ENV="$DEPLOYMENT_ENV" npm run build && npm prune --omit=dev --ignore-scripts
 
 FROM node:24-alpine
 WORKDIR /workspace/web

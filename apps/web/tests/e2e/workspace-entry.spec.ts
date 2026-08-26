@@ -10,14 +10,15 @@ test.use({ locale: 'en-US' });
 
 async function expectPublicMetadata(page: Page, locale: 'en' | 'ru', path: string, title: string, body: string) {
     const expectedPath = `${locale === 'ru' ? '/ru' : ''}${path}`;
+    const publicOrigin = new URL(page.url()).origin;
     await expect(page).toHaveURL(new RegExp(`${expectedPath.replaceAll('/', '\\/')}$`));
     await expect(page.locator('html')).toHaveAttribute('lang', locale);
     await expect(page).toHaveTitle(new RegExp(`^${title} - EarnIt Kids$`));
     await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /.+/);
-    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', expectedPath);
-    await expect(page.locator('link[rel="alternate"][hreflang="en"]')).toHaveAttribute('href', path);
-    await expect(page.locator('link[rel="alternate"][hreflang="ru"]')).toHaveAttribute('href', `/ru${path}`);
-    await expect(page.locator('link[rel="alternate"][hreflang="x-default"]')).toHaveAttribute('href', path);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `${publicOrigin}${expectedPath}`);
+    await expect(page.locator('link[rel="alternate"][hreflang="en"]')).toHaveAttribute('href', `${publicOrigin}${path}`);
+    await expect(page.locator('link[rel="alternate"][hreflang="ru"]')).toHaveAttribute('href', `${publicOrigin}/ru${path}`);
+    await expect(page.locator('link[rel="alternate"][hreflang="x-default"]')).toHaveAttribute('href', `${publicOrigin}${path}`);
     await expect(page.getByText(body, { exact: false }).first()).toBeVisible();
 }
 
@@ -119,10 +120,11 @@ test('canonical public documents expose localized metadata before JavaScript run
             const html = await response.text();
             expect(html).toContain(`<html lang="${locale}">`);
             expect(html).toContain(`<title>${title[index]} - EarnIt Kids</title>`);
-            expect(html).toContain(`<link rel="canonical" href="${urlPath}">`);
-            expect(html).toContain(`<link rel="alternate" hreflang="en" href="${path}">`);
-            expect(html).toContain(`<link rel="alternate" hreflang="ru" href="/ru${path}">`);
-            expect(html).toContain(`<link rel="alternate" hreflang="x-default" href="${path}">`);
+            const publicOrigin = new URL(response.url()).origin;
+            expect(html).toContain(`<link rel="canonical" href="${publicOrigin}${urlPath}">`);
+            expect(html).toContain(`<link rel="alternate" hreflang="en" href="${publicOrigin}${path}">`);
+            expect(html).toContain(`<link rel="alternate" hreflang="ru" href="${publicOrigin}/ru${path}">`);
+            expect(html).toContain(`<link rel="alternate" hreflang="x-default" href="${publicOrigin}${path}">`);
             expect(html).toContain(body);
             expect(html).not.toMatch(/<link rel="canonical" href="\/public\//);
             expect(html).not.toMatch(/<link rel="alternate"[^>]+href="\/public\//);

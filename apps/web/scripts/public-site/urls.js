@@ -1,5 +1,6 @@
 export const PUBLIC_LOCALES = ['en', 'ru'];
 export const DEFAULT_PUBLIC_LOCALE = 'en';
+export const DEFAULT_PUBLIC_ORIGIN = 'http://localhost:4174';
 
 const PUBLIC_PAGES = [
     { key: 'index', englishPath: '/', artifact: 'index.html' },
@@ -14,6 +15,22 @@ function normalizeLocale(value) {
     if (typeof value !== 'string') return null;
     const locale = value.trim().toLowerCase();
     return PUBLIC_LOCALES.includes(locale) ? locale : null;
+}
+
+export function resolvePublicOrigin(rawOrigin, { production = false } = {}) {
+    const value = typeof rawOrigin === 'string' && rawOrigin.trim() ? rawOrigin.trim() : null;
+    if (!value) {
+        if (production) throw new Error('APP_URL is required for a production public-site build');
+        return DEFAULT_PUBLIC_ORIGIN;
+    }
+
+    try {
+        const url = new URL(value);
+        if (!['http:', 'https:'].includes(url.protocol) || !url.hostname) throw new Error('unsupported origin');
+        return url.origin;
+    } catch {
+        throw new Error(`APP_URL must be a valid HTTP(S) URL: ${value}`);
+    }
 }
 
 function preferredPublicLocale(acceptLanguage) {
@@ -111,7 +128,7 @@ export function normalizePublicRequest(input, { acceptLanguage } = {}) {
 export function publicLanguageHref(pathname, locale, origin = 'https://example.test') {
     const path = canonicalPublicPath(pathname.startsWith('/ru/') ? pathname.slice(3) || '/' : pathname, locale);
     if (!path) return null;
-    return new URL(path, origin).toString();
+    return new URL(path, resolvePublicOrigin(origin)).toString();
 }
 
 export { PUBLIC_PAGES };

@@ -2,7 +2,7 @@ import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { messages } from './i18n.js';
-import { PUBLIC_LOCALES, PUBLIC_PAGES } from './urls.js';
+import { PUBLIC_LOCALES, PUBLIC_PAGES, publicLanguageHref, resolvePublicOrigin } from './urls.js';
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectDirectory = path.resolve(scriptDirectory, '../..');
@@ -10,6 +10,9 @@ const templatePath = path.join(scriptDirectory, 'template.html');
 const pagesDirectory = path.join(scriptDirectory, 'pages');
 const outputDirectory = path.join(projectDirectory, 'static/public');
 const template = await readFile(templatePath, 'utf8');
+const publicOrigin = resolvePublicOrigin(process.env.APP_URL, {
+    production: process.env.DEPLOYMENT_ENV === 'production',
+});
 
 const escapeAttribute = (value) => String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 const replaceAll = (source, values) => Object.entries(values).reduce((result, [key, value]) => result.replaceAll(`{{${key}}}`, String(value)), source);
@@ -30,14 +33,13 @@ async function generateLocale(locale) {
         const fragment = await readFile(path.join(pagesDirectory, `${page.key}.html`), 'utf8');
         const localizedContent = fragment.replaceAll(`{{${page.key}.content}}`, messages[locale].pages[page.key].content);
         const englishPath = page.englishPath;
-        const localizedPath = locale === 'ru' ? `/ru${englishPath}` : englishPath;
         const output = replaceAll(template, {
             LANG: locale,
             TITLE: escapeAttribute(messages[locale].pageTitles[page.key]),
             DESCRIPTION: escapeAttribute(messages[locale].descriptions[page.key]),
-            CANONICAL: localizedPath,
-            EN_URL: englishPath,
-            RU_URL: `/ru${englishPath}`,
+            CANONICAL: publicLanguageHref(englishPath, locale, publicOrigin),
+            EN_URL: publicLanguageHref(englishPath, 'en', publicOrigin),
+            RU_URL: publicLanguageHref(englishPath, 'ru', publicOrigin),
             HOME_URL: locale === 'ru' ? '/ru/' : '/',
             NAV_LABEL: escapeAttribute(messages[locale].navLabel),
             BRAND_LABEL: escapeAttribute(messages[locale].brandLabel),

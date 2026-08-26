@@ -11,6 +11,7 @@ import {
     resolveLocale,
     withLanguage,
 } from '../../scripts/public-site/i18n.js';
+import { resolvePublicOrigin } from '../../scripts/public-site/urls.js';
 
 describe('static public-site i18n', () => {
     it('normalizes supported language variants and rejects unsupported values', () => {
@@ -57,11 +58,19 @@ describe('static public-site i18n', () => {
                 expect(html).toContain(locale === 'ru' ? 'Награды' : 'Rewards');
                 expect(html).toMatch(/<title>[^<]+ - EarnIt Kids<\/title>/);
                 expect(html).toMatch(/<meta name="description" content="[^"]+">/);
-                expect(html).not.toMatch(/<link rel="canonical" href="\/public\//);
+                expect(html).toMatch(/<link rel="canonical" href="https:\/\/example\.test\/(?:ru\/)?[^"]*">/);
+                expect(html.match(/<link rel="alternate"[^>]+href="https:\/\/example\.test\/[^"]*">/g)).toHaveLength(3);
                 expect(html).not.toMatch(/<link rel="alternate"[^>]+href="\/public\//);
                 expect(html).not.toContain('?lang=');
             }
         }
+    });
+
+    it('normalizes the configured public origin and rejects invalid production input', () => {
+        expect(resolvePublicOrigin('https://example.test///app?tab=1')).toBe('https://example.test');
+        expect(resolvePublicOrigin(undefined)).toBe('http://localhost:4174');
+        expect(() => resolvePublicOrigin(undefined, { production: true })).toThrow(/APP_URL is required/);
+        expect(() => resolvePublicOrigin('not-an-url', { production: true })).toThrow(/valid HTTP/);
     });
 
     it('adds language only to same-origin public links', () => {
