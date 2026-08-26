@@ -16,6 +16,9 @@ yarn-error.log*
 pnpm-debug.log*
 **/node_modules/
 
+# Removed Capacitor mobile workspace; keep stale local installs out of the repo.
+mobile/
+
 # Builds / outputs
 dist/
 build/
