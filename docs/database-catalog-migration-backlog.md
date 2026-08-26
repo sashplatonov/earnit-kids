@@ -234,7 +234,7 @@ git commit -m "refactor(backend): serve catalog translations from database"
 
 ## CAT-DB-007: Retire V53 language columns after rollout
 
-**Status:** TODO
+**Status:** IN_PROGRESS
 **Priority:** P2
 **Depends on:** CAT-DB-006
 
@@ -280,6 +280,15 @@ cd apps/backend && ./mvnw -B -ntp -Dtest=CatalogItemTranslationMigrationTest,Loc
 git add apps/backend/src/main/resources/db/migration/V55__drop_legacy_catalog_locale_columns.sql apps/backend/src/test/java/com/sashplatonov/earnit/kids/family/infrastructure/persistence/CatalogItemTranslationMigrationTest.java
 git commit -m "refactor(backend): remove legacy catalog locale columns"
 ```
+
+### CHECKPOINT
+
+- completed: Confirmed CAT-DB-007 scope and verified that the repository contains no production rollout proof for CAT-DB-006.
+- remaining: Record proof that no running production binary reads V53 locale columns; then create V55, add PostgreSQL/H2 migration coverage, verify, mark DONE, and commit atomically.
+- changed files: `docs/database-catalog-migration-backlog.md`, `docs/.backlog-execution-state.md`.
+- current test/verification status: Not run; the destructive migration is intentionally not created before the required rollout gate is satisfied.
+- confirmed blockers: Production rollout proof is unavailable in the workspace; local tests cannot establish this operational fact.
+- next exact action: Provide or record the CAT-DB-006 production deployment and read-path verification, then resume CAT-DB-007 in a fresh thread.
 
 ## Final quality gates
 
