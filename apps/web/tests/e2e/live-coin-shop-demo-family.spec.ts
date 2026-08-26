@@ -1,12 +1,10 @@
 import { expect, test } from '@playwright/test';
+import { captureApiRequests, expectNoApiRequests } from './live-coin-shop-demo.helpers';
 
 test.use({ locale: 'en-US' });
 
 test('family management stays live and external controls remain isolated', async ({ page }) => {
-    const apiRequests: string[] = [];
-    page.on('request', (request) => {
-        if (new URL(request.url()).pathname.startsWith('/api/')) apiRequests.push(request.url());
-    });
+    const apiRequests = captureApiRequests(page);
 
     await page.goto('/demo');
     await page.getByRole('tab', { name: 'Family' }).click();
@@ -34,5 +32,5 @@ test('family management stays live and external controls remain isolated', async
     await page.getByRole('tab', { name: 'Family' }).click();
     await page.locator('.settings > .setting').first().click();
     await expect(page.getByRole('alert')).toContainText('unavailable in the demo');
-    expect(apiRequests).toEqual([]);
+    expectNoApiRequests(apiRequests);
 });

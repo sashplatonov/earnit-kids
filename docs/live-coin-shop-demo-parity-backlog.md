@@ -357,7 +357,7 @@ git commit -m "feat(i18n): localize live demo family workspace"
 
 ## LCDP-007: Доказать UI parity, accessibility и полную network isolation в браузере
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** LCDP-004, LCDP-005, LCDP-006
 

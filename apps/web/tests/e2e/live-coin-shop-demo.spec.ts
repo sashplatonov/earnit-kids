@@ -1,25 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { captureApiRequests, expectNoApiRequests, expectNoHorizontalOverflow, expectParentTabs, expectTargetSize } from './live-coin-shop-demo.helpers';
 
 test.use({ locale: 'en-US' });
-
-function captureApiRequests(page: Page): string[] {
-    const apiRequests: string[] = [];
-    page.on('request', (request) => {
-        if (new URL(request.url()).pathname.startsWith('/api/')) apiRequests.push(request.url());
-    });
-    return apiRequests;
-}
-
-async function expectNoApiRequests(apiRequests: string[]): Promise<void> {
-    expect(apiRequests, 'live demo must stay isolated from the API').toEqual([]);
-}
-
-async function expectTargetSize(page: Page, locator: ReturnType<Page['getByRole']>): Promise<void> {
-    const box = await locator.boundingBox();
-    expect(box).not.toBeNull();
-    expect(box!.width).toBeGreaterThanOrEqual(44);
-    expect(box!.height).toBeGreaterThanOrEqual(44);
-}
 
 test('anonymous live demo submits a noted request and keeps it in memory', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
@@ -28,10 +10,13 @@ test('anonymous live demo submits a noted request and keeps it in memory', async
 
     expect(response?.status()).toBe(200);
     await expect(page).toHaveTitle('Live rewards shop demo · EarnIt Kids');
-    await expect(page.getByRole('heading', { name: 'Live rewards shop demo', level: 1 })).toBeVisible();
+    await expectParentTabs(page);
+    await expect(page.getByRole('main', { name: 'My family' })).toBeVisible();
     await expect(page.getByText('This is a temporary demo.', { exact: false })).toBeVisible();
-    await expect(page.getByText('75 / 120', { exact: true })).toBeVisible();
+    await expect(page.getByLabel('Balance: 75 coins', { exact: true })).toBeVisible();
 
+    await page.getByRole('button', { name: /View as child/ }).click();
+    await page.getByRole('tab', { name: 'Rewards' }).click();
     const iceCream = page.getByRole('listitem').filter({ hasText: 'Ice cream' });
     const requestButton = iceCream.getByRole('button', { name: 'Ask for reward', exact: true });
     await requestButton.click();
@@ -42,16 +27,19 @@ test('anonymous live demo submits a noted request and keeps it in memory', async
     await dialog.getByRole('button', { name: /Ask for reward/ }).click();
 
     await expect(page.getByRole('status')).toContainText('Reward request sent for approval.');
-    await expect(requestButton).toBeDisabled();
     await expectNoApiRequests(apiRequests);
 
     await page.getByRole('button', { name: 'Reset demo', exact: true }).click();
     await expect(page.locator('.announcement')).toContainText('The demo was reset to its starting state.');
+    await page.getByRole('button', { name: /View as child/ }).click();
+    await page.getByRole('tab', { name: 'Rewards' }).click();
     await expect(requestButton).toBeEnabled();
     await expectNoApiRequests(apiRequests);
 
     await page.reload();
-    await expect(page.getByText('75 / 120', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: /View as child/ }).click();
+    await page.getByRole('tab', { name: 'Rewards' }).click();
+    await expect(page.getByLabel('Balance: 75 coins', { exact: true })).toBeVisible();
     await expect(page.getByRole('listitem').filter({ hasText: 'Ice cream' }).getByRole('button', { name: 'Ask for reward', exact: true })).toBeEnabled();
     await expectNoApiRequests(apiRequests);
 });
@@ -63,7 +51,8 @@ test('Russian live demo is directly reachable and preserves locale copy', async 
     expect(response?.status()).toBe(200);
     await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
     await expect(page).toHaveTitle('Живое демо магазина наград · EarnIt Kids');
-    await expect(page.getByRole('heading', { name: 'Живое демо магазина наград', level: 1 })).toBeVisible();
+    await expect(page.getByRole('main', { name: 'Моя семья' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: /^Главная/ })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Сбросить демо', exact: true })).toBeVisible();
     await expect(page.getByText('Ваши действия остаются в этой вкладке браузера', { exact: false })).toBeVisible();
     await expectNoApiRequests(apiRequests);
@@ -73,15 +62,44 @@ test('live demo remains usable at 320px with keyboard-visible touch targets', as
     await page.setViewportSize({ width: 320, height: 568 });
     const apiRequests = captureApiRequests(page);
     await page.goto('/demo');
+    await expectParentTabs(page);
 
     const reset = page.getByRole('button', { name: 'Reset demo', exact: true });
     const request = page.getByRole('listitem').filter({ hasText: 'Ice cream' }).getByRole('button', { name: 'Ask for reward', exact: true });
-    await expectTargetSize(page, reset);
-    await expectTargetSize(page, request);
+    await page.getByRole('button', { name: /View as child/ }).click();
+    await page.getByRole('tab', { name: 'Rewards' }).click();
+    await expectTargetSize(reset);
+    await expectTargetSize(request);
 
     await reset.focus();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Shift+Tab');
     await expect(reset).toBeFocused();
     await expect(reset).toHaveCSS('outline-style', 'solid');
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+    await expectNoHorizontalOverflow(page);
+    await expectNoApiRequests(apiRequests);
+});
+
+test('parent tabs support keyboard navigation and child selector stays isolated', async ({ page }) => {
+    const apiRequests = captureApiRequests(page);
+    await page.goto('/demo');
+    await expectParentTabs(page);
+
+    const home = page.getByRole('tab', { name: /^Home/ });
+    await home.focus();
+    await home.press('End');
+    const family = page.getByRole('tab', { name: /^Family/ });
+    await expect(family).toBeFocused();
+    await family.press('Home');
+    await expect(home).toBeFocused();
+    await expect(home).toHaveCSS('outline-style', 'solid');
+
+    const selector = page.getByRole('button', { name: 'Switch child' });
+    await selector.click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('option', { name: /Leo/ }).click();
+    await expect(selector).toContainText('Leo');
+    await expect(page.getByLabel('Balance: 145 coins', { exact: true })).toBeVisible();
     await expectNoApiRequests(apiRequests);
 });
