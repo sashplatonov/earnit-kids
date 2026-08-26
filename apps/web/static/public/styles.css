@@ -98,24 +98,6 @@ h3{font-size:19px}
 .faq summary{font-weight:800;cursor:pointer}
 .faq p{color:var(--muted);margin:9px 0 0}
 
-.miniapp-preview-section{padding-top:24px}
-.miniapp-preview-head{margin-bottom:9px}
-.miniapp-preview-intro{margin:6px 0 0!important;max-width:650px!important}
-.miniapp-carousel{position:relative;width:min(100%,520px);margin:0 auto;padding:2px 46px 0}
-.carousel-viewport{overflow:hidden}
-.carousel-track{display:flex;transition:transform .26s ease;touch-action:pan-y}
-.carousel-slide{min-width:100%;margin:0;text-align:center}
-.carousel-slide img{width:auto;height:350px;max-width:100%;margin:0 auto;object-fit:contain;object-position:top;border:1px solid var(--line);border-radius:15px;background:#fff}
-.carousel-slide figcaption{max-width:340px;margin:8px auto 0}
-.carousel-slide figcaption b{display:block;font-size:13px}
-.carousel-slide figcaption span{display:block;margin-top:2px;color:var(--muted);font-size:11px}
-.carousel-arrow{position:absolute;top:155px;width:36px;height:36px;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--text);font-size:25px;line-height:1;cursor:pointer;z-index:2}
-.carousel-arrow:hover{border-color:#bdc8d8;color:var(--blue)}
-.carousel-prev{left:1px}.carousel-next{right:1px}
-.carousel-dots{display:flex;justify-content:center;gap:7px;margin-top:9px}
-.carousel-dot{width:9px;height:9px;padding:0;border:0;border-radius:50%;background:#cfd6e2;cursor:pointer}
-.carousel-dot.is-active{background:var(--blue)}
-
 .footer{padding:30px 0 40px;color:var(--muted);font-size:12px}
 .footer-row{display:flex;justify-content:space-between;gap:16px;align-items:center;border-top:1px solid var(--line);padding-top:20px}
 .footer-brand{display:flex;align-items:center;gap:8px;color:var(--text);font-weight:800}
@@ -161,10 +143,6 @@ h3{font-size:19px}
   .page-hero{padding:24px 0 12px}
   .callout{padding:16px;border-radius:18px;gap:13px}.callout .btn{width:100%}
   .faq details{padding:12px 13px}.faq summary{font-size:14px}.faq p{font-size:13px}
-  .miniapp-preview-section{padding-top:17px}.miniapp-preview-intro{font-size:13px}
-  .miniapp-carousel{width:100%;padding:0 30px}
-  .carousel-slide img{height:285px;border-radius:12px}
-  .carousel-arrow{top:125px;width:31px;height:31px;font-size:21px}.carousel-prev{left:0}.carousel-next{right:0}
   main{padding-bottom:120px}
   .footer{padding:24px 0 130px}.footer-row{flex-direction:column;align-items:flex-start;gap:7px;padding-top:16px}
   .mobile-cta{display:flex;position:fixed;left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));z-index:50;min-height:48px;border-radius:14px;box-shadow:0 10px 30px rgba(29,79,185,.25)}
@@ -176,11 +154,9 @@ h3{font-size:19px}
   h1{font-size:31px}
   .metric-row{grid-template-columns:1fr}
   .metric{display:flex;align-items:baseline;gap:6px}
-  .carousel-slide img{height:255px}.carousel-arrow{top:111px}
 }
 @media(hover:none) and (pointer:coarse){
   .btn{min-height:46px}
-  .carousel-dot{width:10px;height:10px}
 }
 @media(prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
