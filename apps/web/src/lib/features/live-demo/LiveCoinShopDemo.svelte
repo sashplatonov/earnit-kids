@@ -91,8 +91,11 @@
     .public-link { color:#2454bb; text-decoration:none; }
     .reset { flex:none; border:1px solid #3867d6; background:#fff; color:#2454bb; cursor:pointer; }
     .reset:focus-visible { outline:3px solid #93b4ff; outline-offset:2px; }
-    .notice { flex:1; margin:0; color:#52627d; font-size:.74rem; line-height:1.25; }
+    .notice { flex:1; min-width:0; margin:0; color:#52627d; font-size:.74rem; line-height:1.25; }
+    .demo-toolbar :global(.locale-switcher--compact) { width:auto; flex:none; }
+    .demo-toolbar :global(.locale-switcher--compact .locale-switcher__label) { display:none; }
+    .demo-toolbar :global(.locale-switcher--compact .locale-switcher__option) { min-height:2.25rem; padding:.3rem .55rem; }
     .announcement { width:min(100%, 48rem); margin:0 auto; color:#26734d; font-size:.8rem; }
     .announcement:empty { display:none; }
-    @media (max-width: 420px) { .demo-toolbar { align-items:stretch; flex-direction:column; gap:.4rem; } .reset { width:100%; } }
+    @media (max-width: 420px) { .demo-toolbar { align-items:stretch; flex-direction:column; gap:.4rem; } .reset { width:100%; } .demo-toolbar :global(.locale-switcher--compact) { align-self:flex-start; } }
 </style>
