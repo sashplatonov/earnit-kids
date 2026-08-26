@@ -12,10 +12,18 @@ public class BotKeyboardFactory {
         var rows = new java.util.ArrayList<TelegramReplyKeyboard.Row>();
         rows.add(new TelegramReplyKeyboard.Row(TelegramCopy.requests(TelegramLocaleContext.current()), TelegramCopy.coins(TelegramLocaleContext.current())));
         rows.add(new TelegramReplyKeyboard.Row(TelegramCopy.recent(TelegramLocaleContext.current()), TelegramCopy.switchChild(TelegramLocaleContext.current())));
+        rows.add(new TelegramReplyKeyboard.Row(TelegramCopy.language(TelegramLocaleContext.current())));
         if (publicSiteUrl != null && !publicSiteUrl.isBlank()) {
             rows.add(new TelegramReplyKeyboard.Row(TelegramCopy.site(TelegramLocaleContext.current())));
         }
         return TelegramReplyKeyboard.persistent(rows);
+    }
+
+    public TelegramReplyKeyboard languagePicker() {
+        return TelegramReplyKeyboard.persistent(java.util.List.of(
+            new TelegramReplyKeyboard.Row(TelegramCopy.languageEnglish(TelegramLocaleContext.current())),
+            new TelegramReplyKeyboard.Row(TelegramCopy.languageRussian(TelegramLocaleContext.current()))
+        ));
     }
 
     public TelegramReplyKeyboard childMain() {

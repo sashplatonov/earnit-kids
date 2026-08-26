@@ -14,11 +14,58 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class TelegramReplyKeyboardNavigatorTest {
+    @Test
+    void parentLanguageActionSendsExactlyTwoLocalizedChoices() throws Exception {
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        when(quickActions.load(77L, null)).thenReturn(Optional.of(parentView()));
+
+        navigator(quickActions, null, config(), apiClient).handle(
+            message(TelegramCopy.language(FamilyLocale.ru)), 44L, 77L);
+
+        verify(apiClient).sendMessageWithReplyKeyboard(eq(44L), eq(TelegramCopy.languagePrompt(FamilyLocale.ru)),
+            argThat(keyboard -> keyboard.rows().size() == 2
+                && keyboard.rows().get(0).buttons().get(0).label().equals(TelegramCopy.languageEnglish(FamilyLocale.ru))
+                && keyboard.rows().get(1).buttons().get(0).label().equals(TelegramCopy.languageRussian(FamilyLocale.ru))));
+    }
+
+    @Test
+    void parentLanguageChoicePersistsAndRefreshesKeyboardInSelectedLocale() throws Exception {
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository families =
+            mock(com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository.class);
+        when(quickActions.load(77L, null)).thenReturn(Optional.of(parentView()));
+        when(families.updateLocale("family", FamilyLocale.en)).thenReturn(true);
+        navigator(quickActions, null, config(), apiClient, families).handle(
+            message(TelegramCopy.languageEnglish(FamilyLocale.ru)), 44L, 77L);
+
+        verify(families).updateLocale("family", FamilyLocale.en);
+        verify(apiClient).sendMessageWithReplyKeyboard(eq(44L), eq(TelegramCopy.languageUpdated(FamilyLocale.en)),
+            argThat(keyboard -> keyboard.rows().get(2).buttons().get(0).label().equals(TelegramCopy.language(FamilyLocale.en))));
+    }
+
+    @Test
+    void childLanguageChoiceDoesNotMutateFamily() throws Exception {
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository families =
+            mock(com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository.class);
+        when(quickActions.load(77L, null)).thenReturn(Optional.of(view(FamilyLocale.ru, "child")));
+
+        navigator(quickActions, null, config(), apiClient, families).handle(
+            message(TelegramCopy.languageEnglish(FamilyLocale.ru)), 44L, 77L);
+
+        verify(families, never()).updateLocale(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any());
+    }
+
     @Test
     void parentRequestsNavigationSendsDecisionButtons() throws Exception {
         TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
@@ -153,6 +200,14 @@ class TelegramReplyKeyboardNavigatorTest {
         return new TelegramReplyKeyboardNavigator(quickActions, menuBuilder, config, apiClient);
     }
 
+    private static TelegramReplyKeyboardNavigator navigator(TelegramQuickActionService quickActions,
+                                                              TelegramMenuBuilder menuBuilder,
+                                                              TelegramConfig config,
+                                                              TelegramBotApiClient apiClient,
+                                                              com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository families) {
+        return new TelegramReplyKeyboardNavigator(quickActions, menuBuilder, config, apiClient, families);
+    }
+
     private static TelegramConfig config() {
         TelegramConfig config = mock(TelegramConfig.class);
         when(config.miniAppUrl()).thenReturn(Optional.of("https://mini.example.test"));
@@ -162,6 +217,13 @@ class TelegramReplyKeyboardNavigatorTest {
 
     private static TelegramQuickActionResponse parentView() {
         return view(FamilyLocale.ru);
+    }
+
+    private static TelegramQuickActionResponse view(FamilyLocale locale, String role) {
+        TelegramQuickActionResponse original = view(locale);
+        return new TelegramQuickActionResponse(original.familyId(), role, original.childId(), original.childName(),
+            original.balance(), original.children(), original.tasks(), original.rewards(), original.requests(),
+            original.history(), original.locale());
     }
 
     private static TelegramQuickActionResponse view(FamilyLocale locale) {

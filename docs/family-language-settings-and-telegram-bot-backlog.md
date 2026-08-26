@@ -90,7 +90,7 @@ git commit -m "feat(web): move family language into settings"
 
 ## TASK-FLANG-002: Add a parent language menu to the Telegram bot
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** -
 

@@ -16,6 +16,13 @@ public final class TelegramCopy {
   static String coins(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.menu.coins"); }
   static String recent(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.menu.recent"); }
   static String switchChild(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.menu.switchChild"); }
+  static String language(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.menu.language"); }
+  static String languageEnglish(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.language.english"); }
+  static String languageRussian(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.language.russian"); }
+  static String languagePrompt(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.language.prompt"); }
+  static String languageUpdated(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.language.updated"); }
+  static String languageUnchanged(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.language.unchanged"); }
+  static String languageError(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.language.error"); }
   public static String approve(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.action.approve"); }
   public static String reject(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.action.reject"); }
   static String next(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.action.next"); }

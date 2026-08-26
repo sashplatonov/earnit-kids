@@ -260,11 +260,12 @@ class TelegramBotServiceImplTest {
             eq(44L),
             eq("👧 Alex\n🟡 20 монет\n\n✅ Сейчас ничего не требует внимания"),
             argThat((TelegramReplyKeyboard kb) ->
-                kb.rows().size() == 2
+                kb.rows().size() == 3
                 && kb.rows().get(0).buttons().get(0).label().equals(TelegramCopy.requests(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru))
                 && kb.rows().get(0).buttons().get(1).label().equals(TelegramCopy.coins(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru))
                 && kb.rows().get(1).buttons().get(0).label().equals(TelegramCopy.recent(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru))
                 && kb.rows().get(1).buttons().get(1).label().equals(TelegramCopy.switchChild(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru))
+                && kb.rows().get(2).buttons().get(0).label().equals(TelegramCopy.language(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru))
             )
         );
     }

@@ -7,6 +7,7 @@ public enum BotNavAction {
     COINS("coins"),
     RECENT("recent"),
     SELECT_CHILD("switch"),
+    LANGUAGE("language"),
     OPEN_SITE("site");
 
     private final String actionCode;
@@ -38,6 +39,7 @@ public enum BotNavAction {
             case COINS -> TelegramCopy.coins(locale);
             case RECENT -> TelegramCopy.recent(locale);
             case SELECT_CHILD -> TelegramCopy.switchChild(locale);
+            case LANGUAGE -> TelegramCopy.language(locale);
             case OPEN_SITE -> TelegramCopy.site(locale);
         };
     }

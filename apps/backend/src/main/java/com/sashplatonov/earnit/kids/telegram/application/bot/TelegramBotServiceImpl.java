@@ -39,7 +39,7 @@ public class TelegramBotServiceImpl implements TelegramBotService {
         this.identities = identities;
         this.timeProvider = timeProvider;
         TelegramReplyKeyboardNavigator navigator =
-            new TelegramReplyKeyboardNavigator(quickActions, menuBuilder, config, apiClient);
+            new TelegramReplyKeyboardNavigator(quickActions, menuBuilder, config, apiClient, families);
         this.messageHandler = new TelegramMessageUpdateHandler(identities, apiClient, config,
             quickActions, menuBuilder, featureGate, families, navigator);
         this.callbackHandler = new TelegramCallbackUpdateHandler(identities, apiClient, callbacks,
