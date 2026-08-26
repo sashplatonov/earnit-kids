@@ -2,7 +2,7 @@
     import { onMount } from 'svelte';
     import { appStore } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
-    import { initializeFromServer, refreshData } from '$lib/services/bootstrap';
+    import { useWorkspaceActions } from '$lib/features/workspace/workspaceActions';
     import TelegramParentHome from './TelegramParentHome.svelte';
     import TelegramParentTasks from './TelegramParentTasks.svelte';
     import TelegramParentRewards from './TelegramParentRewards.svelte';
@@ -18,6 +18,7 @@
     import type { MembershipPermission } from '$lib/types/auth';
 
     const i18n = useI18n();
+    const workspaceActions = useWorkspaceActions();
 
     export let publicOrigin = '';
     export let onViewAsChild: () => void = () => {};
@@ -42,14 +43,14 @@
     onMount(async () => {
         loading = true;
         error = '';
-        const ok = await initializeFromServer();
+        const ok = await workspaceActions.initialize();
         if (!ok) error = $i18n.t('app.telegram.shell.loadError');
         else view = workspaceContext.parentTab;
         loading = false;
     });
 
     async function retry() {
-        const ok = await refreshData();
+        const ok = await workspaceActions.refresh();
         if (ok) { error = ''; view = 'home'; }
         else error = $i18n.t('app.telegram.shell.refreshError');
     }

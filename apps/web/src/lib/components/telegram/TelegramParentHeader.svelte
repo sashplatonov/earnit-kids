@@ -1,11 +1,12 @@
 <script lang="ts">
     import { appStore } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
-    import { switchChild } from '$lib/services/bootstrap';
+    import { useWorkspaceActions } from '$lib/features/workspace/workspaceActions';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
 
     const i18n = useI18n();
+    const workspaceActions = useWorkspaceActions();
 
     export let onViewAsChild: () => void = () => {};
 
@@ -22,7 +23,7 @@
         }
         switching = true;
         error = '';
-        await switchChild(id);
+        await workspaceActions.switchChild(id);
         switching = false;
         open = false;
         if ($appStore.currentChildId != id) error = $i18n.t('app.telegram.family.switchError');

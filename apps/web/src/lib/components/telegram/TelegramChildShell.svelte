@@ -2,7 +2,7 @@
     import { onMount } from 'svelte';
     import { appStore, type Request } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
-    import { initializeFromServer, refreshData } from '$lib/services/bootstrap';
+    import { useWorkspaceActions } from '$lib/features/workspace/workspaceActions';
     import { deleteRequest } from '$lib/services/api';
     import { confirmAction } from '$lib/services/confirm';
     import TelegramBalanceHeader from './TelegramBalanceHeader.svelte';
@@ -12,7 +12,6 @@
     import TelegramHistoryList from './TelegramHistoryList.svelte';
     import TelegramChildRequestList from './TelegramChildRequestList.svelte';
     import TelegramConfirmModal from './TelegramConfirmModal.svelte';
-    import { loadTelegramHistory } from '$lib/services/telegramActivity';
     import type { HistoryEntry } from '$lib/stores/app';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramParentReturn from './TelegramParentReturn.svelte';
@@ -23,6 +22,7 @@
     import { parseTelegramWorkspaceContext, type ActivityTab, type ChildTab } from './telegramWorkspaceContext';
 
     const i18n = useI18n();
+    const workspaceActions = useWorkspaceActions();
 
     export let publicOrigin = '';
     export let onExitPreview: (() => void) | null = null;
@@ -53,19 +53,19 @@
     ] satisfies readonly TelegramTab[];
 
     onMount(async () => {
-        const ok = await initializeFromServer();
+        const ok = await workspaceActions.initialize();
         loading = false;
         view = workspaceContext.childTab;
         activityView = workspaceContext.activityTab;
         if (!ok) error = $i18n.t('app.telegram.childShell.loadError');
     });
-    async function retry() { refreshing = true; error = ''; const ok = await refreshData(); refreshing = false; if (!ok) error = $i18n.t('app.telegram.childShell.refreshError'); }
-    function onVisibility() { if (document.visibilityState === 'visible' && !loading && !refreshing) void refreshData(); }
+    async function retry() { refreshing = true; error = ''; const ok = await workspaceActions.refresh(); refreshing = false; if (!ok) error = $i18n.t('app.telegram.childShell.refreshError'); }
+    function onVisibility() { if (document.visibilityState === 'visible' && !loading && !refreshing) void workspaceActions.refresh(); }
     async function loadHistory(reset = false) {
         if (historyLoading || $appStore.currentChildId == null) return;
         historyLoading = true; historyError = '';
         try {
-            const page = await loadTelegramHistory($appStore.currentChildId, reset ? 1 : historyPage + 1, 20);
+            const page = await workspaceActions.loadHistory({ childId: $appStore.currentChildId, page: reset ? 1 : historyPage + 1, limit: 20 });
             history = reset ? page.items : [...history, ...page.items]; historyPage = page.page; historyHasMore = page.items.length === page.limit;
         } catch { historyError = $i18n.t('app.telegram.childShell.activityError'); }
         historyLoading = false;
@@ -99,7 +99,7 @@
         const ok = await deleteRequest(request.id, $appStore.currentChildId);
         cancellingIds = cancellingIds.filter((id) => String(id) !== String(request.id));
         if (ok) {
-            await refreshData();
+            await workspaceActions.refresh();
         } else {
             cancelError = $i18n.t('app.telegram.childRequests.cancelError');
         }
