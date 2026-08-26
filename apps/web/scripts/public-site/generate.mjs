@@ -34,9 +34,7 @@ async function generateLocale(locale) {
     await mkdir(localeDirectory, { recursive: true });
     for (const page of PUBLIC_PAGES) {
         const fragment = await readFile(path.join(pagesDirectory, `${page.key}.html`), 'utf8');
-        const localizedContent = page.key === 'demo'
-            ? `<section class="demo-root" data-demo-root aria-labelledby="demo-title"><div class="container"><p class="demo-loading" data-demo-loading>${messages[locale].demo.required}</p><noscript>${messages[locale].demo.required}</noscript></div></section>`
-            : fragment.replaceAll(`{{${page.key}.content}}`, messages[locale].pages[page.key].content);
+        const localizedContent = fragment.replaceAll(`{{${page.key}.content}}`, messages[locale].pages[page.key].content);
         const englishPath = page.englishPath;
         const output = replaceAll(template, {
             LANG: locale,
@@ -45,7 +43,6 @@ async function generateLocale(locale) {
             CANONICAL: publicLanguageHref(englishPath, locale, publicOrigin),
             EN_URL: publicLanguageHref(englishPath, 'en', publicOrigin),
             RU_URL: publicLanguageHref(englishPath, 'ru', publicOrigin),
-            DEMO_URL: publicPath('/demo.html', locale, publicOrigin),
             EN_CURRENT: locale === 'en' ? ' aria-current="page"' : '',
             RU_CURRENT: locale === 'ru' ? ' aria-current="page"' : '',
             HOME_URL: locale === 'ru' ? '/ru/' : '/',
@@ -58,10 +55,8 @@ async function generateLocale(locale) {
             LANGUAGE_GROUP: escapeAttribute(messages[locale].languageGroup),
             TELEGRAM: escapeAttribute(messages[locale].telegram),
             LOGIN: escapeAttribute(messages[locale].login),
-            DEMO_LINK: escapeAttribute(messages[locale].demoLink),
-            DEMO_LINK_LABEL: escapeAttribute(messages[locale].demoLinkLabel),
             CONTENT: localizedContent,
-            PAGE_SCRIPT: page.key === 'demo' ? '<script type="module" src="/public/demo.js"></script>' : '',
+            PAGE_SCRIPT: '',
         });
         const outputPath = path.join(localeDirectory, page.artifact);
         await writeFile(outputPath, output);
@@ -71,6 +66,4 @@ async function generateLocale(locale) {
 for (const locale of PUBLIC_LOCALES) await generateLocale(locale);
 await copyFile(path.join(scriptDirectory, 'i18n.js'), path.join(outputDirectory, 'i18n.js'));
 await copyFile(path.join(scriptDirectory, 'urls.js'), path.join(outputDirectory, 'urls.js'));
-await copyFile(path.join(scriptDirectory, 'demo-data.js'), path.join(outputDirectory, 'demo-data.js'));
-await copyFile(path.join(scriptDirectory, 'demo.js'), path.join(outputDirectory, 'demo.js'));
 console.log(`Generated ${PUBLIC_PAGES.length * PUBLIC_LOCALES.length} public pages from ${path.relative(projectDirectory, templatePath)}`);

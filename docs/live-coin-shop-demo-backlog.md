@@ -24,7 +24,7 @@
 
 ## LCD-001: Удалить static Parent demo и старый URL-контракт
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** —
 

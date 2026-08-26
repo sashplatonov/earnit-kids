@@ -106,12 +106,6 @@ h3{font-size:19px}
 .footer-brand img{width:30px;height:30px;border-radius:9px}
 .mobile-cta{display:none}
 .public-access-status{margin:0}
-.demo-container{padding:34px 0 48px}.demo-container h1{font-size:clamp(32px,5vw,52px)}
-.demo-notice{margin:12px 0 18px;padding:12px 14px;background:var(--blue-soft);border:1px solid #cddcff;border-radius:12px;color:#31549a;font-weight:700}
-.demo-summary{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}.demo-summary>div{flex:1 1 220px;min-width:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 15px}.demo-summary strong,.demo-eyebrow{display:block}.demo-eyebrow{color:var(--muted);font-size:12px;font-weight:700}.demo-summary strong{font-size:20px}
-.demo-tablist{overflow:auto}.demo-tabs{display:flex;gap:4px;min-width:max-content;border-bottom:1px solid var(--line)}.demo-tab{min-height:44px;padding:9px 14px;border:0;border-bottom:3px solid transparent;background:transparent;color:var(--muted);font-weight:800;cursor:pointer}.demo-tab.is-active{color:var(--blue);border-bottom-color:var(--blue)}
-.demo-panel{margin-top:14px}.demo-panel h2{font-size:24px;margin-bottom:10px}.demo-list{display:grid;gap:8px;list-style:none;padding:0;margin:0}.demo-row{display:flex;align-items:center;justify-content:space-between;gap:14px;min-width:0;padding:13px 14px;background:#fff;border:1px solid var(--line);border-radius:12px}.demo-row-main{min-width:0}.demo-row h3{font-size:16px;overflow-wrap:anywhere}.demo-meta{display:inline-block;margin:5px 9px 0 0;color:var(--muted);font-size:12px}.demo-amount,.demo-status{flex:0 0 auto;font-size:13px;font-weight:850;text-align:right}.demo-amount-positive,.demo-amount-earned{color:#187c52}.demo-amount-negative,.demo-amount-spent{color:#a33b3b}.demo-status-pending{color:#89610c}.demo-status-approved{color:#187c52}.demo-status-rejected{color:#a33b3b}.demo-empty{padding:16px;background:#fff;border:1px solid var(--line);border-radius:12px;color:var(--muted)}.demo-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px}.demo-actions a{min-width:44px}.demo-actions a:focus-visible,.demo-tab:focus-visible{outline:3px solid rgba(39,95,214,.35);outline-offset:3px}
-@media(max-width:640px){.demo-container{padding-top:24px}.demo-row{align-items:flex-start;flex-direction:column}.demo-amount,.demo-status{text-align:left}.demo-actions{display:grid;grid-template-columns:1fr}.demo-actions a{width:100%}}
 
 @media(max-width:1280px){
   .container{width:min(calc(100% - 26px),var(--max))}

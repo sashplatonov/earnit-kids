@@ -9,7 +9,6 @@ const PAGE_METADATA: Record<string, { priority: string; changefreq: string }> = 
     rewards: { priority: '0.8', changefreq: 'monthly' },
     parents: { priority: '0.8', changefreq: 'monthly' },
     faq: { priority: '0.6', changefreq: 'monthly' },
-    demo: { priority: '0.7', changefreq: 'monthly' },
 } as const;
 
 function escapeXml(value: string): string {

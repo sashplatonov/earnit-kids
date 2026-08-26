@@ -5,7 +5,5 @@ export function resolveDocumentLocale(documentRef: { documentElement?: { lang?: 
 export function getMessage(locale: 'en' | 'ru', key: string): string;
 export function withLanguage(href: string, locale: 'en' | 'ru', currentOrigin?: string): string;
 export interface PublicSiteMessages extends Record<string, unknown> {
-    demoLink: string;
-    demoLinkLabel: string;
 }
 export const messages: Record<'en' | 'ru', PublicSiteMessages>;

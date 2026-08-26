@@ -2,13 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { canonicalPublicPath, normalizePublicRequest, publicDocumentPath, publicLanguageHref } from '../../scripts/public-site/urls.js';
 
 describe('public-site URL contract', () => {
-    it('maps all seven pages to English and Russian canonical artifacts', () => {
+    it('maps all six pages to English and Russian canonical artifacts', () => {
         expect(publicDocumentPath(new URL('https://example.test/'))).toBe('/public/index.html');
         expect(publicDocumentPath(new URL('https://example.test/ru/'))).toBe('/public/ru/index.html');
         expect(publicDocumentPath('/ru/faq.html')).toBe('/public/ru/faq.html');
         expect(canonicalPublicPath('/tasks.html', 'ru')).toBe('/ru/tasks.html');
-        expect(publicDocumentPath('/demo.html')).toBe('/public/demo.html');
-        expect(canonicalPublicPath('/demo.html', 'ru')).toBe('/ru/demo.html');
     });
 
     it('redirects valid legacy locale queries and preserves unrelated pairs', () => {
@@ -28,9 +26,6 @@ describe('public-site URL contract', () => {
         expect(normalizePublicRequest('https://example.test/how.html', {
             acceptLanguage: 'en-US, ru;q=0.8',
         }).redirect).toBeNull();
-        expect(normalizePublicRequest('https://example.test/demo.html', {
-            acceptLanguage: 'ru-RU, en;q=0.8',
-        }).redirect).toBe('https://example.test/ru/demo.html');
     });
 
     it('keeps explicit valid locale queries ahead of browser preferences', () => {
@@ -58,7 +53,6 @@ describe('public-site URL contract', () => {
 
     it('builds same-origin language links without touching external destinations', () => {
         expect(publicLanguageHref('/how.html', 'ru', 'https://example.test')).toBe('https://example.test/ru/how.html');
-        expect(publicLanguageHref('/demo.html', 'ru', 'https://example.test')).toBe('https://example.test/ru/demo.html');
         expect(publicLanguageHref('/api/login-google/start', 'ru', 'https://example.test')).toBeNull();
     });
 });

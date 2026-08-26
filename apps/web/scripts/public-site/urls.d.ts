@@ -1,7 +1,7 @@
 export const PUBLIC_LOCALES: readonly ['en', 'ru'];
 export const DEFAULT_PUBLIC_LOCALE: 'en';
 export const DEFAULT_PUBLIC_ORIGIN: 'http://localhost:4174';
-export const PUBLIC_PAGES: readonly { key: 'index' | 'how' | 'tasks' | 'rewards' | 'parents' | 'faq' | 'demo'; englishPath: string; artifact: string }[];
+export const PUBLIC_PAGES: readonly { key: 'index' | 'how' | 'tasks' | 'rewards' | 'parents' | 'faq'; englishPath: string; artifact: string }[];
 export function publicDocument(pathname: string, locale?: 'en' | 'ru'): {
     key: string;
     englishPath: string;
