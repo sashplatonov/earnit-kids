@@ -10,6 +10,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.List;
 import java.util.Optional;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.membership.FamilyParentMembershipRepository;
@@ -25,6 +27,24 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class TelegramReplyKeyboardNavigatorTest {
+    @Test
+    void parentAndChildMenuButtonsKeepRussianEmojiInBothLocales() {
+        assertThat(TelegramCopy.myTasks(FamilyLocale.en)).startsWith("✅");
+        assertThat(TelegramCopy.myTasks(FamilyLocale.ru)).startsWith("✅");
+        assertThat(TelegramCopy.rewards(FamilyLocale.en)).startsWith("🎁");
+        assertThat(TelegramCopy.rewards(FamilyLocale.ru)).startsWith("🎁");
+        assertThat(TelegramCopy.requests(FamilyLocale.en)).startsWith("🎯");
+        assertThat(TelegramCopy.requests(FamilyLocale.ru)).startsWith("🎯");
+        assertThat(TelegramCopy.coins(FamilyLocale.en)).startsWith("🟡");
+        assertThat(TelegramCopy.coins(FamilyLocale.ru)).startsWith("🟡");
+        assertThat(TelegramCopy.recent(FamilyLocale.en)).startsWith("📜");
+        assertThat(TelegramCopy.recent(FamilyLocale.ru)).startsWith("📜");
+        assertThat(TelegramCopy.switchChild(FamilyLocale.en)).startsWith("👧");
+        assertThat(TelegramCopy.switchChild(FamilyLocale.ru)).startsWith("👧");
+        assertThat(TelegramCopy.language(FamilyLocale.en)).startsWith("🌐");
+        assertThat(TelegramCopy.language(FamilyLocale.ru)).startsWith("🌐");
+    }
+
     @Test
     void editorCannotOpenOrSubmitLanguageAction() throws Exception {
         TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
