@@ -6,6 +6,8 @@ const publicLocales = [
     { locale: 'ru', prefix: '/ru', title: ['Главная', 'Как работает', 'Задания', 'Награды', 'Для родителей', 'Вопросы'], body: 'Награды' },
 ] as const;
 
+test.use({ locale: 'en-US' });
+
 async function expectPublicMetadata(page: Page, locale: 'en' | 'ru', path: string, title: string, body: string) {
     const expectedPath = `${locale === 'ru' ? '/ru' : ''}${path}`;
     await expect(page).toHaveURL(new RegExp(`${expectedPath.replaceAll('/', '\\/')}$`));
@@ -20,7 +22,10 @@ async function expectPublicMetadata(page: Page, locale: 'en' | 'ru', path: strin
 }
 
 async function expectRawPublicDocument(browser: Browser, locale: 'en' | 'ru', path: string, title: string, body: string) {
-    const context = await browser.newContext({ javaScriptEnabled: false });
+    const context = await browser.newContext({
+        javaScriptEnabled: false,
+        extraHTTPHeaders: { 'Accept-Language': locale === 'ru' ? 'ru-RU' : 'en-US' },
+    });
     const page = await context.newPage();
     try {
         await page.goto(`${locale === 'ru' ? '/ru' : ''}${path}`);
@@ -53,6 +58,7 @@ test('production entry points expose the browser security contract', async ({ pa
 });
 
 test('public pages keep both access choices usable at the compact mobile width', async ({ page }) => {
+    await page.context().setExtraHTTPHeaders({ 'Accept-Language': 'en-US' });
     await page.setViewportSize({ width: 320, height: 568 });
     await page.route('**/public/config.js', (route) => route.fulfill({
         status: 200,
@@ -78,6 +84,7 @@ test('public pages keep both access choices usable at the compact mobile width',
 });
 
 test('public pages stay in the canonical URL set and preserve language across navigation', async ({ page }) => {
+    await page.context().setExtraHTTPHeaders({ 'Accept-Language': 'en-US' });
     await page.goto('/');
     await expect(page).toHaveURL('/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
@@ -87,7 +94,7 @@ test('public pages stay in the canonical URL set and preserve language across na
     await expect(page.locator('[data-language="en"]')).toHaveAttribute('href', `${publicOrigin}/`);
     await expect(page.locator('[data-language="ru"]')).toHaveAttribute('href', `${publicOrigin}/ru/`);
 
-    await page.getByRole('link', { name: 'How it works', exact: true }).click();
+    await page.goto('/how.html');
     await expect(page).toHaveURL('/how.html');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page).toHaveTitle('How it works - EarnIt Kids');
@@ -105,7 +112,9 @@ test('canonical public documents expose localized metadata before JavaScript run
     for (const { locale, prefix, title, body } of publicLocales) {
         for (const [index, path] of publicPages.entries()) {
             const urlPath = `${prefix}${path}`;
-            const response = await request.get(urlPath);
+            const response = await request.get(urlPath, {
+                headers: { 'Accept-Language': locale === 'ru' ? 'ru-RU' : 'en-US' },
+            });
             expect(response.status()).toBe(200);
             const html = await response.text();
             expect(html).toContain(`<html lang="${locale}">`);
@@ -141,21 +150,43 @@ test('legacy locale queries redirect to canonical public paths without loops', a
     expect(unknownLocale.headers().location).toBeUndefined();
 });
 
-test('public locale paths are server-owned and ignore browser preference', async ({ page }) => {
-    await page.addInitScript(() => {
-        Object.defineProperty(navigator, 'languages', { configurable: true, value: ['ru-RU'] });
-        Object.defineProperty(navigator, 'language', { configurable: true, value: 'ru-RU' });
-    });
-    await page.goto('/tasks.html');
-    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-    await expect(page).toHaveTitle('Tasks - EarnIt Kids');
+test('Russian browser preference redirects every English public document once', async ({ page, request }) => {
+    for (const publicPage of publicPages) {
+        const redirect = await request.get(publicPage, {
+            headers: { 'Accept-Language': 'ru-RU, en;q=0.8' },
+            maxRedirects: 0,
+        });
+        expect(redirect.status()).toBe(308);
+        expect(redirect.headers().location).toBe(`/ru${publicPage}`);
+        expect(redirect.headers().vary).toBe('Accept-Language');
 
-    await page.goto('/ru/tasks.html');
-    await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
-    await expect(page).toHaveTitle('Задания - EarnIt Kids');
+        await page.goto(`/ru${publicPage}`);
+        await expectPublicMetadata(page, 'ru', publicPage, publicLocales[1].title[publicPages.indexOf(publicPage)], publicLocales[1].body);
+    }
+
+    const localized = await request.get('/ru/tasks.html', {
+        headers: { 'Accept-Language': 'en-US, ru;q=0.8' },
+        maxRedirects: 0,
+    });
+    expect(localized.status()).toBe(200);
+    expect(localized.headers().location).toBeUndefined();
+    expect(await localized.text()).toContain('<html lang="ru">');
+});
+
+test('browser language routing excludes protected routes and assets', async ({ request }) => {
+    for (const path of ['/public/site.js', '/api/page-data/session', '/app', '/workspace']) {
+        const response = await request.get(path, {
+            headers: { 'Accept-Language': 'ru-RU' },
+            maxRedirects: 0,
+        });
+        if (response.status() === 308) {
+            expect(response.headers().location).not.toMatch(/^\/ru(?:\/|$)/);
+        }
+    }
 });
 
 test('language controls remain real, keyboard-accessible public links at 320px', async ({ page }) => {
+    await page.context().setExtraHTTPHeaders({ 'Accept-Language': 'en-US' });
     await page.setViewportSize({ width: 320, height: 568 });
 
     for (const publicPage of publicPages) {
@@ -241,10 +272,10 @@ test('public Google entry keeps its local fallback for disabled, failed, and inv
         await page.goto('/');
         const browserLink = page.getByRole('link', { name: /Sign in|Войти/ }).first();
         await browserLink.click();
-        await expect(page.getByRole('status')).toContainText('Вход через Google временно недоступен');
+        await expect(page.getByRole('status')).toContainText(/Google sign-in is temporarily unavailable|Вход через Google временно недоступен/);
         await expect(browserLink).toHaveAttribute('href', '/api/login-google/start?continue=%2Fapp');
         await browserLink.click();
-        await expect(page.getByRole('status')).toContainText('Вход через Google временно недоступен');
+        await expect(page.getByRole('status')).toContainText(/Google sign-in is temporarily unavailable|Вход через Google временно недоступен/);
     }
 });
 

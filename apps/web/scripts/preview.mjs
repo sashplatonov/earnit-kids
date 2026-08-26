@@ -232,9 +232,15 @@ const server = createServer((req, res) => {
                 return;
             }
 
-            const publicRequest = normalizePublicRequest(url);
+            const publicRequest = normalizePublicRequest(url, {
+                acceptLanguage: pathname.startsWith('/ru/') ? undefined : req.headers['accept-language'],
+            });
             if (publicRequest.redirect) {
-                res.writeHead(308, { Location: `${publicRequest.url.pathname}${publicRequest.url.search}` });
+                const headers = { Location: `${publicRequest.url.pathname}${publicRequest.url.search}` };
+                if (publicRequest.vary) {
+                    headers.Vary = 'Accept-Language';
+                }
+                res.writeHead(308, headers);
                 res.end();
                 return;
             }

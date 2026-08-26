@@ -11,5 +11,10 @@ export function publicDocument(pathname: string, locale?: 'en' | 'ru'): {
 } | null;
 export function publicDocumentPath(url: string | URL, locale?: 'en' | 'ru'): string | null;
 export function canonicalPublicPath(pathname: string, locale: 'en' | 'ru'): string | null;
-export function normalizePublicRequest(input: string | URL): { url: URL; redirect: string | null; document: ReturnType<typeof publicDocument> };
+export function normalizePublicRequest(input: string | URL, options?: { acceptLanguage?: string }): {
+    url: URL;
+    redirect: string | null;
+    document: ReturnType<typeof publicDocument>;
+    vary: boolean;
+};
 export function publicLanguageHref(pathname: string, locale: 'en' | 'ru', origin?: string): string | null;

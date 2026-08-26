@@ -16,6 +16,27 @@ describe('public-site URL contract', () => {
             .toBe('https://example.test/how.html');
     });
 
+    it('negotiates Russian browser preferences with ordered quality values', () => {
+        expect(normalizePublicRequest('https://example.test/how.html', {
+            acceptLanguage: 'fr-FR, ru-RU;q=0.9, en;q=0.8',
+        })).toMatchObject({
+            redirect: 'https://example.test/ru/how.html',
+            vary: true,
+        });
+        expect(normalizePublicRequest('https://example.test/how.html', {
+            acceptLanguage: 'en-US, ru;q=0.8',
+        }).redirect).toBeNull();
+    });
+
+    it('keeps explicit valid locale queries ahead of browser preferences', () => {
+        expect(normalizePublicRequest('https://example.test/how.html?lang=en&utm_source=mail', {
+            acceptLanguage: 'ru-RU',
+        })).toMatchObject({
+            redirect: 'https://example.test/how.html?utm_source=mail',
+            vary: false,
+        });
+    });
+
     it('leaves unsupported, protected, and Telegram handoff requests untouched', () => {
         for (const input of [
             'https://example.test/how.html?lang=de',
@@ -26,6 +47,8 @@ describe('public-site URL contract', () => {
         ]) {
             expect(normalizePublicRequest(input).redirect).toBeNull();
         }
+
+        expect(normalizePublicRequest('https://example.test/ru/how.html', { acceptLanguage: 'ru-RU' }).redirect).toBeNull();
     });
 
     it('builds same-origin language links without touching external destinations', () => {

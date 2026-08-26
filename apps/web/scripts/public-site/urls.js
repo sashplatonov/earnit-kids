@@ -16,6 +16,31 @@ function normalizeLocale(value) {
     return PUBLIC_LOCALES.includes(locale) ? locale : null;
 }
 
+function preferredPublicLocale(acceptLanguage) {
+    if (typeof acceptLanguage !== 'string') return DEFAULT_PUBLIC_LOCALE;
+
+    const preferences = acceptLanguage.split(',')
+        .map((part, index) => {
+            const [range, ...parameters] = part.trim().toLowerCase().split(';');
+            const qualityParameter = parameters.find((parameter) => parameter.trim().startsWith('q='));
+            const quality = qualityParameter ? Number(qualityParameter.trim().slice(2)) : 1;
+            return {
+                range: range.trim(),
+                quality: Number.isFinite(quality) ? Math.max(0, Math.min(1, quality)) : 0,
+                index,
+            };
+        })
+        .filter(({ range, quality }) => range && quality > 0)
+        .sort((left, right) => right.quality - left.quality || left.index - right.index);
+
+    const supportedPreference = preferences.find(({ range }) => {
+        const language = range.split('-')[0];
+        return PUBLIC_LOCALES.includes(language);
+    });
+
+    return supportedPreference?.range.split('-')[0] || DEFAULT_PUBLIC_LOCALE;
+}
+
 export function publicDocument(pathname, locale = DEFAULT_PUBLIC_LOCALE) {
     const normalizedLocale = normalizeLocale(locale);
     if (!normalizedLocale) return null;
@@ -52,20 +77,35 @@ export function canonicalPublicPath(pathname, locale) {
     return publicDocument(pathname, locale)?.path || null;
 }
 
-export function normalizePublicRequest(input) {
+export function normalizePublicRequest(input, { acceptLanguage } = {}) {
     const url = input instanceof URL ? new URL(input) : new URL(input, 'https://example.test');
     const current = publicDocument(url.pathname);
     if (!current || (url.pathname === '/' && url.searchParams.has('tgWebAppStartParam'))) {
-        return { url, redirect: null, document: current };
+        return { url, redirect: null, document: current, vary: false };
     }
 
-    const requestedLocale = normalizeLocale(url.searchParams.get('lang'));
-    if (!requestedLocale) return { url, redirect: null, document: current };
+    const queryLocale = url.searchParams.get('lang');
+    const requestedLocale = normalizeLocale(queryLocale);
+    if (queryLocale !== null && !requestedLocale) {
+        return { url, redirect: null, document: current, vary: false };
+    }
 
-    const target = publicDocument(current.englishPath, requestedLocale);
+    const negotiatedLocale = requestedLocale || (
+        current.locale === DEFAULT_PUBLIC_LOCALE ? preferredPublicLocale(acceptLanguage) : null
+    );
+    if (!negotiatedLocale || (!requestedLocale && negotiatedLocale === current.locale)) {
+        return { url, redirect: null, document: current, vary: !requestedLocale && current.locale === DEFAULT_PUBLIC_LOCALE && typeof acceptLanguage === 'string' };
+    }
+
+    const target = publicDocument(current.englishPath, negotiatedLocale);
     url.pathname = target.path;
     url.searchParams.delete('lang');
-    return { url, redirect: url.toString(), document: target };
+    return {
+        url,
+        redirect: url.toString(),
+        document: target,
+        vary: !requestedLocale,
+    };
 }
 
 export function publicLanguageHref(pathname, locale, origin = 'https://example.test') {
