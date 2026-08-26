@@ -21,15 +21,12 @@ const replaceAll = (source, values) => Object.entries(values).reduce((result, [k
 const publicPath = (pathname, locale, origin) => new URL(publicLanguageHref(pathname, locale, origin)).pathname;
 
 function navigationFor(activeKey, locale) {
-    const linkFor = (page) => {
+    return PUBLIC_PAGES.map((page) => {
         const active = page.key === activeKey ? ' active' : '';
         const current = page.key === activeKey ? ' aria-current="page"' : '';
         const href = locale === 'ru' ? `/ru${page.englishPath}` : page.englishPath;
         return `<a class="tab${active}" href="${href}"${current}>${messages[locale].pageTitles[page.key]}</a>`;
-    };
-    const primaryPages = PUBLIC_PAGES.filter((page) => ['index', 'how', 'demo'].includes(page.key));
-    const secondaryPages = PUBLIC_PAGES.filter((page) => !['index', 'how', 'demo'].includes(page.key));
-    return `<div class="tabs-primary">${primaryPages.map(linkFor).join('')}</div><details class="tabs-more"><summary class="tab"><span>${messages[locale].moreNavigation}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></summary><div class="tabs-popover">${secondaryPages.map(linkFor).join('')}</div></details>`;
+    }).join('');
 }
 
 async function generateLocale(locale) {

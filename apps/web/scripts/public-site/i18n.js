@@ -33,8 +33,6 @@ messages.en.demoLink = 'Parent demo';
 messages.en.demoLinkLabel = 'View the read-only parent demo';
 messages.ru.demoLink = 'Демо для родителя';
 messages.ru.demoLinkLabel = 'Открыть демонстрацию родительского пространства';
-messages.en.moreNavigation = 'More';
-messages.ru.moreNavigation = 'Ещё';
 
 export function normalizeLocale(value) { if (typeof value !== 'string') return null; const normalized = value.trim().toLowerCase(); if (normalized === 'ru' || normalized.startsWith('ru-')) return 'ru'; if (normalized === 'en' || normalized.startsWith('en-')) return 'en'; return null; }
 export function resolveDocumentLocale(documentRef) { return normalizeLocale(documentRef?.documentElement?.lang) || DEFAULT_LOCALE; }

@@ -63,6 +63,20 @@ describe('static public-site i18n', () => {
         }
     });
 
+    it('renders every public artifact from the shared shell', () => {
+        const root = resolve(process.cwd(), 'static/public');
+        const generatedMarker = '<!-- GENERATED FILE: edit scripts/public-site/template.html, not this artifact. -->';
+        for (const locale of ['en', 'ru'] as const) {
+            const directory = locale === 'ru' ? resolve(root, 'ru') : root;
+            for (const file of ['index.html', 'how.html', 'tasks.html', 'rewards.html', 'parents.html', 'faq.html', 'demo.html']) {
+                const html = readFileSync(resolve(directory, file), 'utf8');
+                expect(html).toContain(generatedMarker);
+                expect(html.match(/data-public-shell="header"/g)).toHaveLength(1);
+                expect(html.match(/data-public-shell="footer"/g)).toHaveLength(1);
+            }
+        }
+    });
+
     it('normalizes the configured public origin and rejects invalid production input', () => {
         expect(resolvePublicOrigin('https://example.test///app?tab=1')).toBe('https://example.test');
         expect(resolvePublicOrigin(undefined)).toBe('http://localhost:4174');
