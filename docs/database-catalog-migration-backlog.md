@@ -84,7 +84,7 @@ git commit -m "feat(backend): seed localized catalog in database"
 
 ## CAT-DB-002: Add a localized database catalog read model
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1  
 **Depends on:** CAT-DB-001
 
