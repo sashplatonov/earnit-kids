@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { DEMO_TABS, demoData, normalizeDemoTab } from '../../scripts/public-site/demo-data.js';
 import { messages } from '../../scripts/public-site/i18n.js';
-import { formatDemoAmount } from '../../scripts/public-site/demo.js';
+import { formatDemoAmount, resolveDemoTabState } from '../../scripts/public-site/demo.js';
 
 describe('public parent demo', () => {
     it('contains the complete immutable scenario', () => {
@@ -19,19 +19,31 @@ describe('public parent demo', () => {
     it('normalizes tab state and formats signed amounts by locale', () => {
         expect(normalizeDemoTab('rewards')).toBe('rewards');
         expect(normalizeDemoTab('unknown')).toBe('tasks');
+        expect(resolveDemoTabState('https://example.test/ru/demo.html?tab=not-a-tab&source=review#overview')).toEqual({
+            tab: 'tasks',
+            shouldReplace: true,
+            canonicalHref: 'https://example.test/ru/demo.html?tab=tasks&source=review#overview',
+        });
+        expect(resolveDemoTabState('https://example.test/demo.html?tab=rewards&source=review#overview')).toEqual({
+            tab: 'rewards',
+            shouldReplace: false,
+            canonicalHref: null,
+        });
         expect(formatDemoAmount(12, 'en')).toContain('+12');
         expect(formatDemoAmount(12, 'ru')).toContain('+12');
     });
 
     it('keeps every fixture display value in the equal static locale catalogs', () => {
-        expect(messages.en.demo.fixture).toEqual({
+        const englishFixture = (messages.en.demo as { fixture: Record<string, unknown> }).fixture;
+        const russianFixture = (messages.ru.demo as { fixture: Record<string, unknown> }).fixture;
+        expect(englishFixture).toEqual({
             taskNames: { reading: 'Read for 15 minutes', desk: 'Clear your desk', plants: 'Water the plants' },
             rewardNames: { film: 'Choose the family film', game: 'Pick a board game', treat: 'Choose a weekend treat' },
             groups: { learning: 'Learning', home: 'Home', familyTime: 'Family time', smallJoys: 'Small joys' },
             repeats: { daily: 'Daily', weekdays: 'Weekdays', weekly: 'Weekly' },
             availability: { yes: 'Yes', no: 'No' },
         });
-        expect(Object.keys(messages.en.demo.fixture)).toEqual(Object.keys(messages.ru.demo.fixture));
+        expect(Object.keys(englishFixture)).toEqual(Object.keys(russianFixture));
         expect(demoData.tasks.every((task) => task.nameKey && task.groupKey && task.repeatKey)).toBe(true);
         expect(demoData.rewards.every((reward) => reward.nameKey && reward.groupKey)).toBe(true);
     });

@@ -89,7 +89,7 @@ git commit -m "fix(web): localize public demo fixtures"
 
 ## PSD-RVW-002: Canonicalize invalid public demo tab parameters
 
-**Status:** TODO
+**Status:** DONE
 
 **Priority:** P1
 

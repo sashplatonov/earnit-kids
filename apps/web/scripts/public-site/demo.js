@@ -32,6 +32,15 @@ function fixture(copy, section, key) {
     return copy.fixture[section][key];
 }
 
+export function resolveDemoTabState(href) {
+    const url = new URL(href);
+    const requestedTab = url.searchParams.get('tab');
+    const tab = normalizeDemoTab(requestedTab);
+    const shouldReplace = requestedTab !== null && requestedTab !== tab;
+    if (shouldReplace) url.searchParams.set('tab', tab);
+    return { tab, shouldReplace, canonicalHref: shouldReplace ? url.href : null };
+}
+
 function renderTasks(copy) {
     return demoData.tasks.length ? element('ul', 'demo-list', demoData.tasks.map((task) => element('li', 'demo-row', [
         element('div', 'demo-row-main', [element('h3', null, [text(fixture(copy, 'taskNames', task.nameKey))]), label(copy.task.group, fixture(copy, 'groups', task.groupKey)), label(copy.task.repeat, fixture(copy, 'repeats', task.repeatKey))]),
@@ -65,7 +74,9 @@ export function renderDemo(documentRef = document, windowRef = window) {
     if (!root) return;
     const locale = resolveDocumentLocale(documentRef);
     const copy = messages[locale].demo;
-    const tab = normalizeDemoTab(new URL(windowRef.location.href).searchParams.get('tab'));
+    const tabState = resolveDemoTabState(windowRef.location.href);
+    if (tabState.shouldReplace) windowRef.history.replaceState({}, '', tabState.canonicalHref);
+    const { tab } = tabState;
     root.replaceChildren();
 
     const title = element('h1', null, [text(messages[locale].pageTitles.demo)]);
