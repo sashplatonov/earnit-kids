@@ -7,9 +7,13 @@ tokens, or production links.
 
 ## Access boundaries
 
-- `/workspace` is the authenticated browser workspace. The web server checks
-  the session before rendering it and redirects an anonymous request to the
-  local, localized `/login` path with a safe continuation back to `/workspace`.
+- `/app` and `/{locale}/app` are the authenticated browser application entry
+  paths. The web server checks the session before rendering them and redirects
+  an anonymous request to the local, localized `/login` path with a safe
+  continuation back to the requested application path. `/workspace` and
+  `/{locale}/workspace` are legacy links only: the deployed edge must redirect
+  each exactly once to the corresponding `/app` path while preserving the
+  query string.
 - `/telegram` is the Telegram-hosted workspace. The Telegram adapter exchanges
   verified Telegram `initData`; a normal browser visit must not create a
   session. The Telegram Mini App URL defaults to ${APP_URL}/telegram and may
@@ -19,12 +23,10 @@ tokens, or production links.
   accepted through `/invite/parent/{token}` plus the server-bound Google OAuth
   continuation. The raw token must not be copied into support tickets or logs.
 - Child access uses the one-time `/login-child/{token}` flow and redirects to
-  token-free `/workspace` after successful server-side consumption.
-- Browser push is owned by the workspace. The service worker is registered for
-  `/workspace/`; authenticated subscriptions use `/api/push/register` and
-  `/api/push/unregister`.
-- `/app` and `/ru/app` are not compatibility routes. Do not add links,
-  redirects, proxy rules, or deployment health checks for them.
+  token-free `/app` after successful server-side consumption.
+- Browser push is owned by the application. The service worker and manifest
+  use the `/app/` scope; authenticated subscriptions use
+  `/api/push/register` and `/api/push/unregister`.
 
 Family and permission selection is server-authorized. Browser state, a request
 body, a supplied `familyId`, or another person's email is presentation/input
@@ -96,10 +98,72 @@ fresh signed init data. A browser or a mocked SDK does not prove this.
 | `WEB_PUSH_VAPID_SUBJECT` | VAPID contact URI, normally a monitored `mailto:` address or approved HTTPS contact URL. |
 | `WEB_PUSH_MAX_ATTEMPTS` | Maximum delivery attempts before the outbox item is treated as failed. |
 
-The web manifest starts at `/workspace` with scope `/workspace/`; the service
-worker provides an offline protected-data response rather than caching API
-responses. Push requires a secure deployed origin, a supported browser, user
-permission, an authenticated session, and a reachable push provider.
+The web manifest starts at `/app` with scope `/app/`; the service worker
+provides an offline protected-data response rather than caching API responses.
+Push requires a secure deployed origin, a supported browser, user permission,
+an authenticated session, and a reachable push provider. Telegram remains at
+`/telegram` and is not part of the browser-route migration.
+
+## Public canonical URL map and production SEO checks
+
+The public site has six canonical English/Russian pairs (twelve URLs):
+
+| English | Russian |
+| --- | --- |
+| `/` | `/ru/` |
+| `/how.html` | `/ru/how.html` |
+| `/tasks.html` | `/ru/tasks.html` |
+| `/rewards.html` | `/ru/rewards.html` |
+| `/parents.html` | `/ru/parents.html` |
+| `/faq.html` | `/ru/faq.html` |
+
+These are the only localized marketing entries. `/public/` files are build
+artifacts, not canonical marketing URLs. A public `?lang=en` or `?lang=ru`
+request is a compatibility request and must redirect to the matching path;
+it must not remain an indexable 200 response. Check both the `Location` value
+and the absence of a locale query in the final URL.
+
+After deployment, set `ORIGIN` to the exact HTTPS public origin and run these
+checks from a network that can reach the deployed edge:
+
+```bash
+ORIGIN=https://example.test
+for path in / /how.html /tasks.html /rewards.html /parents.html /faq.html /ru/ /ru/how.html /ru/tasks.html /ru/rewards.html /ru/parents.html /ru/faq.html; do
+  curl --fail --silent --show-error --location --max-redirs 0 --head "$ORIGIN$path"
+done
+curl --fail --silent --show-error --location --max-redirs 5 -D - "$ORIGIN/?lang=ru" -o /tmp/earnit-public-ru.html
+curl --fail --silent --show-error --location --max-redirs 5 -D - "$ORIGIN/workspace?continue=%2Fapp%3Fx%3D1" -o /dev/null
+curl --fail --silent --show-error --location --max-redirs 5 -D - "$ORIGIN/ru/workspace?continue=%2Fru%2Fapp%3Fx%3D1" -o /dev/null
+curl --fail --silent --show-error "$ORIGIN/robots.txt"
+curl --fail --silent --show-error "$ORIGIN/sitemap.xml"
+```
+
+For each canonical page, confirm status `200`, the final URL is the table
+entry, the HTML contains one canonical link for that entry and reciprocal
+`hreflang="en"`, `hreflang="ru"`, and `hreflang="x-default"` links, and the
+linked CSS, JavaScript, icon, image, and `/public/config.js` requests return
+successfully. Inspect the sitemap for exactly these twelve `<loc>` entries
+and matching alternate links. Production `robots.txt` must allow crawling and
+point at the same-origin `/sitemap.xml`; preview, staging, and development
+must remain blocked. Repeat the browser checks at 320px and with keyboard
+navigation so a successful curl does not hide an unusable page.
+
+In Google Search Console, verify ownership of the production property, submit
+the production sitemap URL, and inspect one English URL and one Russian URL
+with URL Inspection. Request indexing only after a material content change;
+record the inspection result, submitted sitemap, timestamp, deployment
+revision, and any coverage or canonicalization report. “Submitted” or
+“requested” is not proof that indexing succeeded: wait for the Search Console
+or search-engine status before reporting it as indexed.
+
+Verify the browser-route migration on the deployed origin: `/app` and
+`/ru/app` are the application paths; `/workspace` and `/ru/workspace` each
+redirect once to `/app` and `/ru/app` respectively with query strings intact.
+Confirm the manifest and service worker advertise `/app/` scope, notification
+permission/subscription fallbacks remain usable, and no migration check moves
+Telegram away from `/telegram`. Existing installed devices require a separate
+PWA update/notification test; a fresh browser load cannot prove migration of
+an already-installed service worker.
 
 ## Release and deployment checklist
 
@@ -111,46 +175,51 @@ permission, an authenticated session, and a reachable push provider.
    is announced by the control, and follow public navigation to verify the
    choice remains in the URL and content. Do not expect a family `locale`
    cookie or authenticated locale state to change.
-2. At a 320px-wide viewport, confirm every canonical public page has no
+2. Run the production SEO checks and Search Console procedure above, then at
+   a 320px-wide viewport confirm every canonical public page has no
    horizontal overflow, visible keyboard focus, and usable language controls.
    Confirm CSS, JavaScript, icons, images, and `/public/config.js` load from
    the deployed origin. Confirm both the configured Telegram Mini App URL and
-   the browser workspace fallback are visible and usable. The public access
+   the browser application fallback are visible and usable. The public access
    fallback must retain the same-origin Google-start anchor when startup is
    unavailable, and neither OAuth nor Telegram URLs may receive `lang`.
 3. Verify that a root request carrying `tgWebAppStartParam` still enters the
    Russian Telegram Mini App flow with its complete query string preserved.
    This check belongs to the official Telegram launch path; a normal browser
    request to `/` must remain the public marketing home.
-4. Confirm the deployed web origin, backend origin, HTTPS certificate, DNS, and
+4. Confirm `/app` and `/ru/app` render the browser application, while deployed
+   `/workspace` and `/ru/workspace` redirect once with query strings intact.
+   Check the `/app/` manifest/service-worker scope and notification fallback;
+   keep Telegram at `/telegram`.
+5. Confirm the deployed web origin, backend origin, HTTPS certificate, DNS, and
    exact `CORS_ORIGINS` values. Send an authenticated and an unauthenticated
    `OPTIONS` preflight to a representative `/api/*` endpoint and inspect the
    returned origin and credentials headers.
-5. Confirm Google Cloud OAuth consent-screen publishing status and register
+6. Confirm Google Cloud OAuth consent-screen publishing status and register
    exactly ${APP_URL}/api/login-google/callback. Test login and cancellation
    with a non-production account; verify the callback does not accept a foreign
    redirect or email for an invitation.
-6. Sign in to the browser workspace with a test account, confirm the browser
+7. Sign in to the browser application with a test account, confirm the browser
    sign-out control is present, and verify a successful sign-out clears the
    session before returning to the static public site. Also verify that a
    failed logout remains on the workspace and presents a generic error.
-7. Confirm the mail provider sender/domain, SPF/DKIM/DMARC, bounce/complaint
+8. Confirm the mail provider sender/domain, SPF/DKIM/DMARC, bounce/complaint
    path, provider credentials, and rate limits. Send a controlled test invite,
    verify provider acceptance and mailbox delivery, then revoke the test
    invitation. Never paste the raw URL into logs or monitoring.
-8. Generate or load the VAPID key pair through the approved secret-management
+9. Generate or load the VAPID key pair through the approved secret-management
    process. Set the public key, private key, subject, and retry limit; deploy
    with `ENABLE_WEB_PUSH=true`; enable push in an HTTPS browser and verify the
    subscription and a delivered notification, including unsubscribe behavior.
-9. In BotFather, configure the Mini App URL to the deployed
+10. In BotFather, configure the Mini App URL to the deployed
    `TELEGRAM_MINI_APP_URL` (or its ${APP_URL}/telegram default). Verify the
    bot webhook ownership, secret, rollout gate, and callback settings. Launch
    from the official Telegram client with a test identity and check both parent
    and child authorization boundaries.
-10. Confirm database migrations, outbox/retention worker health, structured
+11. Confirm database migrations, outbox/retention worker health, structured
    backend errors, bounded web diagnostics, security headers, and alerting for
    failed mail, Telegram, and push delivery.
-11. Confirm the former Mini App reference carousel and its four screenshots
+12. Confirm the former Mini App reference carousel and its four screenshots
    are absent from the deployed public site. Their reappearance is a deployment
    regression, not an expected visual variation. Run the local quality gates
    below, then run the deployment smoke checks above. Record provider responses,
@@ -160,7 +229,9 @@ permission, an authenticated session, and a reachable push provider.
 ## Verification boundaries
 
 The local gates prove source-level compilation, tests, lint, and a production
-web build only:
+web build only. They are Tier 1 source/local evidence. They do not prove
+deployed crawler responses, CDN behavior, indexing, Search Console state, or
+PWA migration on an already-installed device:
 
 ```bash
 git diff --check
@@ -168,7 +239,9 @@ cd apps/backend && JAVA_HOME="$HOME/.sdkman/candidates/java/25.0.2-amzn" ./mvnw 
 cd ../web && npm run lint && npm run test && npm run build
 ```
 
-They do not prove remote CI, deployed secrets, Google consent configuration,
-DNS/HTTPS, CORS at the public edge, email delivery, push delivery on a real
-browser/device, or an official Telegram client launch. Those require the
-deployment checklist and evidence from the relevant provider or client.
+Remote CI and the deployed HTTPS/browser checks above are Tier 2 deployment
+evidence. Search Console inspection and indexing status are Tier 3 search
+evidence. Public accessibility, OAuth, Telegram root handoff, and push/mail
+checks must be recorded separately; an official Telegram client and a
+physical device are Tier 4 client/device evidence. A local unit test or
+Playwright run must never be reported as proof of any higher tier.

@@ -439,7 +439,7 @@ git commit -m "test(web): cover crawlable public locales"
 
 ## PSS-SEO-005: Document deployment and search-engine verification
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** PSS-SEO-004, PSS-APP-004
 
