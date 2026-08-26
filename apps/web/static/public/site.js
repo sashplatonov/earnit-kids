@@ -1,5 +1,5 @@
 
-import { getMessage, resolveDocumentLocale } from "./i18n.js";
+import { DEFAULT_LOCALE, getMessage, normalizeLocale, resolveDocumentLocale } from "./i18n.js";
 import { publicLanguageHref } from "./urls.js";
 
 export const GOOGLE_WORKSPACE_FALLBACK = "/";
@@ -47,9 +47,20 @@ export async function requestBrowserWorkspaceUrl(fetchImpl, config = {}) {
 
 export function enhancePublicSite(documentRef, windowRef, fetchImpl) {
   const locale = resolveDocumentLocale(documentRef);
+  const pathname = windowRef.location.pathname;
+  const savedLocale = String(documentRef.cookie || "").split(";").map((part) => part.trim().split("=")).find(([name]) => name === "locale")?.[1];
+  const browserLocale = normalizeLocale(savedLocale) || normalizeLocale(windowRef.navigator?.languages?.[0]) || normalizeLocale(windowRef.navigator?.language);
+  if (locale === DEFAULT_LOCALE && browserLocale === "ru" && !pathname.startsWith("/ru/")) {
+    const target = pathname === "/" ? "/ru/" : `/ru${pathname}`;
+    windowRef.location.assign(`${target}${windowRef.location.search}${windowRef.location.hash}`);
+    return;
+  }
   documentRef.querySelectorAll("[data-language]").forEach((link) => {
     const href = publicLanguageHref(windowRef.location.pathname, link.dataset.language, windowRef.location.origin);
     if (href) link.href = href;
+    link.addEventListener("click", () => {
+      document.cookie = `locale=${encodeURIComponent(link.dataset.language)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+    });
   });
   const cfg = windowRef.EARNIT_CONFIG || {};
   const url = String(cfg.telegramMiniAppUrl || "");

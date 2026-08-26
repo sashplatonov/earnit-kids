@@ -32,9 +32,9 @@ export const handle: Handle = async ({ event, resolve }) => {
     // EXPLAIN: The Telegram Mini App is served at a bare URL (no locale prefix).
     // The public marketing site is served from static/public/.
     const isTelegramMiniApp = internalPath === '/telegram' || internalPath.startsWith('/telegram/');
-    // EXPLAIN: The anonymous demo owns its bare English entry point; otherwise
-    // a previous RU demo visit would redirect /demo back to /ru/demo.
-    const resolvedLocale = localeFromPath ?? (internalPath === '/demo' ? DEFAULT_LOCALE : cookieLocale ?? headerLocale ?? DEFAULT_LOCALE);
+    // EXPLAIN: Bare public/demo entry points negotiate the visitor's language;
+    // an explicit locale path and saved preference remain authoritative.
+    const resolvedLocale = localeFromPath ?? cookieLocale ?? headerLocale ?? DEFAULT_LOCALE;
 
     event.locals.locale = resolvedLocale;
 

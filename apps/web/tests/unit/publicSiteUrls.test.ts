@@ -28,6 +28,19 @@ describe('public-site URL contract', () => {
         }).redirect).toBeNull();
     });
 
+    it('prefers a saved locale over browser language negotiation', () => {
+        expect(normalizePublicRequest('https://example.test/', {
+            cookie: 'session=1; locale=ru',
+            acceptLanguage: 'en-US, ru;q=0.8',
+        })).toMatchObject({
+            redirect: 'https://example.test/ru/',
+            vary: true,
+        });
+        expect(normalizePublicRequest('https://example.test/', {
+            acceptLanguage: 'de-DE',
+        }).redirect).toBeNull();
+    });
+
     it('keeps explicit valid locale queries ahead of browser preferences', () => {
         expect(normalizePublicRequest('https://example.test/how.html?lang=en&utm_source=mail', {
             acceptLanguage: 'ru-RU',

@@ -13,7 +13,7 @@ export function publicDocument(pathname: string, locale?: 'en' | 'ru'): {
 export function publicDocumentPath(url: string | URL, locale?: 'en' | 'ru'): string | null;
 export function canonicalPublicPath(pathname: string, locale: 'en' | 'ru'): string | null;
 export function resolvePublicOrigin(rawOrigin?: string, options?: { production?: boolean }): string;
-export function normalizePublicRequest(input: string | URL, options?: { acceptLanguage?: string }): {
+export function normalizePublicRequest(input: string | URL, options?: { acceptLanguage?: string; cookie?: string }): {
     url: URL;
     redirect: string | null;
     document: ReturnType<typeof publicDocument>;

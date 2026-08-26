@@ -4,6 +4,7 @@ import { shopItems } from '$lib/telegram/stores/shopItems';
 import type { ShopItem, CatalogRewardTemplate } from '$lib/telegram/stores/types';
 import type { ApiActionResult } from '$lib/services/api';
 import type { RewardRequestActionInput, RewardRequestActions } from '$lib/telegram/services/rewardRequestActions';
+import type { Locale } from '$lib/i18n';
 
 export const DEMO_FAMILY_ID = 'live-demo-family';
 export const DEMO_PARENT_ID = 'live-demo-parent';
@@ -88,21 +89,38 @@ const catalogReward: CatalogRewardTemplate = { id: 'live-demo-catalog-reward', t
 
 function clone<T>(value: T): T { return structuredClone(value); }
 
-function initialSnapshot(): LiveCoinShopDemoSnapshot {
+function initialSnapshot(locale: Locale = 'en'): LiveCoinShopDemoSnapshot {
+    const ru = locale === 'ru';
+    const names = ru ? {
+        mia: 'Мия', leo: 'Лео', home: 'Дом', learning: 'Учёба', treats: 'Угощения', experiences: 'Впечатления',
+        bed: 'Заправить кровать', read: 'Читать 20 минут', oldTask: 'Старая задача', iceCream: 'Мороженое',
+        cinema: 'Поход в кино', oldReward: 'Старая награда', book: 'Новая книга', water: 'Полить растения',
+        dessert: 'Выбрать десерт', school: 'Для школы', bonus: 'Еженедельный бонус', sweetBreak: 'Сладкий перерыв', movie: 'Выберите фильм вместе'
+    } : {
+        mia: 'Mia', leo: 'Leo', home: 'Home', learning: 'Learning', treats: 'Treats', experiences: 'Experiences',
+        bed: 'Make the bed', read: 'Read for 20 minutes', oldTask: 'Old chore', iceCream: 'Ice cream',
+        cinema: 'Trip to the cinema', oldReward: 'Old reward', book: 'New book', water: 'Water the plants',
+        dessert: 'Choose a dessert', school: 'For school', bonus: 'Weekly bonus', sweetBreak: 'A sweet break', movie: 'Choose the movie together'
+    };
+    const localizedChildren = children.map((entry, index) => ({ ...entry, nickname: index === 0 ? names.mia : names.leo, shopGroupOrder: [names.treats, names.experiences], taskGroupOrder: [names.home, names.learning] }));
+    const localizedTasks = tasks.map((entry) => ({ ...entry, name: String(entry.id).endsWith('bed') ? names.bed : String(entry.id).endsWith('read') ? names.read : names.oldTask, groupName: entry.groupName === 'Home' ? names.home : names.learning }));
+    const localizedShop = shop.map((entry) => ({ ...entry, name: String(entry.id).endsWith('ice-cream') ? names.iceCream : String(entry.id).endsWith('trip') ? names.cinema : String(entry.id).endsWith('inactive') ? names.oldReward : names.book, groupName: entry.groupName === 'Treats' ? names.treats : entry.groupName === 'Experiences' ? names.experiences : names.learning, comment: String(entry.id).endsWith('ice-cream') ? names.sweetBreak : entry.comment }));
+    const localizedCatalogTask = { ...catalogTask, title: names.water, comment: ru ? 'Сохраним дом зелёным' : 'Keep our home green', groupName: names.home };
+    const localizedCatalogReward = { ...catalogReward, title: names.dessert, comment: names.movie, groupName: names.treats };
     const requests: Request[] = [
-        { id: 'live-demo-request-pending', requestType: 'shop_purchase', itemId: 'live-demo-reward-book', itemName: 'New book', childId: DEMO_SECOND_CHILD_ID, childNickname: 'Leo', amount: 45, coins: 45, note: 'For school', status: 'pending', createdAt: '2026-08-26T10:00:00Z' },
-        { id: 'live-demo-request-approved', requestType: 'shop_purchase', itemId: 'live-demo-reward-ice-cream', itemName: 'Ice cream', childId: DEMO_SECOND_CHILD_ID, childNickname: 'Leo', amount: 30, coins: 30, status: 'approved', createdAt: '2026-08-25T10:00:00Z' },
-        { id: 'live-demo-request-rejected', requestType: 'task_completion', taskId: 'live-demo-task-read', taskName: 'Read for 20 minutes', childId: DEMO_CHILD_ID, childNickname: 'Mia', amount: 15, coins: 15, status: 'rejected', createdAt: '2026-08-24T10:00:00Z' },
+        { id: 'live-demo-request-pending', requestType: 'shop_purchase', itemId: 'live-demo-reward-book', itemName: names.book, childId: DEMO_SECOND_CHILD_ID, childNickname: names.leo, amount: 45, coins: 45, note: names.school, status: 'pending', createdAt: '2026-08-26T10:00:00Z' },
+        { id: 'live-demo-request-approved', requestType: 'shop_purchase', itemId: 'live-demo-reward-ice-cream', itemName: names.iceCream, childId: DEMO_SECOND_CHILD_ID, childNickname: names.leo, amount: 30, coins: 30, status: 'approved', createdAt: '2026-08-25T10:00:00Z' },
+        { id: 'live-demo-request-rejected', requestType: 'task_completion', taskId: 'live-demo-task-read', taskName: names.read, childId: DEMO_CHILD_ID, childNickname: names.mia, amount: 15, coins: 15, status: 'rejected', createdAt: '2026-08-24T10:00:00Z' },
     ];
     const history: HistoryEntry[] = [
-        { id: 'live-demo-history-1', type: 'earn', amount: 15, title: 'Read for 20 minutes', taskId: 'live-demo-task-read', childId: DEMO_CHILD_ID, createdAt: '2026-08-25T18:00:00Z' },
-        { id: 'live-demo-history-2', type: 'purchase', amount: -30, title: 'Ice cream', itemId: 'live-demo-reward-ice-cream', childId: DEMO_SECOND_CHILD_ID, createdAt: '2026-08-25T12:00:00Z' },
-        { id: 'live-demo-history-3', type: 'admin', amount: 50, description: 'Weekly bonus', childId: DEMO_SECOND_CHILD_ID, createdAt: '2026-08-24T09:00:00Z' },
+        { id: 'live-demo-history-1', type: 'earn', amount: 15, title: names.read, taskId: 'live-demo-task-read', childId: DEMO_CHILD_ID, createdAt: '2026-08-25T18:00:00Z' },
+        { id: 'live-demo-history-2', type: 'purchase', amount: -30, title: names.iceCream, itemId: 'live-demo-reward-ice-cream', childId: DEMO_SECOND_CHILD_ID, createdAt: '2026-08-25T12:00:00Z' },
+        { id: 'live-demo-history-3', type: 'admin', amount: 50, description: names.bonus, childId: DEMO_SECOND_CHILD_ID, createdAt: '2026-08-24T09:00:00Z' },
     ];
     return {
-        app: { isAdmin: true, role: 'PARENT', permission: 'family_admin', balance: children[0].balance, rules: null, tasks: clone(tasks), history, requests, friends: [], childNickname: 'Mia', isPinSet: false, familyId: DEMO_FAMILY_ID, monthlyLimit: 10000, dailyCoinLimit: 100, baseData: { tasks: clone(tasks) }, catalog: { tasks: [catalogTask] }, children: clone(children), currentChildId: DEMO_CHILD_ID, isLoading: false },
-        shopItems: clone(shop),
-        catalogRewards: [clone(catalogReward)],
+        app: { isAdmin: true, role: 'PARENT', permission: 'family_admin', balance: localizedChildren[0].balance, rules: null, tasks: clone(localizedTasks), history, requests, friends: [], childNickname: names.mia, isPinSet: false, familyId: DEMO_FAMILY_ID, monthlyLimit: 10000, dailyCoinLimit: 100, baseData: { tasks: clone(localizedTasks) }, catalog: { tasks: [localizedCatalogTask] }, children: clone(localizedChildren), currentChildId: DEMO_CHILD_ID, isLoading: false },
+        shopItems: clone(localizedShop),
+        catalogRewards: [clone(localizedCatalogReward)],
     };
 }
 
@@ -166,10 +184,10 @@ export function createLiveCoinShopDemoActions(read: () => LiveCoinShopDemoSnapsh
 
 export type LiveCoinShopDemoSession = { actions: LiveCoinShopDemoActions; initialize: () => void; reset: () => void; teardown: () => void; snapshot: () => LiveCoinShopDemoSnapshot; };
 
-export function createLiveCoinShopDemoSession(): LiveCoinShopDemoSession {
-    let canonical = initialSnapshot();
+export function createLiveCoinShopDemoSession(locale: Locale = 'en'): LiveCoinShopDemoSession {
+    let canonical = initialSnapshot(locale);
     const publish = (next: LiveCoinShopDemoSnapshot) => { canonical = clone(next); appStore.set(clone(canonical.app)); shopItems.set(clone(canonical.shopItems)); catalogRewards.set(clone(canonical.catalogRewards)); return clone(canonical); };
-    const session = { actions: null as unknown as LiveCoinShopDemoActions, initialize: () => publish(initialSnapshot()), reset: () => publish(initialSnapshot()), teardown: () => { appStore.reset(); shopItems.set([]); catalogRewards.set([]); }, snapshot: () => clone(canonical) };
+    const session = { actions: null as unknown as LiveCoinShopDemoActions, initialize: () => publish(initialSnapshot(locale)), reset: () => publish(initialSnapshot(locale)), teardown: () => { appStore.reset(); shopItems.set([]); catalogRewards.set([]); }, snapshot: () => clone(canonical) };
     session.actions = createLiveCoinShopDemoActions(() => clone(canonical), publish);
     return session;
 }

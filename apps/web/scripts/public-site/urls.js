@@ -58,6 +58,19 @@ function preferredPublicLocale(acceptLanguage) {
     return supportedPreference?.range.split('-')[0] || DEFAULT_PUBLIC_LOCALE;
 }
 
+function localeFromCookie(cookie) {
+    if (typeof cookie !== 'string') return null;
+
+    const value = cookie.split(';')
+        .map((part) => part.trim().split('='))
+        .find(([name]) => name === 'locale')?.[1];
+    try {
+        return normalizeLocale(value ? decodeURIComponent(value) : null);
+    } catch {
+        return null;
+    }
+}
+
 export function publicDocument(pathname, locale = DEFAULT_PUBLIC_LOCALE) {
     const normalizedLocale = normalizeLocale(locale);
     if (!normalizedLocale) return null;
@@ -94,7 +107,7 @@ export function canonicalPublicPath(pathname, locale) {
     return publicDocument(pathname, locale)?.path || null;
 }
 
-export function normalizePublicRequest(input, { acceptLanguage } = {}) {
+export function normalizePublicRequest(input, { acceptLanguage, cookie } = {}) {
     const url = input instanceof URL ? new URL(input) : new URL(input, 'https://example.test');
     const current = publicDocument(url.pathname);
     if (!current || (url.pathname === '/' && url.searchParams.has('tgWebAppStartParam'))) {
@@ -108,10 +121,18 @@ export function normalizePublicRequest(input, { acceptLanguage } = {}) {
     }
 
     const negotiatedLocale = requestedLocale || (
-        current.locale === DEFAULT_PUBLIC_LOCALE ? preferredPublicLocale(acceptLanguage) : null
+        current.locale === DEFAULT_PUBLIC_LOCALE
+            ? localeFromCookie(cookie) || preferredPublicLocale(acceptLanguage)
+            : null
     );
     if (!negotiatedLocale || (!requestedLocale && negotiatedLocale === current.locale)) {
-        return { url, redirect: null, document: current, vary: !requestedLocale && current.locale === DEFAULT_PUBLIC_LOCALE && typeof acceptLanguage === 'string' };
+        return {
+            url,
+            redirect: null,
+            document: current,
+            vary: !requestedLocale && current.locale === DEFAULT_PUBLIC_LOCALE
+                && (typeof acceptLanguage === 'string' || typeof cookie === 'string'),
+        };
     }
 
     const target = publicDocument(current.englishPath, negotiatedLocale);

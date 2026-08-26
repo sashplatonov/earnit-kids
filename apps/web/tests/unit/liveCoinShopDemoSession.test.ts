@@ -26,6 +26,16 @@ describe('live coin shop demo session', () => {
         expect(items.find((item) => item.id === liveCoinShopDemoFixture.unaffordableRewardId)?.price).toBeGreaterThan(state.balance);
     });
 
+    it('builds the same complete fixture with Russian presentation data', () => {
+        const russianSession = createLiveCoinShopDemoSession('ru');
+        russianSession.initialize();
+
+        expect(get(appStore).children.map((child) => child.nickname)).toEqual(['Мия', 'Лео']);
+        expect(get(appStore).tasks.map((task) => task.name)).toContain('Заправить кровать');
+        expect(get(shopItems).map((item) => item.groupName)).toEqual(['Угощения', 'Впечатления', 'Угощения', 'Учёба']);
+        expect(get(shopItems).map((item) => item.name)).toContain('Мороженое');
+    });
+
     it('creates one pending request with and without a note without changing balance', async () => {
         const result = await session.actions.request({ itemId: liveCoinShopDemoFixture.affordableRewardId, childId: liveCoinShopDemoFixture.childId, note: 'Saturday afternoon' });
 

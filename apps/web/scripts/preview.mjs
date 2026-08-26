@@ -234,11 +234,12 @@ const server = createServer((req, res) => {
 
             const publicRequest = normalizePublicRequest(url, {
                 acceptLanguage: pathname.startsWith('/ru/') ? undefined : req.headers['accept-language'],
+                cookie: pathname.startsWith('/ru/') ? undefined : req.headers.cookie,
             });
             if (publicRequest.redirect) {
                 const headers = { Location: `${publicRequest.url.pathname}${publicRequest.url.search}` };
                 if (publicRequest.vary) {
-                    headers.Vary = 'Accept-Language';
+                    headers.Vary = 'Accept-Language, Cookie';
                 }
                 res.writeHead(308, headers);
                 res.end();

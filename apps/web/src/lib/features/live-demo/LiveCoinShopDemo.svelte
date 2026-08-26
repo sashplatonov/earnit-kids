@@ -2,6 +2,7 @@
     import { onMount } from 'svelte';
     import TelegramParentShell from '$lib/components/telegram/TelegramParentShell.svelte';
     import TelegramChildShell from '$lib/components/telegram/TelegramChildShell.svelte';
+    import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
     import { useI18n } from '$lib/i18n/context';
     import { provideWorkspaceActions } from '$lib/features/workspace/workspaceActions';
     import { provideTaskActions } from '$lib/telegram/services/taskActions';
@@ -15,7 +16,7 @@
 
     const i18n = useI18n();
     export let publicOrigin = '';
-    const session = createLiveCoinShopDemoSession();
+    const session = createLiveCoinShopDemoSession($i18n.locale);
     const workspace = createLiveCoinShopDemoWorkspace(session);
     provideWorkspaceActions(workspace.workspace);
     provideTaskActions(workspace.tasks);
@@ -56,7 +57,8 @@
 <main class="demo-page">
     <div class="demo-toolbar">
         <p class="notice" role="note">{$i18n.t('app.liveDemo.temporaryData')}</p>
-        <button class="reset" type="button" on:click={resetDemo}>{$i18n.t('app.liveDemo.reset')}</button>
+        <a class="public-link" href={publicOrigin || '/'}><TelegramIcon name="link" size={16} label={$i18n.t('app.liveDemo.publicSite')} />{$i18n.t('app.liveDemo.publicSite')}</a>
+        <button class="reset" type="button" on:click={resetDemo}><TelegramIcon name="refresh" size={16} label={$i18n.t('app.liveDemo.reset')} />{$i18n.t('app.liveDemo.reset')}</button>
     </div>
     <p class="announcement" aria-live="polite">{announcement}</p>
     {#if mounted}
@@ -73,7 +75,9 @@
 <style>
     .demo-page { min-height:100vh; box-sizing:border-box; padding:0 1rem 2rem; background:#f8fafc; color:#18243d; }
     .demo-toolbar { display:flex; align-items:center; gap:1rem; width:min(100%, 48rem); margin:0 auto; padding:.7rem 0; }
-    .reset { flex:none; min-height:2.75rem; padding:.6rem .9rem; border:1px solid #3867d6; border-radius:.7rem; background:#fff; color:#2454bb; font:inherit; font-weight:600; cursor:pointer; }
+    .public-link, .reset { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; min-height:2.75rem; padding:.6rem .9rem; border-radius:.7rem; font:inherit; font-weight:600; }
+    .public-link { color:#2454bb; text-decoration:none; }
+    .reset { flex:none; border:1px solid #3867d6; background:#fff; color:#2454bb; cursor:pointer; }
     .reset:focus-visible { outline:3px solid #93b4ff; outline-offset:2px; }
     .notice { flex:1; margin:0; color:#5c4b21; font-size:.82rem; line-height:1.35; }
     .announcement { width:min(100%, 48rem); min-height:1.4rem; margin:.1rem auto; color:#26734d; font-size:.85rem; }

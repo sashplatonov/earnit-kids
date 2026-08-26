@@ -17,7 +17,7 @@ describe('public site browser access', () => {
         } as unknown as Parameters<typeof enhancePublicSite>[0];
         const windowRef = {
             location: { pathname: '/', origin: 'https://example.test', href: 'https://example.test/?lang=ru&error=oauth' },
-            navigator: { languages: ['ru-RU'], language: 'ru-RU' },
+            navigator: { languages: ['en-US'], language: 'en-US' },
             EARNIT_CONFIG: {},
             matchMedia: () => ({ matches: false }),
         } as unknown as Parameters<typeof enhancePublicSite>[1];
@@ -25,6 +25,23 @@ describe('public site browser access', () => {
         enhancePublicSite(documentRef, windowRef, vi.fn());
 
         expect(status.textContent).toBe('Google sign-in is temporarily unavailable. Use the browser sign-in link to try again.');
+    });
+
+    it('redirects a static English page for a Russian browser', () => {
+        const assign = vi.fn();
+        const documentRef = {
+            documentElement: { lang: 'en' },
+            cookie: '',
+            querySelectorAll: vi.fn(() => []),
+        } as unknown as Parameters<typeof enhancePublicSite>[0];
+        const windowRef = {
+            location: { pathname: '/how.html', origin: 'https://example.test', search: '', hash: '', assign },
+            navigator: { languages: ['ru-RU'], language: 'ru-RU' },
+        } as unknown as Parameters<typeof enhancePublicSite>[1];
+
+        enhancePublicSite(documentRef, windowRef, vi.fn());
+
+        expect(assign).toHaveBeenCalledWith('/ru/how.html');
     });
 
     it('keeps a local login fallback and requests the app OAuth target', async () => {
