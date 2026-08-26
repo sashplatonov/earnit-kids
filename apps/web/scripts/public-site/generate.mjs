@@ -65,4 +65,6 @@ async function generateLocale(locale) {
 for (const locale of PUBLIC_LOCALES) await generateLocale(locale);
 await copyFile(path.join(scriptDirectory, 'i18n.js'), path.join(outputDirectory, 'i18n.js'));
 await copyFile(path.join(scriptDirectory, 'urls.js'), path.join(outputDirectory, 'urls.js'));
+await copyFile(path.join(scriptDirectory, 'demo-data.js'), path.join(outputDirectory, 'demo-data.js'));
+await copyFile(path.join(scriptDirectory, 'demo.js'), path.join(outputDirectory, 'demo.js'));
 console.log(`Generated ${PUBLIC_PAGES.length * PUBLIC_LOCALES.length} public pages from ${path.relative(projectDirectory, templatePath)}`);

@@ -99,7 +99,7 @@ git commit -m "feat(web): add localized public demo route"
 
 ## PSD-002: Render the read-only parent demo from generated static fixtures
 
-**Status:** TODO
+**Status:** DONE
 
 **Priority:** P1
 
