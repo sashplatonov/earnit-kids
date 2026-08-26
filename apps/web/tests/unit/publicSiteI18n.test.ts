@@ -34,8 +34,8 @@ describe('static public-site i18n', () => {
     });
 
     it('adds language only to same-origin public links', () => {
-        expect(withLanguage('/how.html?x=1', 'ru')).toBe('/how.html?x=1&lang=ru');
+        expect(withLanguage('/how.html?x=1', 'ru')).toBe('/ru/how.html?x=1');
         expect(withLanguage('https://telegram.me/example', 'ru')).toBe('https://telegram.me/example');
-        expect(withLanguage('/api/login-google/start?continue=%2Fworkspace', 'ru')).toContain('lang=ru');
+        expect(withLanguage('/api/login-google/start?continue=%2Fworkspace', 'ru')).toBe('/api/login-google/start?continue=%2Fworkspace');
     });
 });

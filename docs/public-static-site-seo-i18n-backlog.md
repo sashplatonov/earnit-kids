@@ -61,7 +61,7 @@ without breaking OAuth, invitations, push, or existing deep links.
 
 ## PSS-SEO-001: Define public language paths and edge canonicalization
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** -
 

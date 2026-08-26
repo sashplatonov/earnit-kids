@@ -4,6 +4,7 @@ import { gzip } from 'node:zlib';
 import httpProxy from 'http-proxy-3';
 import { handler } from '../build/handler.js';
 import { buildProxyReferer, resolveProxyContext, resolveTelegramMiniAppUrl } from './proxy-context.mjs';
+import { normalizePublicRequest, publicDocumentPath } from './public-site/urls.js';
 
 function applyCliOverrides(argv) {
     for (let index = 0; index < argv.length; index += 1) {
@@ -93,23 +94,6 @@ function isBackendProxyRoute(pathname) {
 
 function isWebSocketRoute(pathname) {
     return pathname === '/ws';
-}
-
-const PUBLIC_DOCUMENTS = new Map([
-    ['/', '/public/index.html'],
-    ['/how.html', '/public/how.html'],
-    ['/tasks.html', '/public/tasks.html'],
-    ['/rewards.html', '/public/rewards.html'],
-    ['/parents.html', '/public/parents.html'],
-    ['/faq.html', '/public/faq.html'],
-]);
-
-function publicDocumentPath(url) {
-    if (url.pathname === '/' && url.searchParams.has('tgWebAppStartParam')) {
-        return null;
-    }
-
-    return PUBLIC_DOCUMENTS.get(url.pathname) || null;
 }
 
 function setSecurityHeaders(res) {
@@ -245,6 +229,13 @@ const server = createServer((req, res) => {
 
             if (isBackendProxyRoute(pathname)) {
                 proxyRequest(req, res);
+                return;
+            }
+
+            const publicRequest = normalizePublicRequest(url);
+            if (publicRequest.redirect) {
+                res.writeHead(308, { Location: `${publicRequest.url.pathname}${publicRequest.url.search}` });
+                res.end();
                 return;
             }
 

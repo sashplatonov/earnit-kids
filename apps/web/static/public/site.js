@@ -1,5 +1,6 @@
 
-import { applyLocale, getMessage, resolveLocale, withLanguage } from "./i18n.js";
+import { getMessage, resolveLocale } from "./i18n.js";
+import { publicLanguageHref } from "./urls.js";
 
 export const GOOGLE_WORKSPACE_FALLBACK = "/";
 const GOOGLE_WORKSPACE_START = "/api/login-google/start?continue=%2Fworkspace";
@@ -45,11 +46,9 @@ export async function requestBrowserWorkspaceUrl(fetchImpl, config = {}) {
 
 export function enhancePublicSite(documentRef, windowRef, fetchImpl) {
   const locale = resolveLocale(windowRef.location.search, windowRef.navigator);
-  applyLocale(documentRef, windowRef, locale);
-  documentRef.querySelectorAll("[data-language]").forEach((button) => {
-    button.addEventListener("click", () => {
-      windowRef.location.assign(withLanguage(windowRef.location.pathname, button.dataset.language, windowRef.location.origin));
-    });
+  documentRef.querySelectorAll("[data-language]").forEach((link) => {
+    const href = publicLanguageHref(windowRef.location.pathname, link.dataset.language, windowRef.location.origin);
+    if (href) link.href = href;
   });
   const cfg = windowRef.EARNIT_CONFIG || {};
   const url = String(cfg.telegramMiniAppUrl || "");

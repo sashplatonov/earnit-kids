@@ -75,7 +75,11 @@ export function getMessage(locale, key) {
 export function withLanguage(href, locale, currentOrigin = 'https://example.test') {
     const url = new URL(href, currentOrigin);
     if (url.origin !== currentOrigin) return href;
-    url.searchParams.set('lang', locale);
+    if (!['en', 'ru'].includes(locale)) return href;
+    const path = url.pathname.startsWith('/ru/') ? url.pathname.slice(3) || '/' : url.pathname;
+    if (!['/', '/how.html', '/tasks.html', '/rewards.html', '/parents.html', '/faq.html'].includes(path)) return href;
+    url.pathname = locale === 'ru' ? `/ru${path}` : path;
+    url.searchParams.delete('lang');
     return `${url.pathname}${url.search}${url.hash}`;
 }
 
@@ -107,7 +111,6 @@ export function applyLocale(documentRef, windowRef, locale) {
     documentRef.querySelectorAll('[data-language]').forEach((button) => {
         button.setAttribute('aria-pressed', button.dataset.language === locale ? 'true' : 'false');
     });
-    localizePublicLinks(documentRef, locale, windowRef.location.origin);
     return dictionary;
 }
 

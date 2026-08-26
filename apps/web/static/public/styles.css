@@ -42,8 +42,8 @@ button,input{font:inherit}
 .tab.active{color:var(--blue);background:#fff;box-shadow:0 1px 4px rgba(37,61,97,.09)}
 .header-cta{flex:0 0 auto;margin-left:0;padding-inline:13px;white-space:nowrap}
 .language-switcher{display:flex;flex:0 0 auto;gap:2px;padding:2px;background:#eef2f7;border:1px solid #e1e6ed;border-radius:11px}
-.language-switcher button{min-width:44px;min-height:44px;padding:6px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-size:12px;font-weight:850;cursor:pointer}
-.language-switcher button[aria-pressed="true"]{background:#fff;color:var(--blue);box-shadow:0 1px 4px rgba(37,61,97,.09)}
+.language-switcher a{display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:6px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-size:12px;font-weight:850}
+.language-switcher a[aria-current="page"]{background:#fff;color:var(--blue);box-shadow:0 1px 4px rgba(37,61,97,.09)}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 15px;border-radius:12px;border:1px solid transparent;font-weight:800;cursor:pointer;transition:background .16s ease,border-color .16s ease,transform .16s ease}
 .btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
