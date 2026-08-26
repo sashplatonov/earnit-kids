@@ -113,7 +113,7 @@ public class TelegramReplyKeyboardNavigator {
         if (!updateSucceeded) {
             try {
                 String familyId = identity.get().familyId() == null ? view.get().familyId()
-                    : String.valueOf(identity.get().familyId());
+                    : families.get().findFamilyIdByDbId(identity.get().familyId()).orElse(null);
                 updateSucceeded = familyId != null && !familyId.isBlank()
                     && families.get().updateLocale(familyId, selected);
             } catch (RuntimeException exception) {

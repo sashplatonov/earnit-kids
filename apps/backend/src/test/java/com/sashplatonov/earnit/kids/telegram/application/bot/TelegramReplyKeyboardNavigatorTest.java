@@ -63,14 +63,15 @@ class TelegramReplyKeyboardNavigatorTest {
         FamilyParentMembershipEntity membership = mock(FamilyParentMembershipEntity.class);
         when(membership.getPermission()).thenReturn(FamilyParentMembershipEntity.Permission.family_admin);
         when(memberships.findByParentAndFamily(9, 7)).thenReturn(Optional.of(membership));
-        when(families.updateLocale("7", FamilyLocale.en)).thenReturn(true);
+        when(families.findFamilyIdByDbId(7)).thenReturn(Optional.of("family-7"));
+        when(families.updateLocale("family-7", FamilyLocale.en)).thenReturn(true);
 
         TelegramReplyKeyboardNavigator navigator = navigator(quickActions, null, config(), apiClient, families,
             memberships, identities);
         navigator.handle(message(TelegramCopy.language(FamilyLocale.ru)), 44L, 77L);
         navigator.handle(message(TelegramCopy.languageEnglish(FamilyLocale.ru)), 44L, 77L);
 
-        verify(families).updateLocale("7", FamilyLocale.en);
+        verify(families).updateLocale("family-7", FamilyLocale.en);
         verify(apiClient).sendMessageWithReplyKeyboard(eq(44L), eq(TelegramCopy.languageUpdated(FamilyLocale.en)),
             org.mockito.ArgumentMatchers.any());
     }
