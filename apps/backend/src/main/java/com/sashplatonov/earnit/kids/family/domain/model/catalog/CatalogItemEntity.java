@@ -34,26 +34,8 @@ public class CatalogItemEntity {
     @Column(name = "item_type", nullable = false)
     private CatalogItemType itemType;
 
-    @Column(name = "title_en", nullable = false)
-    private String titleEn;
-
-    @Column(name = "title_ru", nullable = false)
-    private String titleRu;
-
-    @Column(name = "comment_en")
-    private String commentEn;
-
-    @Column(name = "comment_ru")
-    private String commentRu;
-
     @Column(name = "group_key", nullable = false)
     private String groupKey;
-
-    @Column(name = "group_name_en", nullable = false)
-    private String groupNameEn;
-
-    @Column(name = "group_name_ru", nullable = false)
-    private String groupNameRu;
 
     @Column(name = "semantic_graphic_key", nullable = false)
     private String semanticGraphicKey;

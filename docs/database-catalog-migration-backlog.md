@@ -110,7 +110,7 @@ git commit -m "fix(backend): normalize catalog translations"
 
 ## CAT-DB-005: Replace language-specific catalog mappings
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P0
 **Depends on:** CAT-DB-004
 
