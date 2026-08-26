@@ -249,7 +249,9 @@ const server = createServer((req, res) => {
             // Keep authenticated application paths outside the public static
             // resolver, including their locale-prefixed reroute inputs.
             const applicationPath = pathname.startsWith('/ru/') ? pathname.slice(3) : pathname;
-            const publicPath = applicationPath === '/app' || applicationPath.startsWith('/app/')
+            const isTelegramLaunch = url.searchParams.has('tgWebAppStartParam');
+            const publicPath = isTelegramLaunch ? null
+                : applicationPath === '/app' || applicationPath.startsWith('/app/')
                 || applicationPath === '/workspace' || applicationPath.startsWith('/workspace/')
                 ? null
                 : publicDocumentPath(url);
