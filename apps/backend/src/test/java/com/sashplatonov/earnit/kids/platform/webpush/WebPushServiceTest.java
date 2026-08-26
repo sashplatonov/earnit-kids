@@ -2,15 +2,20 @@ package com.sashplatonov.earnit.kids.platform.webpush;
 
 import com.sashplatonov.earnit.kids.config.auth.AuthContext;
 import com.sashplatonov.earnit.kids.family.application.notification.FamilyNotificationService;
+import com.sashplatonov.earnit.kids.family.domain.model.outbox.ApplicationOutboxEventEntity;
+import com.sashplatonov.earnit.kids.family.domain.model.outbox.ApplicationOutboxEventType;
 import com.sashplatonov.earnit.kids.family.domain.model.membership.FamilyParentMembershipEntity;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.membership.FamilyParentMembershipRepository;
+import com.sashplatonov.earnit.kids.family.infrastructure.persistence.outbox.ApplicationOutboxEventRepository;
 import com.sashplatonov.earnit.kids.identity.domain.model.ParentAccountEntity;
 import com.sashplatonov.earnit.kids.identity.infrastructure.persistence.ParentAccountRepository;
 import com.sashplatonov.earnit.kids.platform.security.SecurityAuditWriter;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
+import java.util.List;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -29,6 +34,26 @@ class WebPushServiceTest {
     private final FamilyParentMembershipRepository memberships = mock(FamilyParentMembershipRepository.class);
     private final WebPushService service = new WebPushService(subscriptions, deliveries, families,
         preferences, audits, config, new WebPushJavaAdapter(config), parentAccounts, memberships);
+
+    @Test
+    void plannedDeliveryUsesCanonicalAppFallbackDeepLink() {
+        ApplicationOutboxEventRepository events = mock(ApplicationOutboxEventRepository.class);
+        ApplicationOutboxEventEntity event = ApplicationOutboxEventEntity.builder()
+            .id(1L).eventType(ApplicationOutboxEventType.TASK_REQUEST_CREATED)
+            .familyId(7).childId(3).createdAt(Instant.parse("2026-08-26T10:00:00Z")).build();
+        WebPushSubscriptionEntity subscription = WebPushSubscriptionEntity.builder().id(2L)
+            .familyId(7).actorType("parent").build();
+        when(events.findPlanningCandidates(any())).thenReturn(List.of(event));
+        when(subscriptions.findParents(7)).thenReturn(List.of(subscription));
+        when(deliveries.findByEventAndSubscription(1L, 2L)).thenReturn(Optional.empty());
+        when(preferences.isEnabled(7, "parent", "taskMarkedDone", null)).thenReturn(true);
+        when(config.enabled()).thenReturn(true);
+
+        assertThat(service.planDueEvents(Instant.parse("2026-08-26T10:01:00Z"), events)).isEqualTo(1);
+        ArgumentCaptor<WebPushDeliveryEntity> captor = ArgumentCaptor.forClass(WebPushDeliveryEntity.class);
+        verify(deliveries).persist(captor.capture());
+        assertThat(captor.getValue().getDeepLink()).isEqualTo("/app");
+    }
 
     @Test
     void registrationUsesAuthenticatedParentAndNeverClientIdentity() {

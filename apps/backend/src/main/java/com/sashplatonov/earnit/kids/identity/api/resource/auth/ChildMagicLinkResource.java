@@ -68,7 +68,7 @@ public class ChildMagicLinkResource {
         var cookies = cookieBuilder.buildRotatedAuthCookies(
             payload.email(), payload.role(), payload.familyId(), payload.childId(),
             payload.permission());
-        URI locationUri = URI.create(publicOriginResolver.toAbsoluteRedirect("/workspace", request));
+        URI locationUri = URI.create(publicOriginResolver.toAbsoluteRedirect("/app", request));
         Response.ResponseBuilder response = Response.seeOther(locationUri)
             .header("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
             .header("Pragma", "no-cache")

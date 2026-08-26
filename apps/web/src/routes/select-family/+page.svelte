@@ -19,7 +19,7 @@
                 body: JSON.stringify({ familyId }),
             });
             if (response.ok) {
-                window.location.assign('/workspace');
+                window.location.assign('/app');
                 return;
             }
             error = $i18n.t('auth.login.chooserError');

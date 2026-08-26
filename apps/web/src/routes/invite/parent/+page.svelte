@@ -42,7 +42,7 @@
             cache: 'no-store',
         });
         if (response.ok) {
-            window.location.assign('/workspace');
+            window.location.assign('/app');
             return;
         }
         error = response.status === 401

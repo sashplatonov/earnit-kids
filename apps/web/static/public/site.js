@@ -3,7 +3,7 @@ import { getMessage, resolveLocale } from "./i18n.js";
 import { publicLanguageHref } from "./urls.js";
 
 export const GOOGLE_WORKSPACE_FALLBACK = "/";
-const GOOGLE_WORKSPACE_START = "/api/login-google/start?continue=%2Fworkspace";
+const GOOGLE_WORKSPACE_START = "/api/login-google/start?continue=%2Fapp";
 
 function isUsableAuthorizationUrl(value) {
   try {
@@ -31,7 +31,7 @@ export async function requestBrowserWorkspaceUrl(fetchImpl, config = {}) {
   if (authConfig?.googleEnabled !== true) throw new Error("unavailable");
 
   try {
-    const response = await fetchImpl(`/api/login-google/url?redirect_to=${encodeURIComponent(config.redirectTo || "/workspace")}`, {
+    const response = await fetchImpl(`/api/login-google/url?redirect_to=${encodeURIComponent(config.redirectTo || "/app")}`, {
       credentials: "same-origin",
       cache: "no-store",
     });
@@ -86,7 +86,7 @@ export function enhancePublicSite(documentRef, windowRef, fetchImpl) {
       status.textContent = "";
       link.setAttribute("aria-busy", "true");
       try {
-        windowRef.location.assign(await requestBrowserWorkspaceUrl(fetchImpl, { redirectTo: "/workspace" }));
+        windowRef.location.assign(await requestBrowserWorkspaceUrl(fetchImpl, { redirectTo: "/app" }));
       } catch {
         link.href = GOOGLE_WORKSPACE_START;
         status.textContent = getMessage(locale, "oauthError");

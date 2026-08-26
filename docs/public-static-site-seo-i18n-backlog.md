@@ -618,7 +618,7 @@ git commit -m "feat(web): move browser workspace to app route"
 
 ## PSS-APP-002: Move authenticated entry and OAuth continuations to `/app`
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** PSS-APP-001
 

@@ -43,6 +43,7 @@ class PublicOriginResolverTest {
     void validateLocalContinuation_acceptsApplicationPathsAndRejectsForeignForms() {
         PublicOriginResolver resolver = new PublicOriginResolver("https://app.test");
 
+        assertThat(resolver.validateLocalContinuation("/app")).contains("/app");
         assertThat(resolver.validateLocalContinuation("/workspace")).contains("/workspace");
         assertThat(resolver.validateLocalContinuation("/en/telegram?tab=history")).contains("/en/telegram?tab=history");
         assertThat(resolver.validateLocalContinuation("https://attacker.example")).isEmpty();

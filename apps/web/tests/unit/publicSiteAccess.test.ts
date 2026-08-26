@@ -6,14 +6,14 @@ function jsonResponse(body: unknown, status = 200): Response {
 }
 
 describe('public site browser access', () => {
-    it('keeps a local login fallback and requests the workspace OAuth target', async () => {
+    it('keeps a local login fallback and requests the app OAuth target', async () => {
         const fetchMock = vi.fn<typeof fetch>()
             .mockResolvedValueOnce(jsonResponse({ googleEnabled: true }))
             .mockResolvedValueOnce(jsonResponse({ url: 'https://accounts.google.com/o/oauth2/auth?state=signed' }));
 
-        await expect(requestBrowserWorkspaceUrl(fetchMock, { redirectTo: '/workspace' })).resolves.toContain('accounts.google.com');
+        await expect(requestBrowserWorkspaceUrl(fetchMock)).resolves.toContain('accounts.google.com');
         expect(GOOGLE_WORKSPACE_FALLBACK).toBe('/');
-        expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/login-google/url?redirect_to=%2Fworkspace', {
+        expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/login-google/url?redirect_to=%2Fapp', {
             credentials: 'same-origin',
             cache: 'no-store',
         });

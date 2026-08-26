@@ -185,7 +185,7 @@ public class WebPushService {
                   .transport("WEB_PUSH")
                   .title("EarnIt Kids")
                   .body(event.getEventType().name().replace('_', ' '))
-                  .deepLink("/workspace")
+                  .deepLink("/app")
                   .status(enabled && config.enabled() ? "PENDING" : "SKIPPED_DISABLED")
                   .nextAttemptAt(now)
                   .terminalAt(enabled && config.enabled() ? null : now)

@@ -40,7 +40,7 @@ class ChildMagicLinkResourceTest {
         Response response = resource.loginByToken(request, "token");
 
         assertThat(response.getStatus()).isEqualTo(303);
-        assertThat(response.getLocation().toString()).isEqualTo("/workspace");
+        assertThat(response.getLocation().toString()).isEqualTo("/app");
         assertThat(response.getHeaders().get("Set-Cookie")).hasSize(2);
     }
 
