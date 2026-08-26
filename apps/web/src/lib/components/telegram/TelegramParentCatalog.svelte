@@ -46,7 +46,7 @@
     function addOne(template: CatalogTaskTemplate | CatalogRewardTemplate) {
         const mapped = mapGroupKeyToFamily(template.groupKey, familyGroups, template.groupName, kind);
         if (mapped) {
-            commitAdd([template], mapped);
+            void commitAdd([template], mapped);
         } else {
             pendingTemplates = [template];
             pendingGroupName = template.groupName ?? null;
@@ -57,7 +57,7 @@
     function addMany(templates: Array<CatalogTaskTemplate | CatalogRewardTemplate>) {
         const mapped = mapGroupKeyToFamily(templates[0]?.groupKey, familyGroups, templates[0]?.groupName, kind);
         if (mapped) {
-            commitAdd(templates, mapped);
+            void commitAdd(templates, mapped);
         } else {
             pendingTemplates = templates;
             pendingGroupName = templates[0]?.groupName ?? null;
@@ -67,10 +67,10 @@
 
     function chooseGroup(groupName: string | null) {
         groupMapOpen = false;
-        commitAdd(pendingTemplates, groupName);
+        void commitAdd(pendingTemplates, groupName);
     }
 
-    function commitAdd(templates: Array<CatalogTaskTemplate | CatalogRewardTemplate>, groupName: string | null) {
+    async function commitAdd(templates: Array<CatalogTaskTemplate | CatalogRewardTemplate>, groupName: string | null) {
         const existing = new Set(
             familyItems.map((item) => String((item as { sourceCatalogItemId?: string | null }).sourceCatalogItemId ?? ''))
         );
@@ -85,7 +85,7 @@
 
         if (fresh.length === 1) {
             // Single add: no confirmation.
-            applyAdd(fresh, groupName);
+            await applyAdd(fresh, groupName);
             return;
         }
 
@@ -101,7 +101,7 @@
         pendingGroupName = groupName;
     }
 
-    function applyAdd(templates: Array<CatalogTaskTemplate | CatalogRewardTemplate>, groupName: string | null) {
+    async function applyAdd(templates: Array<CatalogTaskTemplate | CatalogRewardTemplate>, groupName: string | null) {
         const section: GroupOrderSection = kind === 'task' ? 'tasks' : 'shop';
         const nextItems = kind === 'task'
             ? templates.map((template) => templateToTask(template as CatalogTaskTemplate, groupName))
@@ -113,8 +113,7 @@
         } else {
             // shopItems are now managed in specialized stores, but we maintain patch for any generic state updates if needed
             // However, since we've decoupled, we primarily update the specialized store
-            shopItems.update((items) => [...items, ...(nextItems as import('$lib/telegram/stores/types').ShopItem[])]);
-            catalogRewards.update((rewards) => [...rewards, ...(templates as CatalogRewardTemplate[])]);
+            for (const template of templates as CatalogRewardTemplate[]) await rewardActions.addCatalogReward(template.id);
         }
 
         if (groupName && currentChild && resolvedChildId && !getEffectiveGroupOrder(currentChild, section, isAdmin).includes(groupName)) {
@@ -122,14 +121,14 @@
             patch.children = applyGroupOrderToChildren($appStore.children, resolvedChildId, section, isAdmin, nextOrder);
         }
 
-        appStore.setState(patch);
+        if (kind === 'task') appStore.setState(patch);
         void (kind === 'task' ? taskActions.persist() : rewardActions.persist());
         detailsOpen = false;
         bulkSummaryOpen = false;
     }
 
     function confirmBulk() {
-        applyAdd(pendingTemplates, pendingGroupName);
+        void applyAdd(pendingTemplates, pendingGroupName);
     }
 
     function back() {

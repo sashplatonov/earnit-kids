@@ -3,7 +3,7 @@
     import { appStore, type Request } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
     import { useWorkspaceActions } from '$lib/features/workspace/workspaceActions';
-    import { deleteRequest } from '$lib/services/api';
+    import { useRequestActions } from '$lib/telegram/services/requestActions';
     import { confirmAction } from '$lib/services/confirm';
     import TelegramBalanceHeader from './TelegramBalanceHeader.svelte';
     import TelegramChildTasks from './TelegramChildTasks.svelte';
@@ -23,6 +23,7 @@
 
     const i18n = useI18n();
     const workspaceActions = useWorkspaceActions();
+    const requestActions = useRequestActions();
 
     export let publicOrigin = '';
     export let onExitPreview: (() => void) | null = null;
@@ -96,9 +97,9 @@
         if (!confirmed) return;
         cancelError = '';
         cancellingIds = [...cancellingIds, request.id];
-        const ok = await deleteRequest(request.id, $appStore.currentChildId);
+        const result = await requestActions.cancel(request.id, $appStore.currentChildId);
         cancellingIds = cancellingIds.filter((id) => String(id) !== String(request.id));
-        if (ok) {
+        if (result != null) {
             await workspaceActions.refresh();
         } else {
             cancelError = $i18n.t('app.telegram.childRequests.cancelError');

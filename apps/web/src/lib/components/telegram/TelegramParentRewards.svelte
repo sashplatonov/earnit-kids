@@ -58,12 +58,9 @@
     }
     function add() { editingItem = null; formOpen = true; }
     function edit(item: unknown) { closeMenu(); editingItem = item as ShopItem; formOpen = true; }
-    function toggleArchive(item: ShopItem) {
+    async function toggleArchive(item: ShopItem) {
         closeMenu(true);
-        const nextActive = item.isActive === false;
-        const nextItems = $shopItems.map((entry) => entry.id == item.id ? ({ ...entry, isActive: nextActive } as typeof entry) : entry);
-        shopItems.set(nextItems);
-        void rewardActions.persist();
+        await rewardActions.archiveReward(item);
     }
     async function remove(item: ShopItem) {
         closeMenu();
@@ -75,9 +72,7 @@
             tone: 'danger',
         });
         if (!confirmed) return;
-        const nextItems = $shopItems.filter((entry) => entry.id != item.id);
-        shopItems.set(nextItems);
-        void rewardActions.persist();
+        await rewardActions.deleteReward(item);
     }
     // EXPLAIN: Parent directly grants a reward to the current child, spending
     // EXPLAIN: coins without a child request. Reuses buyItem (POST /purchase).
@@ -121,16 +116,12 @@
             });
         }
     }
-    function handleDeleteGroup(event: CustomEvent<{ group: string; moveTo: string | null }>) {
+    async function handleDeleteGroup(event: CustomEvent<{ group: string; moveTo: string | null }>) {
         const { group, moveTo } = event.detail;
-        const nextItems = $shopItems.map((item) =>
-            item.groupName === group ? { ...item, groupName: moveTo ?? null } as typeof item : item
-        );
-        shopItems.set(nextItems);
-        void rewardActions.persist();
+        await rewardActions.deleteGroup(group, moveTo);
         const nextGroups = groups.filter((g) => g !== group);
         const nextHidden = hiddenGroups.filter((g) => g !== group);
-        void saveGroups(new CustomEvent('save', { detail: { groups: nextGroups, hiddenGroups: nextHidden } }));
+        await saveGroups(new CustomEvent('save', { detail: { groups: nextGroups, hiddenGroups: nextHidden } }));
     }
 </script>
 

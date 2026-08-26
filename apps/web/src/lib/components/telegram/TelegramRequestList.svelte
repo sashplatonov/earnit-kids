@@ -21,6 +21,7 @@
     export let showHeading = true;
     export let headingText = '';
     export let emptyText = '';
+    export let onDecision: () => void = () => {};
     let busy: string | number | null = null;
     let decisionError = '';
 
@@ -35,6 +36,7 @@
         if (result == null) decisionError = $i18n.t('app.telegram.requests.updateError');
         const refreshed = await requestActions.refresh();
         if (!refreshed && result != null) decisionError = $i18n.t('app.telegram.requests.savedButRefreshFailed');
+        if (result != null) onDecision();
         busy = null;
     }
     $: presentations = requests.map((request) => presentRequest(request, {

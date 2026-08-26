@@ -7,6 +7,8 @@
     import { shopItems } from '$lib/telegram/stores/shopItems';
     import { confirmAction } from '$lib/services/confirm';
     import { moveGroup } from '$lib/telegram/services/groupOrder';
+    import { useTaskActions } from '$lib/telegram/services/taskActions';
+    import { useRewardActions } from '$lib/telegram/services/rewardActions';
     import { getTelegramEntityIcon } from './telegramEntityIcons';
     import { getSemanticGraphic } from './semanticGraphics';
     import TelegramIcon from './TelegramIcon.svelte';
@@ -17,6 +19,8 @@
     export let onClose: () => void = () => {};
 
     const i18n = useI18n();
+    const taskActions = useTaskActions();
+    const rewardActions = useRewardActions();
     const dispatch = createEventDispatcher<{
         save: { groups: string[]; hiddenGroups: string[] };
         deleteGroup: { group: string; moveTo: string | null };
@@ -98,17 +102,8 @@
             // Rename: update items + group order + hidden list.
             const nextGroups = orderedGroups.map((g) => g === editingGroup ? name : g);
             const nextHidden = hiddenGroups.map((g) => g === editingGroup ? name : g);
-            if (kind === 'tasks') {
-                const renamedItems = ($appStore.tasks as Task[]).map((item) =>
-                    item.groupName === editingGroup ? { ...item, groupName: name } as Task : item
-                );
-                appStore.setState({ tasks: renamedItems });
-            } else {
-                const renamedItems = ($shopItems as ShopItem[]).map((item) =>
-                    item.groupName === editingGroup ? { ...item, groupName: name } as ShopItem : item
-                );
-                shopItems.set(renamedItems);
-            }
+            if (kind === 'tasks') void taskActions.deleteGroup(editingGroup, name);
+            else void rewardActions.deleteGroup(editingGroup, name);
             saveGroupOrder(nextGroups, nextHidden);
             saveGroupIcon(name, groupIcon);
         } else if (editingGroup == null) {

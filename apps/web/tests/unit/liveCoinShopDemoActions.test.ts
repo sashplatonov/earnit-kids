@@ -50,4 +50,31 @@ describe('live coin shop demo actions', () => {
         await session.actions.rejectRequest(liveCoinShopDemoFixture.pendingRequestId);
         expect(get(appStore).requests.find((request) => request.id === liveCoinShopDemoFixture.pendingRequestId)?.status).toBe('rejected');
     });
+
+    it('supports child task request and parent completion with synchronized balance and history', async () => {
+        const request = await session.actions.request({
+            itemId: 'live-demo-task-bed',
+            childId: liveCoinShopDemoFixture.childId,
+            note: 'I finished it',
+        });
+        expect(request.ok).toBe(true);
+        expect(get(appStore).requests.at(-1)).toMatchObject({ requestType: 'task_completion', note: 'I finished it', status: 'pending' });
+
+        const beforeBalance = get(appStore).balance;
+        const completed = await session.actions.completeTask({ id: 'live-demo-task-bed', childId: liveCoinShopDemoFixture.childId });
+        expect(completed.ok).toBe(true);
+        expect(get(appStore).balance).toBe(beforeBalance + 10);
+        expect(get(appStore).history[0]).toMatchObject({ type: 'task_completed', taskId: 'live-demo-task-bed', amount: 10 });
+    });
+
+    it('rejects inactive, unaffordable and limited reward purchases without mutating state', async () => {
+        const beforeInactive = session.snapshot();
+        const inactive = await session.actions.spendCoins({ id: liveCoinShopDemoFixture.inactiveRewardId, childId: liveCoinShopDemoFixture.childId, amount: 10 });
+        expect(inactive.ok).toBe(false);
+        expect(session.snapshot()).toEqual(beforeInactive);
+
+        const unaffordable = await session.actions.spendCoins({ id: liveCoinShopDemoFixture.unaffordableRewardId, childId: liveCoinShopDemoFixture.childId, amount: 120 });
+        expect(unaffordable.ok).toBe(false);
+        expect(session.snapshot()).toEqual(beforeInactive);
+    });
 });

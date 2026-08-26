@@ -14,6 +14,10 @@ export type TaskActions = {
     applySnapshot: (snapshot: Record<string, unknown>) => void;
     refresh: (showSuccess?: boolean) => Promise<boolean>;
     saveTask: (task: Task | null, payload: Partial<Task>) => Promise<ApiActionResult>;
+    archiveTask: (task: Task) => Promise<ApiActionResult>;
+    deleteTask: (task: Task) => Promise<ApiActionResult>;
+    setGroupVisibility: (groupName: string, hidden: boolean) => Promise<ApiActionResult>;
+    deleteGroup: (groupName: string, moveTo: string | null) => Promise<ApiActionResult>;
 };
 const KEY = Symbol('earnit-kids-task-actions');
 export function createProductionTaskActions(): TaskActions { return {
@@ -24,6 +28,10 @@ export function createProductionTaskActions(): TaskActions { return {
     applySnapshot: applyDataSnapshot,
     refresh: refreshData,
     saveTask: async (task, payload) => { const next = task ? $replaceTask(task, payload) : { ...payload, id: `task-${Date.now()}` } as Task; appStore.setState({ tasks: task ? appStoreValue().map((item) => item.id === task.id ? next : item) : [...appStoreValue(), next] }); await scheduleSave(); return { ok: true, data: null }; },
+    archiveTask: async (task) => { appStore.setState({ tasks: appStoreValue().map((item) => item.id === task.id ? { ...item, isActive: item.isActive === false } : item) }); await scheduleSave(); return { ok: true, data: null }; },
+    deleteTask: async (task) => { appStore.setState({ tasks: appStoreValue().filter((item) => item.id !== task.id) }); await scheduleSave(); return { ok: true, data: null }; },
+    setGroupVisibility: async () => ({ ok: true, data: null }),
+    deleteGroup: async (groupName, moveTo) => { appStore.setState({ tasks: appStoreValue().map((item) => item.groupName === groupName ? { ...item, groupName: moveTo } : item) }); await scheduleSave(); return { ok: true, data: null }; },
 }; }
 function appStoreValue(): Task[] { let value: Task[] = []; const unsubscribe = appStore.subscribe((state) => { value = state.tasks; }); unsubscribe(); return value; }
 function $replaceTask(task: Task, payload: Partial<Task>): Task { return { ...task, ...payload }; }

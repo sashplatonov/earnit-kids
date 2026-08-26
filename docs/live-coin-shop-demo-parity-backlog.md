@@ -251,7 +251,7 @@ git commit -m "feat(web): render full workspace in live demo"
 
 ## LCDP-005: Реализовать live parity жизненного цикла монет, заданий, наград и заявок
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** LCDP-003, LCDP-004
 

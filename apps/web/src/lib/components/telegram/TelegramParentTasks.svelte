@@ -56,13 +56,9 @@
     }
     function add() { editingTask = null; formOpen = true; }
     function edit(task: unknown) { closeMenu(); editingTask = task as Task; formOpen = true; }
-    function toggleArchive(task: Task) {
+    async function toggleArchive(task: Task) {
         closeMenu(true);
-        const nextActive = task.isActive === false;
-        appStore.setState({
-            tasks: $appStore.tasks.map((item) => item.id == task.id ? ({ ...item, isActive: nextActive } as typeof item) : item),
-        });
-        void taskActions.persist();
+        await taskActions.archiveTask(task);
     }
     async function remove(task: Task) {
         closeMenu();
@@ -74,8 +70,7 @@
             tone: 'danger',
         });
         if (!confirmed) return;
-        appStore.setState({ tasks: $appStore.tasks.filter((item) => item.id != task.id) });
-        void taskActions.persist();
+        await taskActions.deleteTask(task);
     }
     // EXPLAIN: Parent directly completes a task for the current child, awarding
     // EXPLAIN: coins without a child request. Reuses earnCoins (POST /complete).
@@ -114,16 +109,12 @@
             });
         }
     }
-    function handleDeleteGroup(event: CustomEvent<{ group: string; moveTo: string | null }>) {
+    async function handleDeleteGroup(event: CustomEvent<{ group: string; moveTo: string | null }>) {
         const { group, moveTo } = event.detail;
-        const nextTasks = $appStore.tasks.map((task) =>
-            task.groupName === group ? { ...task, groupName: moveTo ?? null } as typeof task : task
-        );
-        appStore.setState({ tasks: nextTasks });
-        void taskActions.persist();
+        await taskActions.deleteGroup(group, moveTo);
         const nextGroups = groups.filter((g) => g !== group);
         const nextHidden = hiddenGroups.filter((g) => g !== group);
-        void saveGroups(new CustomEvent('save', { detail: { groups: nextGroups, hiddenGroups: nextHidden } }));
+        await saveGroups(new CustomEvent('save', { detail: { groups: nextGroups, hiddenGroups: nextHidden } }));
     }
 </script>
 

@@ -54,6 +54,10 @@ export function createLiveCoinShopDemoWorkspace(session: LiveCoinShopDemoSession
         saveTask: async (task, payload) => task
             ? actions.editTask({ id: task.id, ...payload })
             : actions.createTask(payload),
+        archiveTask: (task) => actions.archiveTask({ id: task.id }),
+        deleteTask: (task) => actions.deleteTask({ id: task.id }),
+        setGroupVisibility: (group, hidden) => actions.setGroupVisibility(group, hidden),
+        deleteGroup: (group, moveTo) => actions.deleteGroup(group, moveTo),
     } as TaskActions;
     const rewards: RewardActions = {
         buy: async ({ itemId, id, childId }) => {
@@ -70,6 +74,11 @@ export function createLiveCoinShopDemoWorkspace(session: LiveCoinShopDemoSession
         saveReward: async (item, payload) => item
             ? actions.editReward({ id: item.id, ...payload })
             : actions.createReward(payload),
+        archiveReward: (item) => actions.archiveReward({ id: item.id }),
+        deleteReward: (item) => actions.deleteReward({ id: item.id }),
+        addCatalogReward: (id) => actions.addCatalogReward({ id }),
+        setGroupVisibility: (group, hidden) => actions.setGroupVisibility(group, hidden),
+        deleteGroup: (group, moveTo) => actions.deleteGroup(group, moveTo),
     } as RewardActions;
     const requests: RequestActions = {
         approve: (id) => actions.approveRequest(id as string | number),

@@ -74,7 +74,7 @@
     {#if pending.length}
         <div class="section-heading"><h2 id="parent-home-title">{$i18n.t('app.telegram.home.needsAttention')}</h2><span class="count">{pending.length}</span></div>
     {/if}
-    <TelegramRequestList requests={visibleRequests} canDecide childId={$appStore.currentChildId} showHeading={false} emptyText={pending.length ? '' : $i18n.t('app.telegram.home.nothingNeedsAttention')} />
+    <TelegramRequestList requests={visibleRequests} canDecide childId={$appStore.currentChildId} showHeading={false} emptyText={pending.length ? '' : $i18n.t('app.telegram.home.nothingNeedsAttention')} onDecision={() => loadHistory(true)} />
     {#if pending.length > 2}
         <button class="see-all" type="button" on:click={() => showAll = !showAll}><span>{showAll ? $i18n.t('app.telegram.home.showFewer') : $i18n.t('app.telegram.home.allRequests', { count: pending.length })}</span><TelegramIcon name="arrowRight" size={18} label={showAll ? $i18n.t('app.telegram.home.showFewerRequests') : $i18n.t('app.telegram.home.allRequestsAria')} /></button>
     {/if}
