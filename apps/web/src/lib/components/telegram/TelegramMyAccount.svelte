@@ -6,16 +6,24 @@
     export let open = false;
     export let onClose: () => void = () => {};
     export let onOpenEmail: () => void = () => {};
+    export let demoMode = false;
 
     const i18n = useI18n();
 
     let account: AccountConnection | null = null;
+    let demoAccount: AccountConnection | null = null;
     let loading = false;
     let error = '';
 
     $: if (open) void reload();
 
     async function reload() {
+        if (demoMode) {
+            demoAccount ??= { email: 'parent@example.com', emailLinked: true, telegramLinked: true, telegramUsername: 'earnit_demo', telegramDisplayName: 'EarnIt Demo' };
+            account = { ...demoAccount };
+            error = '';
+            return;
+        }
         loading = true;
         error = '';
         const [accountConnection, telegramConnection] = await Promise.all([

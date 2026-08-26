@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { useI18n } from '$lib/i18n/context';
+import { useI18n } from '$lib/i18n/context';
+    import { appStore } from '$lib/stores/app';
     import {
         getFamilyNotificationSettings,
         setFamilyNotificationPreference,
@@ -13,12 +14,14 @@
 
     export let open = false;
     export let onClose: () => void = () => {};
+    export let demoMode = false;
 
     const i18n = useI18n();
 
     const showBrowserPush = !isTelegramMiniApp();
 
     let settings: FamilyNotificationSettings | null = null;
+    let demoSettings: FamilyNotificationSettings | null = null;
     let loading = false;
     let error = '';
 
@@ -27,6 +30,15 @@
     async function reload() {
         loading = true;
         error = '';
+        if (demoMode) {
+            demoSettings ??= {
+                parent: ['taskMarkedDone', 'rewardRequested', 'balanceChanged', 'parentInviteAccepted', 'childTelegramLinked'].map((key) => ({ key, enabled: true })),
+                children: $appStore.children.map((child) => ({ childId: Number(child.id), childName: child.nickname, preferences: ['taskApproved', 'taskRejected', 'rewardApproved', 'rewardRejected', 'newTasks', 'rewardAvailable'].map((key) => ({ key, enabled: true })) })),
+            };
+            settings = structuredClone(demoSettings);
+            loading = false;
+            return;
+        }
         settings = await getFamilyNotificationSettings();
         if (!settings) error = $i18n.t('app.telegram.notifications.loadError');
         loading = false;
@@ -112,8 +124,9 @@
                 ...settings,
                 parent: settings.parent.map((p) => p.key === pref.key ? { ...p, enabled: next } : p),
             };
+            if (demoMode) demoSettings = structuredClone(settings);
         }
-        const ok = await setFamilyNotificationPreference('parent', null, pref.key, next);
+        const ok = demoMode ? true : await setFamilyNotificationPreference('parent', null, pref.key, next);
         if (!ok) {
             error = $i18n.t('app.telegram.notifications.saveError');
             void reload();
@@ -130,8 +143,9 @@
                         ? { ...child, preferences: child.preferences.map((p) => p.key === pref.key ? { ...p, enabled: next } : p) }
                         : child),
             };
+            if (demoMode) demoSettings = structuredClone(settings);
         }
-        const ok = await setFamilyNotificationPreference('child', childId, pref.key, next);
+        const ok = demoMode ? true : await setFamilyNotificationPreference('child', childId, pref.key, next);
         if (!ok) {
             error = $i18n.t('app.telegram.notifications.saveError');
             void reload();

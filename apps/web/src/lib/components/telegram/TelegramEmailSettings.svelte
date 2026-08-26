@@ -11,10 +11,12 @@
 
     export let open = false;
     export let onClose: () => void = () => {};
+    export let demoMode = false;
 
     const i18n = useI18n();
 
     let account: AccountConnection | null = null;
+    let demoAccount: AccountConnection | null = null;
     let error = '';
     let busy = false;
     let view: 'main' | 'change' | 'password' = 'main';
@@ -26,6 +28,12 @@
     $: if (open) void reload();
 
     async function reload() {
+        if (demoMode) {
+            demoAccount ??= { email: 'parent@example.com', emailLinked: true, telegramLinked: true, telegramUsername: 'earnit_demo', telegramDisplayName: 'EarnIt Demo' };
+            account = { ...demoAccount };
+            error = '';
+            return;
+        }
         account = await getAccountConnection();
         if (!account) error = $i18n.t('app.telegram.emailSettings.error');
     }
@@ -38,6 +46,7 @@
 
     async function submitChange() {
         if (!newEmail.trim()) { error = $i18n.t('app.telegram.emailSettings.error'); return; }
+        if (demoMode) { account = account ? { ...account, email: newEmail.trim() } : account; demoAccount = account; view = 'main'; newEmail = ''; return; }
         busy = true; error = '';
         const result = await changeAccountEmail(newEmail.trim());
         busy = false;
@@ -52,6 +61,7 @@
 
     async function submitPassword() {
         if (!currentPassword || !newPassword) { error = $i18n.t('app.telegram.emailSettings.error'); return; }
+        if (demoMode) { view = 'main'; currentPassword = ''; newPassword = ''; return; }
         busy = true; error = '';
         const result = await changePassword(currentPassword, newPassword);
         busy = false;
@@ -65,6 +75,7 @@
     }
 
     async function submitUnlink() {
+        if (demoMode) { account = account ? { ...account, emailLinked: false } : account; demoAccount = account; confirmUnlink = false; return; }
         busy = true; error = '';
         const result = await unlinkAccountEmail();
         busy = false;

@@ -3,7 +3,7 @@ import { captureApiRequests, expectNoApiRequests } from './live-coin-shop-demo.h
 
 test.use({ locale: 'en-US' });
 
-test('family management stays live and external controls remain isolated', async ({ page }) => {
+test('family management and nested settings stay live without API calls', async ({ page }) => {
     const apiRequests = captureApiRequests(page);
 
     await page.goto('/demo');
@@ -30,7 +30,10 @@ test('family management stays live and external controls remain isolated', async
     await expect(page.getByText('Nora', { exact: true })).not.toBeVisible();
 
     await page.getByRole('tab', { name: 'Family' }).click();
-    await page.locator('.settings > .setting').first().click();
-    await expect(page.getByRole('alert')).toContainText('unavailable in the demo');
+    await page.getByRole('button', { name: 'Parent access' }).click();
+    await expect(page.getByRole('heading', { name: 'Parent access' })).toBeVisible();
+    await page.getByLabel('Email').fill('demo@example.com');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByRole('status')).toContainText('updated');
     expectNoApiRequests(apiRequests);
 });

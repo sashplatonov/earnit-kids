@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { useI18n } from '$lib/i18n/context';
+import { useI18n } from '$lib/i18n/context';
+    import { appStore } from '$lib/stores/app';
     import type { Child } from '$lib/stores/app';
     import { adminSaveLimits } from '$lib/services/api';
     import { refreshData } from '$lib/services/bootstrap';
@@ -10,6 +11,7 @@
     export let child: Child | null = null;
     export let onClose: () => void = () => {};
     export let onSaved: () => void = () => {};
+    export let demoMode = false;
 
     const i18n = useI18n();
 
@@ -40,6 +42,12 @@
 
     async function save() {
         if (!child) return;
+        if (demoMode) {
+            appStore.update((state) => ({ ...state, children: state.children.map((entry) => entry.id === child?.id ? { ...entry, dailyCoinLimit: effectiveLimit(earningEnabled, earningMax), dailyRewardLimit: effectiveLimit(rewardEnabled, rewardMax) } : entry) }));
+            saved = true;
+            onSaved();
+            return;
+        }
         busy = true;
         error = '';
         saved = false;

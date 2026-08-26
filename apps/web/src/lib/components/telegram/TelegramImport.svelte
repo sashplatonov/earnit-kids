@@ -2,7 +2,9 @@
     import { appStore } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
     import { importTasks } from '$lib/services/api';
-    import { importShopItems } from '$lib/telegram/services/shopApi';
+import { importShopItems } from '$lib/telegram/services/shopApi';
+    import { useTaskActions } from '$lib/telegram/services/taskActions';
+    import { useRewardActions } from '$lib/telegram/services/rewardActions';
     import { applyDataSnapshot } from '$lib/services/bootstrap';
     import {
         CSV_IMPORT_SCHEMAS,
@@ -15,8 +17,11 @@
 
     export let open = false;
     export let onClose: () => void = () => {};
+    export let demoMode = false;
 
     const i18n = useI18n();
+    const taskActions = useTaskActions();
+    const rewardActions = useRewardActions();
 
     type Screen = 'pick' | 'tasks' | 'shop';
 
@@ -182,6 +187,15 @@
         busy = true;
         error = '';
         serverErrors = [];
+        if (demoMode) {
+            for (const row of parsed.normalizedRows) {
+                if (screen === 'tasks') await taskActions.saveTask(null, row);
+                else await rewardActions.saveReward(null, row);
+            }
+            busy = false;
+            imported = true;
+            return;
+        }
         const importFn = screen === 'tasks' ? importTasks : importShopItems;
         const result = await importFn({ childId, rows: parsed.normalizedRows });
         busy = false;
