@@ -70,6 +70,8 @@ public class TelegramReplyKeyboardNavigator {
                     sendSiteLink(chatId, telegramUserId);
                 } else if (action == BotNavAction.LANGUAGE) {
                     sendLanguagePicker(chatId, telegramUserId);
+                } else if (action == BotNavAction.SETTINGS) {
+                    sendSettings(chatId, telegramUserId);
                 } else {
                     navigateByAction(chatId, telegramUserId, action.actionCode());
                 }
@@ -80,6 +82,23 @@ public class TelegramReplyKeyboardNavigator {
         if (BotNavAction.fromLabel(label).isEmpty()) {
             handleLanguageChoice(label, chatId, telegramUserId);
         }
+    }
+
+    private void sendSettings(long chatId, long telegramUserId) throws Exception {
+        if (quickActions == null) {
+            return;
+        }
+        var view = quickActions.load(telegramUserId, null);
+        if (view.isEmpty()) {
+            return;
+        }
+        var loaded = view.get();
+        TelegramLocaleContext.with(loaded.locale(), () -> {
+            String publicSiteUrl = TelegramFeatureSupport.normalizePublicSiteUrl(config.publicSiteUrl().orElse(""));
+            apiClient.get().sendMessageWithReplyKeyboard(chatId,
+                TelegramCopy.settings(loaded.locale()),
+                new BotKeyboardFactory(publicSiteUrl).settings(canManageLanguage(telegramUserId)));
+        });
     }
 
     private void sendLanguagePicker(long chatId, long telegramUserId) throws Exception {

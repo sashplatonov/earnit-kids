@@ -17,6 +17,7 @@ public final class TelegramCopy {
   static String recent(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.menu.recent"); }
   static String switchChild(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.menu.switchChild"); }
   static String language(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.menu.language"); }
+  static String settings(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.menu.settings"); }
   static String languageEnglish(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.language.english"); }
   static String languageRussian(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.language.russian"); }
   static String languagePrompt(FamilyLocale locale) { return MESSAGES.text(locale, "telegram.language.prompt"); }

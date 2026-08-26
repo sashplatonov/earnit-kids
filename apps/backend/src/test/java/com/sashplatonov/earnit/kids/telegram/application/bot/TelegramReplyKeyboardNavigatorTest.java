@@ -111,6 +111,24 @@ class TelegramReplyKeyboardNavigatorTest {
     }
 
     @Test
+    void settingsActionContainsChildLanguageAndSiteActions() throws Exception {
+        TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
+        TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
+        TelegramConfig config = config();
+        when(config.publicSiteUrl()).thenReturn(Optional.of("https://site.example.test"));
+        when(quickActions.load(77L, null)).thenReturn(Optional.of(parentView()));
+
+        navigator(quickActions, null, config, apiClient).handle(
+            message(TelegramCopy.settings(FamilyLocale.ru)), 44L, 77L);
+
+        verify(apiClient).sendMessageWithReplyKeyboard(eq(44L), eq(TelegramCopy.settings(FamilyLocale.ru)),
+            argThat(keyboard -> keyboard.rows().size() == 3
+                && keyboard.rows().get(0).buttons().get(0).label().equals(TelegramCopy.switchChild(FamilyLocale.ru))
+                && keyboard.rows().get(1).buttons().get(0).label().equals(TelegramCopy.language(FamilyLocale.ru))
+                && keyboard.rows().get(2).buttons().get(0).label().equals(TelegramCopy.site(FamilyLocale.ru))));
+    }
+
+    @Test
     void parentLanguageChoicePersistsAndRefreshesKeyboardInSelectedLocale() throws Exception {
         TelegramQuickActionService quickActions = mock(TelegramQuickActionService.class);
         TelegramBotApiClient apiClient = mock(TelegramBotApiClient.class);
@@ -123,7 +141,7 @@ class TelegramReplyKeyboardNavigatorTest {
 
         verify(families).updateLocale("family", FamilyLocale.en);
         verify(apiClient).sendMessageWithReplyKeyboard(eq(44L), eq(TelegramCopy.languageUpdated(FamilyLocale.en)),
-            argThat(keyboard -> keyboard.rows().get(2).buttons().get(0).label().equals(TelegramCopy.language(FamilyLocale.en))));
+            argThat(keyboard -> keyboard.rows().get(1).buttons().get(1).label().equals(TelegramCopy.settings(FamilyLocale.en))));
     }
 
     @Test

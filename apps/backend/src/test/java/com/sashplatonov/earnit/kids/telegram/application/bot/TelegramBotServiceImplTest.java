@@ -262,12 +262,12 @@ class TelegramBotServiceImplTest {
             eq(44L),
             eq("👧 Alex\n🟡 20 монет\n\n✅ Сейчас ничего не требует внимания"),
             argThat((TelegramReplyKeyboard kb) ->
-                kb.rows().size() == 3
+                kb.rows().size() == 2
                 && kb.rows().get(0).buttons().get(0).label().equals(TelegramCopy.requests(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru))
                 && kb.rows().get(0).buttons().get(1).label().equals(TelegramCopy.coins(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru))
                 && kb.rows().get(1).buttons().get(0).label().equals(TelegramCopy.recent(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru))
-                && kb.rows().get(1).buttons().get(1).label().equals(TelegramCopy.switchChild(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru))
-                && kb.rows().get(2).buttons().get(0).label().equals(TelegramCopy.language(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru))
+                && kb.rows().get(1).buttons().size() == 2
+                && kb.rows().get(1).buttons().get(1).label().equals(TelegramCopy.settings(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru))
             )
         );
     }
@@ -696,10 +696,10 @@ class TelegramBotServiceImplTest {
         var service = service(identities, apiClient, callbacks, config);
 
         service.handleUpdate(new ObjectMapper().readTree("""
-            {"update_id":50,"message":{"chat":{"id":44},"from":{"id":77},"text":"🌐 Сайт"}}
+            {"update_id":50,"message":{"chat":{"id":44},"from":{"id":77},"text":"🔗 Сайт"}}
             """));
 
-        // EXPLAIN: 🌐 Сайт is a plain text button (KeyboardButton has no `url`
+        // EXPLAIN: 🔗 Сайт is a plain text button (KeyboardButton has no `url`
         // EXPLAIN: field), so the bot answers with one inline URL button using
         // EXPLAIN: the same heading as the tapped button.
         verify(apiClient).sendMessage(eq(44L), eq(TelegramCopy.site(com.sashplatonov.earnit.kids.family.domain.model.FamilyLocale.ru)), any());

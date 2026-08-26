@@ -15,7 +15,13 @@ public class BotKeyboardFactory {
     public TelegramReplyKeyboard parentMain(boolean languageManagementAllowed) {
         var rows = new java.util.ArrayList<TelegramReplyKeyboard.Row>();
         rows.add(new TelegramReplyKeyboard.Row(TelegramCopy.requests(TelegramLocaleContext.current()), TelegramCopy.coins(TelegramLocaleContext.current())));
-        rows.add(new TelegramReplyKeyboard.Row(TelegramCopy.recent(TelegramLocaleContext.current()), TelegramCopy.switchChild(TelegramLocaleContext.current())));
+        rows.add(new TelegramReplyKeyboard.Row(TelegramCopy.recent(TelegramLocaleContext.current()), TelegramCopy.settings(TelegramLocaleContext.current())));
+        return TelegramReplyKeyboard.persistent(rows);
+    }
+
+    public TelegramReplyKeyboard settings(boolean languageManagementAllowed) {
+        var rows = new java.util.ArrayList<TelegramReplyKeyboard.Row>();
+        rows.add(new TelegramReplyKeyboard.Row(TelegramCopy.switchChild(TelegramLocaleContext.current())));
         if (languageManagementAllowed) {
             rows.add(new TelegramReplyKeyboard.Row(TelegramCopy.language(TelegramLocaleContext.current())));
         }
