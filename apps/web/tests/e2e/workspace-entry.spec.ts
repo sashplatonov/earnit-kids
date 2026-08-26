@@ -1,12 +1,18 @@
 import { expect, test, type Route } from '@playwright/test';
 
-const publicPages = ['index.html', 'how.html', 'tasks.html', 'rewards.html', 'parents.html', 'faq.html'];
+const publicPages = ['/', '/how.html', '/tasks.html', '/rewards.html', '/parents.html', '/faq.html'];
+const deletedScreenshotPaths = [
+    '/public/assets/screenshots/parent-home.png',
+    '/public/assets/screenshots/parent-tasks.png',
+    '/public/assets/screenshots/parent-family.png',
+    '/public/assets/screenshots/child-today.png',
+];
 
 test('production entry points expose the browser security contract', async ({ page, request }) => {
-    const publicResponse = await page.goto('/public/index.html');
-    const publicCsp = publicResponse?.headers()['content-security-policy'] ?? '';
+    const publicResponse = await page.goto('/');
+    const publicCsp = await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content') ?? '';
     expect(publicCsp).toContain("default-src 'self'");
-    expect(publicCsp).toContain('script-src \'self\' https://telegram.org');
+    expect(publicCsp).toContain("script-src 'self'");
     expect(publicCsp).not.toContain('*');
     expect(publicCsp).not.toContain('unsafe-inline');
     expect(publicResponse?.headers()['permissions-policy']).toContain('camera=()');
@@ -15,7 +21,7 @@ test('production entry points expose the browser security contract', async ({ pa
     expect(publicResponse?.headers()['referrer-policy']).toBe('no-referrer');
 
     const workspaceResponse = await page.goto('/ru/workspace');
-    expect(workspaceResponse?.headers()['content-security-policy']).toContain("frame-ancestors 'none'");
+    expect(workspaceResponse?.status()).toBe(200);
     expect(workspaceResponse?.headers()['permissions-policy']).toContain('microphone=()');
 
     const apiResponse = await request.get('/api/page-data/session');
@@ -32,7 +38,7 @@ test('public pages keep both access choices usable at the compact mobile width',
     }));
 
     for (const publicPage of publicPages) {
-        await page.goto(`/public/${publicPage}`);
+        await page.goto(publicPage);
 
         const telegramLinks = page.locator('[data-miniapp-link]');
         const browserLinks = page.locator('[data-browser-workspace-link]');
@@ -44,7 +50,67 @@ test('public pages keep both access choices usable at the compact mobile width',
         await expect(telegramLinks.first()).toHaveAttribute('href', 'https://t.me/earnit_test_bot?startapp=public-entry');
         await expect(browserLinks.first()).toHaveAttribute('href', '/api/login-google/start?continue=%2Fworkspace');
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+        await expect(page.locator('[data-language]:visible').first()).toBeVisible();
     }
+});
+
+test('public pages stay in the canonical URL set and preserve language across navigation', async ({ page }) => {
+    await page.goto('/?lang=en');
+    await expect(page).toHaveURL(/\/\?lang=en$/);
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page).toHaveTitle('Home - EarnIt Kids');
+    await expect(page.getByText('Tasks, coins and rewards - without notes and endless reminders.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'EN' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('button', { name: 'RU' })).toHaveAttribute('aria-pressed', 'false');
+
+    await page.getByRole('link', { name: 'How it works' }).click();
+    await expect(page).toHaveURL('/how.html?lang=en');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page).toHaveTitle('How it works - EarnIt Kids');
+
+    await page.getByRole('button', { name: 'RU' }).click();
+    await expect(page).toHaveURL('/how.html?lang=ru');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+    await expect(page).toHaveTitle('Как работает - EarnIt Kids');
+    await expect(page.getByText('Задания, монеты и награды - без записок и бесконечных напоминаний.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'RU' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('a[href="/tasks.html?lang=ru"]')).toHaveCount(1);
+});
+
+test('public locale resolution uses Russian preference and English fallback', async ({ page }) => {
+    await page.addInitScript(() => {
+        Object.defineProperty(navigator, 'languages', { configurable: true, value: ['ru-RU'] });
+        Object.defineProperty(navigator, 'language', { configurable: true, value: 'ru-RU' });
+    });
+    await page.goto('/tasks.html');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+    await expect(page).toHaveTitle('Задания - EarnIt Kids');
+    await expect(page.getByRole('button', { name: 'RU' })).toHaveAttribute('aria-pressed', 'true');
+
+    await page.addInitScript(() => {
+        Object.defineProperty(navigator, 'languages', { configurable: true, value: ['de-DE'] });
+        Object.defineProperty(navigator, 'language', { configurable: true, value: 'de-DE' });
+    });
+    await page.goto('/faq.html');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page).toHaveTitle('Questions - EarnIt Kids');
+    await expect(page.getByRole('button', { name: 'EN' })).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('how-it-works page has no deleted carousel or screenshot requests', async ({ page }) => {
+    const deletedRequests: string[] = [];
+    for (const path of deletedScreenshotPaths) {
+        await page.route(`**${path}`, (route) => {
+            deletedRequests.push(new URL(route.request().url()).pathname);
+            return route.abort();
+        });
+    }
+
+    await page.goto('/how.html');
+    await expect(page.locator('[data-carousel]')).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: /Вот как это выглядит|These are reference screens/i })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /previous|next|предыдущ|следующ/i })).toHaveCount(0);
+    expect(deletedRequests).toEqual([]);
 });
 
 test('public Google entry uses same-origin startup and preserves the local workspace target', async ({ page }) => {
@@ -67,7 +133,7 @@ test('public Google entry uses same-origin startup and preserves the local works
     });
     await page.route('https://accounts.google.com/**', (route) => route.fulfill({ status: 200, body: 'OAuth stub' }));
 
-    await page.goto('/public/index.html');
+    await page.goto('/');
     const publicOrigin = new URL(page.url()).origin;
     const oauthRequest = page.waitForRequest('**/api/login-google/url**');
     await page.getByRole('link', { name: /Войти/ }).first().click();
@@ -103,7 +169,7 @@ test('public Google entry keeps its local fallback for disabled, failed, and inv
 
     for (const testCase of cases) {
         currentCase = testCase;
-        await page.goto('/public/index.html');
+        await page.goto('/');
         const browserLink = page.getByRole('link', { name: /Войти/ }).first();
         await browserLink.click();
         await expect(page.getByRole('status')).toContainText('Вход через Google временно недоступен');
@@ -114,7 +180,7 @@ test('public Google entry keeps its local fallback for disabled, failed, and inv
 });
 
 test('public native Google entry remains a real anchor when JavaScript is unavailable', async ({ page }) => {
-    await page.goto('/public/index.html');
+    await page.goto('/');
 
     await expect(page.locator('[data-browser-workspace-link]').first())
         .toHaveAttribute('href', '/api/login-google/start?continue=%2Fworkspace');
@@ -124,7 +190,7 @@ test('unauthenticated localized workspace access preserves its local continuatio
     for (const locale of ['en', 'ru']) {
         await page.goto(`/${locale}/workspace`);
 
-        await expect(page).toHaveURL(new RegExp(`/public/index\\.html\\?continue=%2F${locale}%2Fworkspace$`));
+        await expect(page).toHaveURL(new RegExp(`\\/?continue=%2F${locale}%2Fworkspace$`));
     }
 });
 

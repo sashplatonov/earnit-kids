@@ -7,7 +7,7 @@ export function uniqueEmail(prefix: string) {
 }
 
 export async function authenticateE2eSession(page: Page, role: 'parent' | 'child' = 'parent') {
-    await page.goto('/public/index.html');
+    await page.goto('/');
     const host = new URL(page.url()).hostname;
     await page.context().addCookies([
         { name: 'e2e_session', value: role, domain: host, path: '/' },

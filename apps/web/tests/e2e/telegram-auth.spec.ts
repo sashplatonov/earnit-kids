@@ -88,7 +88,7 @@ test('unlinked Telegram identity gets a safe parent-link and child-invitation ha
     await page.goto('/telegram');
 
     await expect(page.getByText(/This Telegram account is not linked|Этот Telegram-аккаунт ещё не привязан/)).toBeVisible();
-    await expect(page.getByRole('link', { name: /Sign in as a parent|Войдите как родитель/ })).toHaveAttribute('href', '/public/index.html');
+    await expect(page.getByRole('link', { name: /Sign in as a parent|Войдите как родитель/ })).toHaveAttribute('href', '/');
     await expect(page.getByText(/For a child account|Для ребёнка попросите родителя/)).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });

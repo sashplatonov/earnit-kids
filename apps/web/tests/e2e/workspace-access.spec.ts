@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 async function authenticate(page: Page, role: 'parent' | 'child') {
-    await page.goto('/public/index.html');
+    await page.goto('/');
     const host = new URL(page.url()).hostname;
     await page.context().addCookies([
         { name: 'e2e_session', value: role, domain: host, path: '/' },
@@ -12,7 +12,7 @@ async function authenticate(page: Page, role: 'parent' | 'child') {
 test('normal browser workspace access preserves the detected locale in its continuation', async ({ page }) => {
     await page.goto('/workspace');
 
-    await expect(page).toHaveURL(/\/public\/index\.html\?continue=%2F(?:en|ru)%2Fworkspace$/);
+    await expect(page).toHaveURL(/\/?continue=%2F(?:en|ru)%2Fworkspace$/);
     await expect(page.getByRole('heading', { name: /Чтобы не повторять одно и то же|without repeating/i })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
@@ -56,7 +56,7 @@ test('an authenticated parent can sign out with one pending request', async ({ p
     await expect(logoutButton).toBeDisabled();
     await logoutButton.dispatchEvent('click');
 
-    await expect(page).toHaveURL(/\/public\/index\.html$/);
+    await expect(page).toHaveURL(/\/$/);
     expect(navigationCount).toBeGreaterThan(0);
     expect(requestCount).toBe(1);
 });
@@ -77,7 +77,7 @@ test('a failed browser logout stays in place and can be retried', async ({ page 
     await expect(page.getByRole('alert')).toContainText(/could not sign out|не удалось выйти/i);
     await expect(page).toHaveURL(workspaceUrl);
     await logoutButton.click();
-    await expect(page).toHaveURL(/\/public\/index\.html$/);
+    await expect(page).toHaveURL(/\/$/);
     expect(requestCount).toBe(2);
 });
 

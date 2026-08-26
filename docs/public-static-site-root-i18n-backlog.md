@@ -231,7 +231,7 @@ git commit -m "feat(web): localize static public site"
 
 ## PSS-004: Cover canonical public entry, locale, and removal regressions in the browser
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** PSS-001, PSS-002, PSS-003
 
