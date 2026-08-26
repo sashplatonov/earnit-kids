@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { requestItem, requestItemWithNote } from '$lib/telegram/services/shopApi';
     import { applyDataSnapshot, refreshData } from '$lib/services/bootstrap';
     import { appStore } from '$lib/stores/app';
     import type { ShopItem } from '$lib/telegram/stores/types';
@@ -17,8 +16,10 @@
     import TelegramCatalogToolbar from './TelegramCatalogToolbar.svelte';
     import { sortCatalogItems, type CatalogSortMode } from '$lib/telegram/services/catalogSort';
     import { getEffectiveGroupOrder, orderGroups } from '$lib/telegram/services/groupOrder';
+    import { useRewardRequestActions } from '$lib/telegram/services/rewardRequestActions';
 
     const i18n = useI18n();
+    const rewardRequestActions = useRewardRequestActions();
 
     let selectedGroup = '';
     let sortMode: CatalogSortMode = 'group';
@@ -44,7 +45,7 @@
     async function submit(note: string | null) {
         if (!selected || busy) return;
         busy = true; status = 'pending'; message = $i18n.t('app.telegram.childTasks.sendingRequest');
-        const result = note ? await requestItemWithNote(selected.id, note, $appStore.currentChildId) : await requestItem(selected.id, $appStore.currentChildId);
+        const result = await rewardRequestActions.request({ itemId: selected.id, childId: $appStore.currentChildId, note });
         busy = false;
         if (result.ok) { if (result.data && typeof result.data === 'object') applyDataSnapshot(result.data as Record<string, unknown>); status = 'success'; message = $i18n.t('app.telegram.childRewards.rewardRequestSent'); selected = null; }
         else if (result.errorCode === 'STALE_STATE') { await refreshData(); status = 'stale'; message = $i18n.t('app.telegram.childRewards.rewardChanged'); selected = null; }

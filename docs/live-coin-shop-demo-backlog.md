@@ -84,7 +84,7 @@ Static generator владеет только marketing documents; ему зап�
 
 ## LCD-002: Выделить action port заявки на награду
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** —
 
