@@ -9,6 +9,7 @@
     "build": "npm run generate:public && vite build",
     "build:static": "npm run generate:public && cp svelte.config.js svelte.config.bak.js && cp svelte.config.static.js svelte.config.js && vite build; rc=$?; cp svelte.config.bak.js svelte.config.js && rm svelte.config.bak.js; exit $rc",
     "generate:public": "node scripts/public-site/generate.mjs",
+    "pretest": "APP_URL=https://example.test npm run generate:public",
     "start": "node scripts/preview.mjs",
     "preview": "node scripts/preview.mjs",
     "lint": "svelte-kit sync && eslint . && svelte-check --tsconfig ./tsconfig.json",

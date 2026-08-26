@@ -1064,8 +1064,6 @@
 <svelte:window on:keydown={handleTooltipKeydown} />
 
 <style>
-    /* Dashboard controls and tooltip presentation live in focused feature components. */
-    :global(.toolbar), :global(.segment), :global(.seg), :global(.updated), :global(.tabs-wrap), :global(.tabs), :global(.tab), :global(.tab-ico), :global(.tab-label), :global(.tooltip-box), :global(.tooltip-head), :global(.tooltip-close) { }
     :global(.dashboard-container) {
         --dashboard-surface: #fff;
         --dashboard-line: #dfe4ee;
@@ -1109,48 +1107,6 @@
         margin: 5px 0 0;
     }
 
-    .toolbar {
-        margin: 0 0 8px;
-    }
-
-    .segment {
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 3px;
-        background: #f1f4f9;
-        padding: 4px;
-        border-radius: 14px;
-    }
-
-    .seg {
-        border: 0;
-        background: transparent;
-        border-radius: 11px;
-        min-height: 44px;
-        padding: 8px 3px;
-        color: #687491;
-        font-size: 12px;
-        font-weight: 700;
-        white-space: nowrap;
-        cursor: pointer;
-    }
-
-    .seg.active {
-        background: #fff;
-        color: #6274e8;
-        font-weight: 750;
-        box-shadow: 0 2px 5px rgba(30, 40, 70, 0.1);
-    }
-
-    .updated {
-        margin: 5px 4px 0;
-        text-align: right;
-        color: var(--muted, #8791a6);
-        font-size: 10px;
-        white-space: nowrap;
-    }
-
     .period-loading {
         display: flex;
         align-items: center;
@@ -1178,82 +1134,6 @@
 
     @keyframes dashboard-spin {
         to { transform: rotate(360deg); }
-    }
-
-    .seg:disabled {
-        cursor: wait;
-        opacity: .65;
-    }
-
-    .tabs-wrap {
-        position: fixed;
-        left: 50%;
-        bottom: 0;
-        transform: translateX(-50%);
-        width: min(800px, 100%);
-        background: rgba(246, 247, 251, 0.96);
-        backdrop-filter: blur(12px);
-        border-top: 1px solid #dfe3ec;
-        padding: 10px 10px calc(12px + env(safe-area-inset-bottom));
-        z-index: 20;
-    }
-
-    .tabs {
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 6px;
-    }
-
-    .tab {
-        min-width: 0;
-        min-height: 56px;
-        height: 56px;
-        border: 1px solid var(--line, #e5e8f0);
-        background: #fff;
-        color: #687289;
-        border-radius: 14px;
-        padding: 8px 4px;
-        font-size: 11px;
-        line-height: 1;
-        font-weight: 700;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-        overflow: hidden;
-        cursor: pointer;
-    }
-
-    .tab:focus-visible,
-    .seg:focus-visible,
-    .activity-subtab:focus-visible,
-    .info:focus-visible,
-    .tooltip-close:focus-visible,
-    .retry-btn:focus-visible {
-        outline: 3px solid #273fd0;
-        outline-offset: 2px;
-    }
-
-    .tab-ico {
-        display: block;
-        font-size: 18px;
-        line-height: 1;
-    }
-
-    .tab-label {
-        display: block;
-        max-width: 100%;
-        white-space: normal;
-        overflow-wrap: anywhere;
-        text-align: center;
-    }
-
-    .tab.active {
-        background: var(--primary, #5e6fec);
-        color: #fff;
-        border-color: var(--primary, #5e6fec);
     }
 
     .activity-subtabs {
@@ -1376,52 +1256,6 @@
         font-size: 10px;
         color: #7f8ba5;
         margin-top: 3px;
-    }
-
-    .tooltip-box {
-        position: fixed;
-        bottom: calc(78px + env(safe-area-inset-bottom));
-        left: 50%;
-        transform: translateX(-50%);
-        width: min(320px, calc(100vw - 24px));
-        background: #202633;
-        color: #fff;
-        border-radius: 12px;
-        padding: 10px 11px;
-        font-size: 12px;
-        line-height: 1.4;
-        box-shadow: 0 12px 34px rgba(0, 0, 0, 0.3);
-        z-index: 100;
-    }
-
-    .tooltip-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-        margin-bottom: 2px;
-    }
-
-    .tooltip-head b {
-        font-size: 11px;
-        color: #ccd2ff;
-    }
-
-    .tooltip-box p {
-        margin: 0;
-        color: #e6e9f2;
-        white-space: pre-line;
-    }
-
-    .tooltip-close {
-        width: 44px;
-        height: 44px;
-        border: 0;
-        background: transparent;
-        color: #ccd2ff;
-        line-height: 1;
-        cursor: pointer;
-        padding: 0;
     }
 
     .rows {
@@ -1884,24 +1718,5 @@
             padding-right: 10px;
         }
 
-        .seg {
-            font-size: 10px;
-            padding-left: 2px;
-            padding-right: 2px;
-        }
-
-        .tabs {
-            gap: 4px;
-        }
-
-        .tab {
-            font-size: 10px;
-            padding-left: 2px;
-            padding-right: 2px;
-        }
-
-        .tab-ico {
-            font-size: 17px;
-        }
     }
 </style>
