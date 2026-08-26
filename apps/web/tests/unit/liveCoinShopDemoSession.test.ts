@@ -20,6 +20,10 @@ describe('live coin shop demo session', () => {
         expect(state.balance).toBe(75);
         expect(state.children).toHaveLength(2);
         expect(state.requests.map((request) => request.status)).toEqual(['pending', 'approved', 'rejected']);
+        expect(state.history).toEqual(expect.arrayContaining([
+            expect.objectContaining({ taskId: 'live-demo-task-read', groupName: 'Learning' }),
+            expect.objectContaining({ itemId: 'live-demo-reward-ice-cream', groupName: 'Treats' }),
+        ]));
         expect(items.filter((item) => item.isActive !== false)).toHaveLength(3);
         expect(items.map((item) => item.groupName)).toEqual(['Treats', 'Experiences', 'Treats', 'Learning']);
         expect(items.find((item) => item.id === liveCoinShopDemoFixture.affordableRewardId)?.price).toBeLessThan(state.balance);
@@ -32,6 +36,10 @@ describe('live coin shop demo session', () => {
 
         expect(get(appStore).children.map((child) => child.nickname)).toEqual(['Мия', 'Лео']);
         expect(get(appStore).tasks.map((task) => task.name)).toContain('Заправить кровать');
+        expect(get(appStore).history).toEqual(expect.arrayContaining([
+            expect.objectContaining({ groupName: 'Учёба' }),
+            expect.objectContaining({ groupName: 'Угощения' }),
+        ]));
         expect(get(shopItems).map((item) => item.groupName)).toEqual(['Угощения', 'Впечатления', 'Угощения', 'Учёба']);
         expect(get(shopItems).map((item) => item.name)).toContain('Мороженое');
     });

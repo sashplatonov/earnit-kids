@@ -206,7 +206,7 @@
     <h1 id="family-title">{$i18n.t('app.telegram.family.title')}</h1>
 
     <div class="quick-actions">
-        {#if $appStore.isAdmin}
+        {#if !demoMode && $appStore.isAdmin}
             <a class="quick-action" href="/telegram/dashboard">
                 <span class="setting-icon"><TelegramIcon name="statistics" size={20} label={$i18n.t('admin.settings.dashboardTitle')} /></span>
                 <span><strong>{$i18n.t('admin.settings.dashboardTitle')}</strong><small>{$i18n.t('app.telegram.family.statisticsMeta')}</small></span>

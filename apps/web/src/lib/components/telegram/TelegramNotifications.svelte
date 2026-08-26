@@ -18,7 +18,9 @@ import { useI18n } from '$lib/i18n/context';
 
     const i18n = useI18n();
 
-    const showBrowserPush = !isTelegramMiniApp();
+    // EXPLAIN: The live demo keeps notification choices local and must not wait
+    // for, or start, a browser-push integration.
+    $: showBrowserPush = !demoMode && !isTelegramMiniApp();
 
     let settings: FamilyNotificationSettings | null = null;
     let demoSettings: FamilyNotificationSettings | null = null;
@@ -33,7 +35,9 @@ import { useI18n } from '$lib/i18n/context';
         if (demoMode) {
             demoSettings ??= {
                 parent: ['taskMarkedDone', 'rewardRequested', 'balanceChanged', 'parentInviteAccepted', 'childTelegramLinked'].map((key) => ({ key, enabled: true })),
-                children: $appStore.children.map((child) => ({ childId: Number(child.id), childName: child.nickname, preferences: ['taskApproved', 'taskRejected', 'rewardApproved', 'rewardRejected', 'newTasks', 'rewardAvailable'].map((key) => ({ key, enabled: true })) })),
+                // Demo child IDs are intentionally opaque strings, while the API
+                // contract uses numbers. Use a local stable value for list keys.
+                children: $appStore.children.map((child, index) => ({ childId: index + 1, childName: child.nickname, preferences: ['taskApproved', 'taskRejected', 'rewardApproved', 'rewardRejected', 'newTasks', 'rewardAvailable'].map((key) => ({ key, enabled: true })) })),
             };
             settings = structuredClone(demoSettings);
             loading = false;

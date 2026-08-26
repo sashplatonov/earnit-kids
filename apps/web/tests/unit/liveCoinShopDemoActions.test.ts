@@ -17,7 +17,7 @@ describe('live coin shop demo actions', () => {
         expect(result.ok).toBe(true);
         expect(get(appStore).children.find((child) => child.id === liveCoinShopDemoFixture.secondChildId)?.balance).toBe(100);
         expect(get(appStore).requests.find((request) => request.id === liveCoinShopDemoFixture.pendingRequestId)?.status).toBe('approved');
-        expect(get(appStore).history[0]).toMatchObject({ type: 'purchase', amount: -45, itemId: 'live-demo-reward-book' });
+        expect(get(appStore).history[0]).toMatchObject({ type: 'purchase', amount: -45, itemId: 'live-demo-reward-book', groupName: 'Learning' });
     });
 
     it('rejects invalid coin mutations without changing the snapshot', async () => {
@@ -64,7 +64,7 @@ describe('live coin shop demo actions', () => {
         const completed = await session.actions.completeTask({ id: 'live-demo-task-bed', childId: liveCoinShopDemoFixture.childId });
         expect(completed.ok).toBe(true);
         expect(get(appStore).balance).toBe(beforeBalance + 10);
-        expect(get(appStore).history[0]).toMatchObject({ type: 'task_completed', taskId: 'live-demo-task-bed', amount: 10 });
+        expect(get(appStore).history[0]).toMatchObject({ type: 'task_completed', taskId: 'live-demo-task-bed', amount: 10, groupName: 'Home' });
     });
 
     it('rejects inactive, unaffordable and limited reward purchases without mutating state', async () => {

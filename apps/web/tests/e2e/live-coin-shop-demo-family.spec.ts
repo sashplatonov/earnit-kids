@@ -30,10 +30,31 @@ test('family management and nested settings stay live without API calls', async 
     await expect(page.getByText('Nora', { exact: true })).not.toBeVisible();
 
     await page.getByRole('tab', { name: 'Family' }).click();
-    await page.getByRole('button', { name: 'Parent access' }).click();
-    await expect(page.getByRole('heading', { name: 'Parent access' })).toBeVisible();
+    await page.getByRole('button', { name: 'Parents' }).click();
+    await expect(page.getByRole('heading', { name: 'Parents' })).toBeVisible();
     await page.getByLabel('Email').fill('demo@example.com');
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByRole('status')).toContainText('updated');
+    expectNoApiRequests(apiRequests);
+});
+
+test('live-demo family settings keep notifications local and omit server administration', async ({ page }) => {
+    const apiRequests = captureApiRequests(page);
+
+    await page.goto('/demo');
+    await expect(page.getByText('Learning', { exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Statistics/ })).not.toBeVisible();
+
+    await page.getByRole('tab', { name: 'Family' }).click();
+    await page.getByRole('button', { name: 'Notifications' }).click();
+    const notifications = page.getByRole('dialog', { name: 'Notifications' });
+    await expect(notifications).toBeVisible();
+    await expect(notifications.getByText('Browser notifications', { exact: true })).not.toBeVisible();
+    await expect(notifications.getByText('Child marked a task as done', { exact: true })).toBeVisible();
+    await notifications.getByRole('button', { name: 'Close' }).click();
+
+    await page.getByRole('button', { name: /View as child/ }).click();
+    await page.getByRole('tab', { name: 'Activity' }).click();
+    await expect(page.getByText('Learning', { exact: true })).toBeVisible();
     expectNoApiRequests(apiRequests);
 });
