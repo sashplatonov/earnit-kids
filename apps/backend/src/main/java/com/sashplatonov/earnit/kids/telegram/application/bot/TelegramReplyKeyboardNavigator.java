@@ -15,7 +15,7 @@ public class TelegramReplyKeyboardNavigator {
     private final TelegramQuickActionService quickActions;
     private final TelegramMenuBuilder menuBuilder;
     private final TelegramConfig config;
-    private final FamilyRepository families;
+    private final Supplier<FamilyRepository> families;
     private final Supplier<TelegramBotApiClient> apiClient;
 
     public TelegramReplyKeyboardNavigator(TelegramQuickActionService quickActions,
@@ -33,7 +33,7 @@ public class TelegramReplyKeyboardNavigator {
         this.quickActions = quickActions;
         this.menuBuilder = menuBuilder;
         this.config = config;
-        this.families = families;
+        this.families = () -> families;
         this.apiClient = () -> apiClient;
     }
 
@@ -78,7 +78,7 @@ public class TelegramReplyKeyboardNavigator {
         }
         var view = quickActions.load(telegramUserId, null);
         if (view.isEmpty() || !"parent".equals(view.get().role())
-            || view.get().familyId() == null || view.get().familyId().isBlank() || families == null) {
+            || view.get().familyId() == null || view.get().familyId().isBlank() || families.get() == null) {
             sendLanguageError(chatId, view.map(value -> value.locale()).orElse(FamilyLocale.en));
             return;
         }
@@ -86,7 +86,7 @@ public class TelegramReplyKeyboardNavigator {
         boolean updateSucceeded = selected == current;
         if (!updateSucceeded) {
             try {
-                updateSucceeded = families.updateLocale(view.get().familyId(), selected);
+                updateSucceeded = families.get().updateLocale(view.get().familyId(), selected);
             } catch (RuntimeException exception) {
                 updateSucceeded = false;
             }
