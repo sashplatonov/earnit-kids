@@ -30,6 +30,7 @@ const BYPASS_PREFIXES = [
     '/telegram',
     '/workspace',
     '/app',
+    '/demo',
 ] as const;
 
 function normalisePath(pathname: string): string {

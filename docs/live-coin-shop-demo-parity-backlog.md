@@ -303,7 +303,7 @@ git commit -m "feat(web): support live demo coin shop workflows"
 
 ## LCDP-006: Реализовать parity вкладки «Семья» и работающий EN/RU switcher
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** LCDP-003, LCDP-004
 

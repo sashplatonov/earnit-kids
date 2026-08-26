@@ -1,11 +1,13 @@
 <script lang="ts">
     import { page } from '$app/stores';
-    import { LOCALES, LOCALE_COOKIE_NAME, type Locale } from '$lib/i18n';
+    import { LOCALES, LOCALE_COOKIE_NAME, stripLocaleFromPath, type Locale } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
     import { updateFamilyLocale } from '$lib/services/api';
 
     export let compact: boolean = false;
     export let familyManaged: boolean = false;
+    export let mode: 'family' | 'route' = familyManaged ? 'family' : 'route';
+    export let onLocaleChange: ((locale: Locale) => Promise<void> | void) | null = null;
     export let readOnly: boolean = false;
     let busy = false;
     let failedLocale: Locale | null = null;
@@ -18,7 +20,7 @@
     }
 
     async function handleChange(nextLocale: Locale) {
-        if (familyManaged && !readOnly) {
+        if (mode === 'family' && familyManaged && !readOnly) {
             if (busy) return;
             busy = true;
             failedLocale = null;
@@ -34,7 +36,13 @@
             return;
         }
 
-        const nextPath = $i18n.swapLocale($page.url.pathname, nextLocale);
+        if (onLocaleChange) {
+            await onLocaleChange(nextLocale);
+            return;
+        }
+
+        const localizedPath = $i18n.swapLocale($page.url.pathname, nextLocale);
+        const nextPath = mode === 'route' && nextLocale === 'en' ? stripLocaleFromPath(localizedPath) : localizedPath;
 
         document.cookie = `${LOCALE_COOKIE_NAME}=${encodeURIComponent(nextLocale)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
         location.assign(`${nextPath}${$page.url.search}${$page.url.hash}`);

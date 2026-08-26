@@ -62,7 +62,7 @@
     {#if mounted}
         {#key shellRevision}
             {#if demoView === 'parent'}
-                <TelegramParentShell {publicOrigin} permission="family_admin" onViewAsChild={() => demoView = 'child'} />
+                <TelegramParentShell {publicOrigin} permission="family_admin" demoMode onViewAsChild={() => demoView = 'child'} />
             {:else}
                 <TelegramChildShell {publicOrigin} onExitPreview={() => demoView = 'parent'} />
             {/if}

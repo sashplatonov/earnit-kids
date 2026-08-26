@@ -217,6 +217,7 @@ export const appMessages = {
             copied: 'Copied',
             createNew: 'Create new',
             telegramError: 'Could not complete the Telegram operation. Try again.',
+            demoUnavailable: 'This connection is unavailable in the demo. No external account, notification, or import action was started.',
         },
         header: {
             switchChild: 'Switch child',

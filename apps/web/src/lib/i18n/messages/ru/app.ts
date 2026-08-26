@@ -217,6 +217,7 @@ export const appMessages = {
             copied: 'Скопировано',
             createNew: 'Создать новую',
             telegramError: 'Не удалось выполнить операцию с Telegram. Попробуйте ещё раз.',
+            demoUnavailable: 'Это подключение недоступно в демо. Внешний аккаунт, уведомление или импорт не запускались.',
         },
         header: {
             switchChild: 'Выбрать ребёнка',

@@ -24,6 +24,7 @@
     export let onViewAsChild: () => void = () => {};
     export let showSessionActions = false;
     export let permission: MembershipPermission | null = null;
+    export let demoMode = false;
 
     // EXPLAIN: Bot deep links pass ?context= so the exact Mini App context opens.
     const context = typeof window === 'undefined'
@@ -71,7 +72,7 @@
         {:else if view === 'rewards'}
             <TelegramParentRewards />
         {:else}
-            <TelegramParentFamily {permission} />
+            <TelegramParentFamily {permission} {demoMode} />
         {/if}
     </div>
     <TelegramConfirmModal />

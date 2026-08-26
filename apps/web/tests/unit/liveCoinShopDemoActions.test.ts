@@ -77,4 +77,12 @@ describe('live coin shop demo actions', () => {
         expect(unaffordable.ok).toBe(false);
         expect(session.snapshot()).toEqual(beforeInactive);
     });
+
+    it('deactivates the selected child and exposes the inactive child for reactivation', async () => {
+        await session.actions.setChildActive(liveCoinShopDemoFixture.childId, false);
+        expect(session.snapshot().app.children.find((child) => child.id === liveCoinShopDemoFixture.childId)?.status).toBe('INACTIVE');
+        expect(session.snapshot().app.currentChildId).toBe(liveCoinShopDemoFixture.secondChildId);
+        await session.actions.setChildActive(liveCoinShopDemoFixture.childId, true);
+        expect(session.snapshot().app.children.find((child) => child.id === liveCoinShopDemoFixture.childId)?.status).toBe('ACTIVE');
+    });
 });

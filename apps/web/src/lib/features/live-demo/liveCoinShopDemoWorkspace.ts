@@ -89,11 +89,11 @@ export function createLiveCoinShopDemoWorkspace(session: LiveCoinShopDemoSession
     const family: FamilyActions = {
         selectChild: async (id: string | number) => { await actions.selectChild(id); },
         addChild: (name: string) => actions.addChild({ name }),
-        setChildActive: unavailable,
+        setChildActive: async (id: unknown, active: boolean) => actions.setChildActive(String(id), active),
         awardCoins: (id: string | number, amount: number, description?: string) => actions.awardCoins({ childId: id, amount, description }),
         setLocale: unavailable,
         refresh,
-        getInactive: async () => [],
+        getInactive: async () => session.snapshot().app.children.filter((child) => child.status === 'INACTIVE'),
         getTelegram: unavailable,
         createTelegramInvite: unavailable,
         unlinkTelegram: unavailable,

@@ -19,6 +19,7 @@
     const familyActions = useFamilyActions();
 
     export let permission: MembershipPermission | null = null;
+    export let demoMode = false;
 
     let inviteOpen = false;
     let newChildName = '';
@@ -50,6 +51,7 @@
     let magicLinkBusy = false;
     let magicLinkError = '';
     let magicLinkCopied = false;
+    let unavailableNotice = '';
 
     onMount(() => {
         void loadInactive();
@@ -113,8 +115,14 @@
         magicLinkCopied = false;
         telegram = null;
         manageChild = child;
-        void loadTelegram(child.id);
-        void loadMagicLinkStatus(child.id);
+        if (!demoMode) {
+            void loadTelegram(child.id);
+            void loadMagicLinkStatus(child.id);
+        }
+    }
+
+    function showUnavailable(): void {
+        unavailableNotice = $i18n.t('app.telegram.family.demoUnavailable');
     }
 
     async function loadTelegram(childId: string | number) {
@@ -123,6 +131,7 @@
 
     async function createInvite() {
         if (!manageChild) return;
+        if (demoMode) { showUnavailable(); return; }
         inviteBusy = true;
         telegramError = '';
         inviteLink = '';
@@ -144,6 +153,7 @@
 
     async function unlinkTelegram() {
         if (!manageChild) return;
+        if (demoMode) { showUnavailable(); return; }
         telegramBusy = true;
         telegramError = '';
         const ok = await familyActions.unlinkTelegram(manageChild.id);
@@ -162,6 +172,7 @@
 
     async function createMagicLink() {
         if (!manageChild) return;
+        if (demoMode) { showUnavailable(); return; }
         magicLinkBusy = true;
         magicLinkError = '';
         const result = await familyActions.issueMagicLink(manageChild.id);
@@ -174,6 +185,7 @@
 
     async function revokeMagicLink() {
         if (!manageChild) return;
+        if (demoMode) { showUnavailable(); return; }
         magicLinkBusy = true;
         magicLinkError = '';
         const ok = await familyActions.revokeMagicLink(manageChild.id);
@@ -261,16 +273,17 @@
                 </button>
                 {#if familyLocaleOpen}
                     <div id="family-language-panel" class="family-locale-panel">
-                        <LocaleSwitcher familyManaged compact />
+                        <LocaleSwitcher familyManaged={!demoMode} mode={demoMode ? 'route' : 'family'} compact />
                     </div>
                 {/if}
             </div>
         {/if}
-        <button class="setting" type="button" on:click={() => accessOpen = true}><span class="setting-icon"><TelegramIcon name="shield" size={20} label={$i18n.t('app.telegram.parents.title')} /></span><span class="grow">{$i18n.t('app.telegram.parents.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
-        <button class="setting" type="button" on:click={() => myAccountOpen = true}><span class="setting-icon"><TelegramIcon name="users" size={20} label={$i18n.t('app.telegram.myAccount.title')} /></span><span class="grow">{$i18n.t('app.telegram.myAccount.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
-        <button class="setting" type="button" on:click={() => notificationsOpen = true}><span class="setting-icon"><TelegramIcon name="bell" size={20} label={$i18n.t('app.telegram.family.notifications')} /></span><span class="grow">{$i18n.t('app.telegram.family.notifications')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
-        <button class="setting" type="button" on:click={() => importOpen = true}><span class="setting-icon"><TelegramIcon name="upload" size={20} label={$i18n.t('app.telegram.import.title')} /></span><span class="grow">{$i18n.t('app.telegram.import.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
+        <button class="setting" type="button" on:click={() => demoMode ? showUnavailable() : accessOpen = true}><span class="setting-icon"><TelegramIcon name="shield" size={20} label={$i18n.t('app.telegram.parents.title')} /></span><span class="grow">{$i18n.t('app.telegram.parents.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
+        <button class="setting" type="button" on:click={() => demoMode ? showUnavailable() : myAccountOpen = true}><span class="setting-icon"><TelegramIcon name="users" size={20} label={$i18n.t('app.telegram.myAccount.title')} /></span><span class="grow">{$i18n.t('app.telegram.myAccount.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
+        <button class="setting" type="button" on:click={() => demoMode ? showUnavailable() : notificationsOpen = true}><span class="setting-icon"><TelegramIcon name="bell" size={20} label={$i18n.t('app.telegram.family.notifications')} /></span><span class="grow">{$i18n.t('app.telegram.family.notifications')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
+        <button class="setting" type="button" on:click={() => demoMode ? showUnavailable() : importOpen = true}><span class="setting-icon"><TelegramIcon name="upload" size={20} label={$i18n.t('app.telegram.import.title')} /></span><span class="grow">{$i18n.t('app.telegram.import.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
     </div>
+    {#if unavailableNotice}<p class="demo-unavailable" role="alert">{unavailableNotice}</p>{/if}
 </div>
 
 <TelegramParentAccess open={accessOpen} onClose={() => accessOpen = false} />
@@ -293,7 +306,7 @@
             <h3 id="child-magic-link-title" class="sheet-subtitle">{$i18n.t('app.telegram.family.magicLinkTitle')}</h3>
             <p class="confirm-meta">{$i18n.t('app.telegram.family.magicLinkHint')}</p>
             {#if magicLink}
-                <button class="reactivate-full" type="button" on:click={copyMagicLink}><TelegramIcon name="copy" size={18} />{magicLinkCopied ? $i18n.t('app.telegram.family.copied') : $i18n.t('app.telegram.family.copyLink')}</button>
+                    <button class="reactivate-full" type="button" on:click={demoMode ? showUnavailable : copyMagicLink}><TelegramIcon name="copy" size={18} />{magicLinkCopied ? $i18n.t('app.telegram.family.copied') : $i18n.t('app.telegram.family.copyLink')}</button>
             {:else}
                 <button class="reactivate-full" type="button" disabled={magicLinkBusy} on:click={createMagicLink}><TelegramIcon name="key" size={18} />{magicLinkBusy ? $i18n.t('app.telegram.family.creating') : $i18n.t('app.telegram.family.createMagicLink')}</button>
             {/if}
@@ -389,6 +402,7 @@
     .setting .grow { font-weight:600; }
     .muted { color:#66718a; }
     .error { color:#a33b3b; }
+    .demo-unavailable { margin:.65rem 0 0; padding:.65rem .75rem; border:1px solid #ead9a4; border-radius:.7rem; background:#fff9e8; color:#705719; font-size:.82rem; line-height:1.4; }
     .childrow-wrap .childrow { flex:1; min-width:0; border-bottom:0; }
     .childrow-more { display:grid; place-items:center; width:2.75rem; height:2.75rem; flex:0 0 auto; border:0; background:transparent; color:#66718a; cursor:pointer; }
     .inactive-notice { margin-top:.6rem; padding:.15rem .8rem; border:1px solid #e2e6ef; border-radius:.9rem; background:#f7f8fc; color:#66718a; }
