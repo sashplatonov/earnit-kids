@@ -70,7 +70,7 @@ test('public Google entry uses same-origin startup and preserves the local works
     await page.goto('/public/index.html');
     const publicOrigin = new URL(page.url()).origin;
     const oauthRequest = page.waitForRequest('**/api/login-google/url**');
-    await page.getByRole('link', { name: 'Войти как родитель' }).first().click();
+    await page.getByRole('link', { name: /Войти/ }).first().click();
     const oauthRequestUrl = (await oauthRequest).url();
 
     expect(new URL(oauthRequestUrl).origin).toBe(publicOrigin);
@@ -104,7 +104,7 @@ test('public Google entry keeps its local fallback for disabled, failed, and inv
     for (const testCase of cases) {
         currentCase = testCase;
         await page.goto('/public/index.html');
-        const browserLink = page.getByRole('link', { name: 'Войти как родитель' }).first();
+        const browserLink = page.getByRole('link', { name: /Войти/ }).first();
         await browserLink.click();
         await expect(page.getByRole('status')).toContainText('Вход через Google временно недоступен');
         await expect(browserLink).toHaveAttribute('href', '/api/login-google/start?continue=%2Fworkspace');

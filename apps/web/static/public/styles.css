@@ -123,7 +123,7 @@ h3{font-size:19px}
 .mobile-cta{display:none}
 .public-access-status{margin:0}
 
-@media(max-width:1210px){
+@media(max-width:1300px){
   .container{width:min(calc(100% - 26px),var(--max))}
   .header-row{flex-wrap:wrap;gap:8px;padding:8px 0}
   .tabs{order:3;flex:1 0 100%;width:100%;flex-wrap:wrap;overflow:visible;margin-left:0}
