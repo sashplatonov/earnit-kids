@@ -49,7 +49,7 @@ Completed in `f553ec32`. Its `en`/ `ru` entity fields are superseded; CAT-DB-005
 
 ## CAT-DB-004: Normalize catalog translations and backfill V53 data
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P0
 **Depends on:** CAT-DB-001
 
