@@ -37,7 +37,7 @@
 - Modify apps/web/scripts/public-site/urls.js, urls.d.ts, generate.mjs, i18n.js, i18n.d.ts.
 - Modify generated apps/web/static/public/styles.css и navigation/artifacts только через npm run generate:public.
 - Delete apps/web/scripts/public-site/pages/demo.html, demo.js, demo.d.ts, demo-data.js, demo-data.d.ts.
-- Delete apps/web/static/public/demo.html, ru/demo.html, demo.js, demo.d.ts, demo-data.js, demo-data.d.ts.
+- Delete apps/web/static/public/demo.html, ru/demo.html, demo.js, demo-data.js. EXPLAIN: `.d.ts` files are not copied to `static/public/` by `generate.mjs` (only `.js` + `.html`), so do not `git rm static/public/demo.d.ts` or `static/public/demo-data.d.ts`.
 - Modify apps/web/src/routes/sitemap.xml/+server.ts, apps/web/tests/unit/publicSiteI18n.test.ts, publicSiteUrls.test.ts, sitemap.test.ts, apps/web/tests/e2e/workspace-entry.spec.ts, docs/operations/web-miniapp-access.md.
 - Delete apps/web/tests/unit/publicParentDemo.test.ts. Search anchors: demo.html, Parent demo, Демо для родителя, demoData, DEMO_TABS.
 
@@ -79,7 +79,7 @@ Static generator владеет только marketing documents; ему зап�
 ### Commit
 
     git add apps/web/scripts/public-site apps/web/static/public apps/web/src/routes/sitemap.xml/+server.ts apps/web/tests/unit/publicSiteI18n.test.ts apps/web/tests/unit/publicSiteUrls.test.ts apps/web/tests/unit/sitemap.test.ts apps/web/tests/e2e/workspace-entry.spec.ts docs/operations/web-miniapp-access.md
-    git rm apps/web/scripts/public-site/pages/demo.html apps/web/scripts/public-site/demo.js apps/web/scripts/public-site/demo.d.ts apps/web/scripts/public-site/demo-data.js apps/web/scripts/public-site/demo-data.d.ts apps/web/static/public/demo.html apps/web/static/public/ru/demo.html apps/web/static/public/demo.js apps/web/static/public/demo.d.ts apps/web/static/public/demo-data.js apps/web/static/public/demo-data.d.ts apps/web/tests/unit/publicParentDemo.test.ts
+    git rm apps/web/scripts/public-site/pages/demo.html apps/web/scripts/public-site/demo.js apps/web/scripts/public-site/demo.d.ts apps/web/scripts/public-site/demo-data.js apps/web/scripts/public-site/demo-data.d.ts apps/web/static/public/demo.html apps/web/static/public/ru/demo.html apps/web/static/public/demo.js apps/web/static/public/demo-data.js apps/web/tests/unit/publicParentDemo.test.ts
     git commit -m "refactor(web): remove static parent demo"
 
 ## LCD-002: Выделить action port заявки на награду
@@ -94,7 +94,8 @@ Static generator владеет только marketing documents; ему зап�
 
 **Файлы:**
 
-- Modify apps/web/src/lib/components/telegram/TelegramChildRewards.svelte. Search anchors: requestItem, requestItemWithNote, submit(note, applyDataSnapshot, refreshData.
+- Modify apps/web/src/lib/components/telegram/TelegramChildRewards.svelte. Search anchors: `import { requestItem, requestItemWithNote } from '$lib/telegram/services/shopApi'`, `submit(note: string | null)`, `applyDataSnapshot`, `refreshData`.
+- Production fallback delegates to `apps/web/src/lib/telegram/services/shopApi.ts` (`requestItem`, `requestItemWithNote` — both POST `/api/shop/{id}/request?childId=…`).
 - Create apps/web/src/lib/telegram/services/rewardRequestActions.ts.
 - Create apps/web/tests/unit/rewardRequestActions.test.ts.
 
@@ -207,10 +208,11 @@ Svelte rendering, i18n copy, route, E2E, parent approval и purchase.
 **Файлы:**
 
 - Create apps/web/src/routes/demo/+page.svelte.
+- Create apps/web/src/routes/demo/+page.server.ts (anonymous, no auth check — follows `apps/web/src/routes/telegram/+page.server.ts` pattern: return `{ publicOrigin: locals.appConfig.publicOrigin }` without inspecting `locals.session.authenticated`). EXPLAIN: auth is per-route via `+page.server.ts`, not via hooks or layout; root `+layout.server.ts` only exposes config/i18n/session, `hooks.server.ts` only does locale canonicalization. Do NOT add `PUBLIC_PAGES` — that list lives only in `scripts/public-site/urls.js` for the static generator.
 - Create apps/web/src/lib/features/live-demo/LiveCoinShopDemo.svelte.
-- Modify actual web i18n message modules/types owning app.telegram child copy. Search anchor: app.telegram.childRewards.rewardRequestSent.
+- Modify actual web i18n message modules/types owning app.telegram child copy. Search anchor: `app.telegram.childRewards.rewardRequestSent` (in `apps/web/src/lib/i18n/messages/{en,ru}/app.ts`). EXPLAIN: `MessageKey` is a strict literal union — add explicit demo keys (`app.liveDemo.*`), never dynamic `t(\`...${var}\`)` or svelte-check fails.
 - Create apps/web/tests/unit/liveCoinShopDemo.test.ts if component renderer already exists; otherwise browser rendering proof belongs to LCD-006.
-- Read-only layout contract: apps/web/src/routes/+layout.svelte и +layout.server.ts.
+- Read-only contract: `apps/web/src/routes/+layout.server.ts` (exposes appConfig/i18n/session, no gate) and `apps/web/src/hooks.server.ts` (locale canonicalization only).
 
 **Цель:**
 
@@ -226,11 +228,11 @@ LiveCoinShopDemo owns composition/lifecycle, not reward UI logic. Route не loa
 
 ### Required changes
 
-1. On mount create session, initialise stores и install provider; on destroy release/reset demo-owned state.
+1. On mount create session, initialise stores и install provider; on destroy release/reset demo-owned state. EXPLAIN: avoid `onMount(() => reload())` + `if (!open) return` — that never loads; use reactive `$: if (open)` or guard the mount body so initialise runs once unconditionally.
 2. Render heading, explicit temporary/no-server notice, Reset и single TelegramChildRewards. Reset announces completion through polite live feedback.
-3. Use app i18n, not static public dictionaries; EN/RU shape parity must pass.
-4. Reset is semantic, keyboard reachable, visible focus and minimum 44×44px; preserve current request-sheet focus trap.
-5. Route не требует session/cookie/Telegram globals и не добавляется в PUBLIC_PAGES/sitemap.
+3. Use app i18n, not static public dictionaries; EN/RU shape parity must pass. Add explicit `MessageKey` entries for every new demo string (no dynamic interpolation keys).
+4. Reset is semantic, keyboard reachable, visible focus and minimum 44×44px; preserve current request-sheet focus trap. EXPLAIN: empty/aria-less interactive elements (e.g. `role="switch"`) need explicit `aria-label`.
+5. Route не требует session/cookie/Telegram globals. `/demo` is a normal SvelteKit route with no auth gate; do not add it to `scripts/public-site/urls.js` `PUBLIC_PAGES` or the sitemap loop.
 
 ### Вне scope
 
@@ -238,10 +240,10 @@ Marketing navigation, static generator, server load/auth, PWA caching и duplica
 
 ### Критерии приёмки
 
-- Direct /demo и /ru/demo render anonymous without loading/retry API state.
+- Direct /demo и /ru/demo render anonymous without loading/retry API state и without `locals.session.authenticated` redirect (`+page.server.ts` does not check auth).
 - Demo files не содержат copied reward rows/sheet; visible shop features come from shared component.
 - Reset restores fixture and announces result; controls work at 320px without horizontal overflow.
-- Russian page has Russian user copy; i18n parity/type validation passes.
+- Russian page has Russian user copy; i18n parity/type validation passes (`svelte-check` green, no dynamic `MessageKey`).
 
 ### Targeted validation
 
@@ -360,6 +362,7 @@ Remote deployment/CI, native Telegram client, PWA offline cache и physical-devi
 
 ### Targeted validation
 
+    # EXPLAIN: playwright.config.ts defaults to the running local stack at http://localhost:3001; set PLAYWRIGHT_USE_PREVIEW=true to let Playwright build/serve its own preview on 4174.
     cd apps/web && npm run test:e2e -- --project=chromium tests/e2e/live-coin-shop-demo.spec.ts
     cd apps/web && npm run test -- --run tests/unit/rewardRequestActions.test.ts tests/unit/liveCoinShopDemoSession.test.ts tests/unit/publicSiteI18n.test.ts tests/unit/publicSiteUrls.test.ts tests/unit/sitemap.test.ts
 
@@ -375,5 +378,17 @@ Remote deployment/CI, native Telegram client, PWA offline cache и physical-devi
     cd apps/web && npm run test:e2e -- --project=chromium tests/e2e/live-coin-shop-demo.spec.ts
     git diff --check
     git status --short
+
+## Заметки ревью
+
+Сверено с кодом на 2026-08-26. Исправленные неточности:
+
+- **LCD-001 `git rm`**: `.d.ts` не копируются в `static/public/` генератором — убраны из `git rm` для `static/public/`.
+- **LCD-002 путь shopApi**: фактический путь `apps/web/src/lib/telegram/services/shopApi.ts`, не `apps/web/src/lib/services/shopApi.ts`.
+- **LCD-004 auth gate**: `PUBLIC_PAGES`/auth-gate в `+layout.svelte`/`+layout.server.ts` не существует. Auth — per-route через `+page.server.ts`; добавлен `+page.server.ts` для `/demo` без проверки auth (по образцу `telegram/+page.server.ts`). `hooks.server.ts` делает только locale canonicalization.
+- **LCD-004 i18n/lifecycle**: добавлены предупреждения про strict `MessageKey` (явные ключи, без dynamic interpolation) и про `onMount(() => reload())` + `if (!open) return` (никогда не грузит).
+- **LCD-006 Playwright**: добавлена заметка про `localhost:3001` vs `PLAYWRIGHT_USE_PREVIEW=true`.
+
+Что осталось верным в бэклоге: текущие тесты ожидают 7 страниц / 14 sitemap URL, после LCD-001 должно стать 6 / 12; все файлы на удаление существуют; все якоря (`requestItem`, `applyDataSnapshot`, `DEMO_TABS`, `demoData`, `rewardRequestSent`, demo в sitemap/tests/runbook) присутствуют; новые директории `src/routes/demo/` и `src/lib/features/live-demo/` корректно отсутствуют.
 
 Локальные checks доказывают source, build и browser behavior. Они не являются proof deployment/CI, Telegram Mini App client или физического устройства; эти уровни проверяются отдельно после deploy.
