@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-ARG MANDREL_BUILDER_IMAGE=quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-25
+ARG MANDREL_BUILDER_IMAGE=quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-25.0.4
 ARG JAVA_XMX=2500m
 FROM ${MANDREL_BUILDER_IMAGE} AS build
 WORKDIR /workspace
@@ -23,7 +23,7 @@ RUN --mount=type=cache,target=/root/.m2,sharing=locked \
 
 RUN mkdir -p /workspace/runtime-data/catalog
 
-FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0
+FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0-2026-08-23
 WORKDIR /work/
 
 COPY --from=build /workspace/target/*-runner /work/application

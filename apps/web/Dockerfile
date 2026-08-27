@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM node:24-alpine AS build
+FROM node:24.19.0-alpine3.24 AS build
 WORKDIR /workspace/web
 
 ARG APP_URL
@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=/root/.npm,sharing=locked npm ci
 COPY apps/web ./
 RUN APP_URL="$APP_URL" DEPLOYMENT_ENV="$DEPLOYMENT_ENV" npm run build && npm prune --omit=dev --ignore-scripts
 
-FROM node:24-alpine
+FROM node:24.19.0-alpine3.24
 WORKDIR /workspace/web
 
 RUN apk add --no-cache wget ca-certificates

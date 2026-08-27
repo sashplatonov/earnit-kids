@@ -893,7 +893,7 @@ git commit -m "chore(web): add TypeScript 7 compatibility setup"
 
 ## TASK P2-3: Update Docker base images
 
-**Status:** TODO
+**Status:** IN_PROGRESS
 **Priority:** P2
 **Depends on:** P0-1, P1-8
 
@@ -958,6 +958,15 @@ docker compose config && docker compose --profile db up -d --build && sleep 30 &
 git add apps/backend/Dockerfile.jvm apps/backend/Dockerfile apps/web/Dockerfile docker-compose.yml docker-compose.native.yml
 git commit -m "chore(docker): update base images and New Relic agent"
 ```
+
+### CHECKPOINT
+
+- completed: Updated all listed Docker base images and New Relic Java agent to the latest stable tags observed on 2026-08-27; both Compose files pass `config` with `.env.example`.
+- remaining: Run `docker compose --profile db up -d --build`, verify service health, run `docker compose down`, then mark this task DONE.
+- changed files: `apps/backend/Dockerfile.jvm`, `apps/backend/Dockerfile`, `apps/web/Dockerfile`, `docker-compose.yml`, `docker-compose.native.yml`, `docs/dependency-update-backlog.md`, `docs/.backlog-execution-state.md`.
+- verification status: `docker compose config` passed for both files; build/start was blocked before build because the configured OrbStack Docker socket is unavailable.
+- confirmed blocker: Docker daemon unavailable at `/Users/sash/.orbstack/run/docker.sock`; `docker context ls` confirms the active/default endpoint is OrbStack.
+- next exact action: Start OrbStack (or make the configured Docker daemon available) and rerun the targeted Compose build/healthcheck command.
 
 ---
 
