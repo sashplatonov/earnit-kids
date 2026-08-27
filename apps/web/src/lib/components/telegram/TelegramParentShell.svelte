@@ -94,7 +94,7 @@
 </main>
 
 <style>
-    .parent-workspace { display: flex; flex-direction: column; width: 100%; max-width: 48rem; min-height: 100vh; margin: 0 auto; padding: calc(.75rem + env(safe-area-inset-top)) 1rem 2rem; }
+    .parent-workspace { box-sizing: border-box; display: flex; flex-direction: column; width: 100%; max-width: min(48rem, 100%); min-width: 0; min-height: 100vh; margin: 0 auto; padding: calc(.75rem + env(safe-area-inset-top)) 1rem 2rem; }
     [role="tabpanel"] { box-sizing: border-box; flex: 1 1 auto; width: 100%; max-width: 100%; min-width: 0; min-height: 0; }
     .site-link { display: flex; justify-content: center; margin-top: 1.25rem; }
     .site-link a { display: inline-flex; align-items: center; gap: .3rem; color: #8a93a8; font-size: .78rem; text-decoration: none; }

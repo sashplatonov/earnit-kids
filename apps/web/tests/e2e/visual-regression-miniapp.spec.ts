@@ -76,6 +76,34 @@ test('no horizontal overflow at 320, 375 and 430 widths for parent and child', a
     }
 });
 
+test('parent rewards match the tasks screen width at mobile breakpoints', async ({ page }) => {
+    for (const width of [320, 375, 430]) {
+        await mock(page, 'parent', parentData, width);
+
+        await page.getByRole('tab', { name: /Tasks|Задания/ }).click();
+        const tasksGeometry = await page.locator('.tasks').evaluate((screen) => {
+            const screenRect = screen.getBoundingClientRect();
+            const listRect = screen.querySelector('.list-surface')!.getBoundingClientRect();
+            const panel = screen.parentElement!;
+            const workspace = screen.closest('.parent-workspace')!;
+            return { screenLeft: screenRect.left, screenRight: screenRect.right, listLeft: listRect.left, listRight: listRect.right, panelWidth: panel.getBoundingClientRect().width, workspaceWidth: workspace.getBoundingClientRect().width, screenComputedWidth: getComputedStyle(screen).width };
+        });
+
+        await page.getByRole('tab', { name: /Rewards|Награды/ }).click();
+        const rewardsGeometry = await page.locator('.rewards').evaluate((screen) => {
+            const screenRect = screen.getBoundingClientRect();
+            const listRect = screen.querySelector('.list-surface')!.getBoundingClientRect();
+            const panel = screen.parentElement!;
+            const workspace = screen.closest('.parent-workspace')!;
+            return { screenLeft: screenRect.left, screenRight: screenRect.right, listLeft: listRect.left, listRight: listRect.right, panelWidth: panel.getBoundingClientRect().width, workspaceWidth: workspace.getBoundingClientRect().width, screenComputedWidth: getComputedStyle(screen).width };
+        });
+
+        expect(rewardsGeometry).toEqual(tasksGeometry);
+        expect(rewardsGeometry.screenRight).toBeLessThanOrEqual(width);
+        expect(rewardsGeometry.listRight).toBeLessThanOrEqual(width);
+    }
+});
+
 test('every Mini App button meets the 44px minimum touch target', async ({ page }) => {
     await mock(page, 'parent', parentData, 375);
     for (const tab of [/Home|Главная/, /Tasks|Задания/, /Rewards|Награды/, /Family|Семья/]) {

@@ -73,11 +73,11 @@
 {/if}
 
 <style>
-    .parent-header { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.65rem; }
-    .child-select { display:inline-flex; align-items:center; gap:.35rem; min-height:2.75rem; padding:.3rem .6rem; border:0; background:transparent; color:#18243d; font:inherit; font-weight:700; cursor:pointer; }
+    .parent-header { display:flex; align-items:center; justify-content:space-between; gap:.75rem; min-width:0; margin-bottom:.65rem; }
+    .child-select { display:inline-flex; flex:1 1 auto; align-items:center; gap:.35rem; min-width:0; min-height:2.75rem; padding:.3rem .6rem; border:0; background:transparent; color:#18243d; font:inherit; font-weight:700; cursor:pointer; }
     .child-select:disabled { cursor:default; opacity:.6; }
-    .child-name { max-width:11rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .header-actions { display:flex; align-items:center; gap:.5rem; flex:0 0 auto; margin-left:auto; }
+    .child-name { min-width:0; max-width:11rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .header-actions { display:flex; align-items:center; gap:.5rem; min-width:0; flex:0 0 auto; margin-left:auto; }
     .view-child { display:grid; place-items:center; width:2.75rem; height:2.75rem; flex:0 0 auto; border:1px solid #dfe4ee; border-radius:.7rem; background:#fff; color:#3867d6; cursor:pointer; }
     .view-child:hover { background:#f2f5ff; }
     .balance { display:inline-flex; align-items:center; gap:.35rem; padding:.45rem .65rem; border-radius:999px; background:#eef4ff; color:#2854ba; font-weight:700; white-space:nowrap; }
