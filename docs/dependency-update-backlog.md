@@ -893,7 +893,7 @@ git commit -m "chore(web): add TypeScript 7 compatibility setup"
 
 ## TASK P2-3: Update Docker base images
 
-**Status:** IN_PROGRESS
+**Status:** DONE
 **Priority:** P2
 **Depends on:** P0-1, P1-8
 
@@ -959,14 +959,13 @@ git add apps/backend/Dockerfile.jvm apps/backend/Dockerfile apps/web/Dockerfile 
 git commit -m "chore(docker): update base images and New Relic agent"
 ```
 
-### CHECKPOINT
+### Verification
 
-- completed: Updated all listed Docker base images and New Relic Java agent to the latest stable tags observed on 2026-08-27; both Compose files pass `config` with `.env.example`.
-- remaining: Run `docker compose --profile db up -d --build`, verify service health, run `docker compose down`, then mark this task DONE.
-- changed files: `apps/backend/Dockerfile.jvm`, `apps/backend/Dockerfile`, `apps/web/Dockerfile`, `docker-compose.yml`, `docker-compose.native.yml`, `docs/dependency-update-backlog.md`, `docs/.backlog-execution-state.md`.
-- verification status: `docker compose config` passed for both files; build/start was blocked before build because the configured OrbStack Docker socket is unavailable.
-- confirmed blocker: Docker daemon unavailable at `/Users/sash/.orbstack/run/docker.sock`; `docker context ls` confirms the active/default endpoint is OrbStack.
-- next exact action: Start OrbStack (or make the configured Docker daemon available) and rerun the targeted Compose build/healthcheck command.
+- `docker compose config` passed for both Compose files using `.env.example`.
+- `docker compose --profile db up -d --build` completed successfully for web and JVM backend images.
+- After 35 seconds, PostgreSQL, backend, and web were all reported `healthy` by `docker compose ps`.
+- `docker compose down` completed successfully and removed the test containers and internal networks.
+- The local `dokploy-ipv6` external network was created as a test prerequisite and intentionally retained because Compose does not own external networks.
 
 ---
 
