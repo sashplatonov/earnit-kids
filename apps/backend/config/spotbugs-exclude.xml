@@ -36,4 +36,12 @@
         <Bug pattern="EI_EXPOSE_REP2"/>
         <Class name="com.sashplatonov.earnit.kids.telegram.application.invitation.TelegramChildInvitationOperations"/>
     </Match>
+    <Match>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+        <Class name="com.sashplatonov.earnit.kids.config.security.PublicAuthRateLimitFilter"/>
+    </Match>
+    <Match>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+        <Class name="com.sashplatonov.earnit.kids.family.application.command.FamilyCommandServiceImpl"/>
+    </Match>
 </FindBugsFilter>

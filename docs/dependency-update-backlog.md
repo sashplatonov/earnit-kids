@@ -448,7 +448,7 @@ git commit -m "chore(backend): bump Mockito to 5.23.0"
 
 ## TASK P1-6: Update PMD and SpotBugs
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** P0-1
 
