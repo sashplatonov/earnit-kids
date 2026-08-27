@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount, tick } from 'svelte';
+    import { onMount, tick, untrack } from 'svelte';
     import type { MessageKey } from '$lib/i18n';
     import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
@@ -40,18 +40,18 @@
 
 
     let { data }: { data: PageData } = $props();
-    let overview = $state(data.overview);
-    let coinEconomy: AnalyticsSectionData | null = $state(data.coinEconomy);
-    let taskEconomy: AnalyticsSectionData | null = $state(data.taskEconomy);
-    let parentBehavior: AnalyticsSectionData | null = $state(data.parentBehavior);
-    let childBehavior: AnalyticsSectionData | null = $state(data.childBehavior);
-    let activationFunnel: AnalyticsSectionData | null = $state(data.activationFunnel);
-    let retention: AnalyticsSectionData | null = $state(data.retention);
-    let rewards: AnalyticsSectionData | null = $state(data.rewards);
-    let trends = $state<AnalyticsSectionData | null>(data.trends ?? null);
-    let dashboardStatus = $state(data.dashboardStatus ?? (overview == null ? 'unavailable' : 'available'));
-    let trendsStatus: 'available' | 'unavailable' = $state(data.trendsStatus ?? (trends == null ? 'unavailable' : 'available'));
-    let unavailableSections = data.unavailableSections ?? [];
+    let overview = $state(untrack(() => data.overview));
+    let coinEconomy: AnalyticsSectionData | null = $state(untrack(() => data.coinEconomy));
+    let taskEconomy: AnalyticsSectionData | null = $state(untrack(() => data.taskEconomy));
+    let parentBehavior: AnalyticsSectionData | null = $state(untrack(() => data.parentBehavior));
+    let childBehavior: AnalyticsSectionData | null = $state(untrack(() => data.childBehavior));
+    let activationFunnel: AnalyticsSectionData | null = $state(untrack(() => data.activationFunnel));
+    let retention: AnalyticsSectionData | null = $state(untrack(() => data.retention));
+    let rewards: AnalyticsSectionData | null = $state(untrack(() => data.rewards));
+    let trends = $state<AnalyticsSectionData | null>(untrack(() => data.trends ?? null));
+    let dashboardStatus = $state(untrack(() => data.dashboardStatus ?? (data.overview == null ? 'unavailable' : 'available')));
+    let trendsStatus: 'available' | 'unavailable' = $state(untrack(() => data.trendsStatus ?? (data.trends == null ? 'unavailable' : 'available')));
+    let unavailableSections = untrack(() => data.unavailableSections ?? []);
 
     let loadedSections: string[] = [];
     let loadingSections: string[] = $state([]);

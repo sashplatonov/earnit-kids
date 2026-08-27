@@ -22,7 +22,7 @@
 
     const i18n = useI18n();
 
-    let draft: CatalogFilters = $state({ ...filters });
+    let draft: CatalogFilters = $state({ age: null, difficulty: null, frequency: null, purchase: null });
 
     run(() => {
         if (open) draft = { ...filters };
