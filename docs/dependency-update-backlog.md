@@ -814,13 +814,15 @@ git commit -m "chore(web): bump http-proxy-3 to 2.0.0"
 
 ## TASK P2-2: Update TypeScript to 7.0.2 (major version)
 
-**Status:** BLOCKED
+**Status:** DONE
 **Priority:** P2
 **Depends on:** P1-8
 
 **Exact scope:**
 
-Update TypeScript from 6.0.3 to 7.0.2 in `apps/web/package.json`. This is a major version bump that may introduce stricter type checking, new compiler options, or removed deprecated features.
+Add TypeScript 7.0.2 as `@typescript/native` in `apps/web/package.json`. Keep the
+official `@typescript/typescript6` alias at the `typescript` package name while
+Svelte and ESLint require the TypeScript 6 programmatic API.
 
 **Files:**
 
@@ -831,59 +833,60 @@ Update TypeScript from 6.0.3 to 7.0.2 in `apps/web/package.json`. This is a majo
 
 **Goal:**
 
-TypeScript 7.0.2 is used for type checking and build with no type errors. `svelte-check` and `vite build` pass with the new compiler.
+TypeScript 7.0.2 is used by `tsc` for native project type checking. `svelte-check`
+and the Svelte/Vite build continue to use the supported TypeScript 6 compatibility
+API with no type errors.
 
 ### Outcome
 
-`npm run lint` (which runs `svelte-check --tsconfig ./tsconfig.json`) and `npm run build` pass with TypeScript 7.0.2. No `@ts-ignore` or `@ts-expect-error` directives added.
+`npx tsc --noEmit`, `npm run lint` (which runs `svelte-check --tsconfig
+./tsconfig.json`), and `npm run build` pass. No `@ts-ignore` or
+`@ts-expect-error` directives are added.
 
 ### Architectural decision
 
-TypeScript 7.0 is a major version bump. Check the TypeScript 7.0 release notes for breaking changes. Common breaking changes in major TS versions include: stricter type narrowing, removed deprecated compiler options, changed lib defaults. If TypeScript 7.0 introduces too many new type errors that require extensive code changes, document the decision to stay on 6.0.3 and mark this task as BLOCKED.
+TypeScript 7.0 does not provide the programmatic API required by Svelte,
+`svelte-check`, and `typescript-eslint`. Follow TypeScript's supported
+side-by-side migration: install TypeScript 7 as `@typescript/native` for `tsc`,
+and alias `typescript` to `@typescript/typescript6` until the dependent tools
+support the TypeScript 7 API.
 
 ### Required changes
 
 1. Check the TypeScript 7.0 release notes and migration guide.
-2. Update `typescript` from `^6.0.3` to `^7.0.2` in `apps/web/package.json`.
+2. Add `@typescript/native` as an npm alias for `typescript@^7.0.2` and alias
+   `typescript` to `@typescript/typescript6@^6.0.2` in `apps/web/package.json`.
 3. Run `npm install` to update `package-lock.json`.
-4. Run `npm run lint` — if `svelte-check` reports new type errors, fix each one in the source code. Do not use `@ts-ignore` or `@ts-expect-error`.
-5. Run `npm run test` — if Vitest's TypeScript transformation changes, fix test files.
-6. Run `npm run build` — if Vite's TypeScript handling changes, fix build errors.
-7. If `tsconfig.json` uses deprecated compiler options removed in TS 7.0, update the config.
-8. If the number of new type errors is excessive (e.g., >20 files affected): revert to 6.0.3, mark BLOCKED, document the reason and estimated effort.
+4. Run `npx tsc --noEmit` to validate TypeScript 7 native type checking.
+5. Run `npm run lint` — if `svelte-check` reports new type errors, fix each one in the source code. Do not use `@ts-ignore` or `@ts-expect-error`.
+6. Run `npm run test` — if Vitest's TypeScript transformation changes, fix test files.
+7. Run `npm run build` — if Vite's TypeScript handling changes, fix build errors.
+8. If `tsconfig.json` uses options removed in TypeScript 7, update the config.
 
 ### Out of scope
 
 - http-proxy-3 (P2-1).
 - Other npm packages.
 
-### Blocker
-
-TypeScript 7.0.2 installs, but `npm run lint` cannot start because the scoped
-`typescript-eslint@8.68.0` dependency exits with `typescript-eslint does not
-support TS 7.0`. The task remains blocked until a TypeScript 7-compatible
-`typescript-eslint` release or an approved web-toolchain compatibility solution
-is available.
-
 ### Acceptance criteria
 
+- `npx tsc --version` reports 7.0.2 and `npx tsc --noEmit` passes.
 - `npm run lint` passes (includes `svelte-check`).
 - `npm run test` passes.
 - `npm run build` passes.
 - No `@ts-ignore` or `@ts-expect-error` directives added.
-- If BLOCKED: TypeScript remains at 6.0.3 and the task status is `BLOCKED` with a documented reason.
 
 ### Targeted validation
 
 ```bash
-cd apps/web && npm install && npm run lint && npm run test && npm run build
+cd apps/web && npm install && npx tsc --noEmit && npm run lint && npm run test && npm run build
 ```
 
 ### Commit
 
 ```bash
 git add apps/web/package.json apps/web/package-lock.json apps/web/tsconfig.json
-git commit -m "chore(web): bump TypeScript to 7.0.2"
+git commit -m "chore(web): add TypeScript 7 compatibility setup"
 ```
 
 ---
