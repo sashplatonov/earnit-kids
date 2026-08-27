@@ -23,7 +23,7 @@
         <surefire-plugin.version>3.5.4</surefire-plugin.version>
         <lombok.version>1.18.46</lombok.version>
         <mapstruct.version>1.6.3</mapstruct.version>
-        <mockito.version>5.21.0</mockito.version>
+        <mockito.version>5.23.0</mockito.version>
         <jacoco.version>0.8.14</jacoco.version>
         <checkstyle.version>10.21.4</checkstyle.version>
         <spotbugs.version>4.9.8.3</spotbugs.version>

@@ -386,7 +386,7 @@ git commit -m "chore(backend): migrate BouncyCastle to jdk18on and update web-pu
 
 ## TASK P1-5: Update backend test dependencies
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** P0-1
 
