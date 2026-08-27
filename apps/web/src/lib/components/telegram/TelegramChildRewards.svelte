@@ -74,7 +74,7 @@
     {#if nextGoal}<div class="goal" aria-label={$i18n.t('app.telegram.childRewards.nextGoal')}><span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'reward', title: nextGoal.name, group: nextGoal.groupName })} size={20} label={$i18n.t('app.telegram.rewards.reward')} /></span><div class="goal-text"><span class="goal-title">{stripLeadingEmoji(nextGoal.name)}</span><span class="goal-meta"><TelegramCoin size={13} />{nextGoal.price} · {$i18n.t('app.telegram.childRewards.moreToGo', { count: goalMissing })}</span></div></div>{/if}
     <TelegramActionStatus state={status} message={message} />
 </section>
-<TelegramRequestSheet open={selected !== null} title={selected?.title ?? ''} actionLabel={$i18n.t('app.telegram.childRewards.askForReward')} bind:busy on:close={() => selected = null} on:submit={(event) => submit(event.detail)} />
+<TelegramRequestSheet open={selected !== null} title={selected?.title ?? ''} actionLabel={$i18n.t('app.telegram.childRewards.askForReward')} bind:busy onclose={() => selected = null} onsubmit={submit} />
 
 <style>
     .goal-progress { height:.4rem; margin:-.2rem 0 .75rem; overflow:hidden; border-radius:999px; background:#e8e9f4; } .goal-progress span { display:block; height:100%; border-radius:inherit; background:#5b63e9; transition:width .3s ease; }

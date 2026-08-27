@@ -118,7 +118,7 @@
                 <p class="telegram-hint">{$i18n.t('app.telegram.entry.childHint')}</p>
             {:else if state === 'parent-invite'}
                 <p>{$i18n.t('app.telegram.entry.parentInviteHint')}</p>
-                <button class="telegram-action" type="button" disabled={inviteBusy} on:click={() => void submitParentInvite()}>{$i18n.t('app.telegram.entry.acceptInvite')}</button>
+                <button class="telegram-action" type="button" disabled={inviteBusy} onclick={() => void submitParentInvite()}>{$i18n.t('app.telegram.entry.acceptInvite')}</button>
                 {#if message}<p class="telegram-hint" role="alert">{message}</p>{/if}
             {:else if state === 'language-setup'}
                 <p>{$i18n.t('app.telegram.entry.checkingSession')}</p>

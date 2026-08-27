@@ -71,12 +71,12 @@
         {#if loading}
             <p aria-live="polite">{$i18n.t('auth.invitation.checking')}</p>
         {:else if signedIn}
-            <button type="button" disabled={accepting} on:click={accept}>
+            <button type="button" disabled={accepting} onclick={accept}>
                 {accepting ? $i18n.t('auth.invitation.accepting') : $i18n.t('auth.invitation.accept')}
             </button>
         {:else}
             <p>{$i18n.t('auth.invitation.signInHint')}</p>
-            <button type="button" on:click={signIn}>{$i18n.t('auth.invitation.continueGoogle')}</button>
+            <button type="button" onclick={signIn}>{$i18n.t('auth.invitation.continueGoogle')}</button>
         {/if}
     </section>
 </main>

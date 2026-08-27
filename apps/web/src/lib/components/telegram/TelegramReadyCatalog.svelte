@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, onMount } from 'svelte';
+    import { onMount } from 'svelte';
     import { useI18n } from '$lib/i18n/context';
     import { appStore, type CatalogTaskTemplate } from '$lib/stores/app';
     import type { CatalogRewardTemplate } from '$lib/telegram/stores/types';
@@ -27,17 +27,14 @@
 
     interface Props {
         kind?: 'task' | 'reward';
+        onadd?: (value: { template: CatalogTaskTemplate | CatalogRewardTemplate; groupName: string | null }) => void;
+        onaddMany?: (value: { templates: Array<CatalogTaskTemplate | CatalogRewardTemplate>; groupName: string | null }) => void;
+        onopenDetails?: (value: { template: CatalogTaskTemplate | CatalogRewardTemplate }) => void;
     }
 
-    let { kind = 'task' }: Props = $props();
+    let { kind = 'task', onadd = () => {}, onaddMany = () => {}, onopenDetails = () => {} }: Props = $props();
 
     const i18n = useI18n();
-    const dispatch = createEventDispatcher<{
-        add: { template: CatalogTaskTemplate | CatalogRewardTemplate; groupName: string | null };
-        addMany: { templates: Array<CatalogTaskTemplate | CatalogRewardTemplate>; groupName: string | null };
-        openDetails: { template: CatalogTaskTemplate | CatalogRewardTemplate };
-    }>();
-
     let templates = $derived(kind === 'task'
         ? ($appStore.catalog.tasks as CatalogTaskTemplate[])
         : ($catalogRewards as CatalogRewardTemplate[]));
@@ -71,18 +68,18 @@
     }
     function addOne(template: CatalogTaskTemplate | CatalogRewardTemplate) {
         track('catalog_item_added', { catalogGroupKey: template.groupKey });
-        dispatch('add', { template, groupName: null });
+        onadd({ template, groupName: null });
     }
     function addSelected() {
         const selected = filtered.filter((item) => selectedIds.includes(item.id));
         track('catalog_bulk_add', { bulkCount: selected.length });
-        dispatch('addMany', { templates: selected, groupName: null });
+        onaddMany({ templates: selected, groupName: null });
         selectedIds = [];
         bulkMode = false;
     }
     function openDetails(template: CatalogTaskTemplate | CatalogRewardTemplate) {
         track('catalog_details_opened', { catalogGroupKey: template.groupKey });
-        dispatch('openDetails', { template });
+        onopenDetails({ template });
     }
     function amountLabel(template: CatalogTaskTemplate | CatalogRewardTemplate) {
         const amount = kind === 'task' ? (template as CatalogTaskTemplate).coins : (template as CatalogRewardTemplate).price;

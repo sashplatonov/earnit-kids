@@ -155,9 +155,9 @@
         </div>
     <TelegramReadyCatalog
         {kind}
-        on:add={(event) => addOne(event.detail.template)}
-        on:addMany={(event) => addMany(event.detail.templates)}
-        on:openDetails={(event) => openDetails(event.detail.template)}
+        onadd={(event) => addOne(event.template)}
+        onaddMany={(event) => addMany(event.templates)}
+        onopenDetails={(event) => openDetails(event.template)}
     />
 </div>
 

@@ -36,19 +36,19 @@
             </div>
             <div class="row-actions">
                 {#if parent.status === 'pending'}
-                    <button type="button" class="icon-btn" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.resend')} on:click={() => onAction('resend', parent)}><TelegramIcon name="send" size={19} /></button>
-                    <button type="button" class="icon-btn danger" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.revoke')} on:click={() => onAction('revoke', parent)}><TelegramIcon name="unlink" size={19} /></button>
+                    <button type="button" class="icon-btn" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.resend')} onclick={() => onAction('resend', parent)}><TelegramIcon name="send" size={19} /></button>
+                    <button type="button" class="icon-btn danger" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.revoke')} onclick={() => onAction('revoke', parent)}><TelegramIcon name="unlink" size={19} /></button>
                 {:else if parent.permission === 'family_admin'}
                     {#if parent.transferRequestStatus === 'pending'}
-                        <button type="button" class="icon-btn danger" disabled={busy} aria-label={$i18n.t('app.telegram.parents.cancelRequest')} on:click={() => onAction('cancel-transfer', parent)}><TelegramIcon name="unlink" size={19} /></button>
+                        <button type="button" class="icon-btn danger" disabled={busy} aria-label={$i18n.t('app.telegram.parents.cancelRequest')} onclick={() => onAction('cancel-transfer', parent)}><TelegramIcon name="unlink" size={19} /></button>
                     {:else}
-                        <button type="button" class="icon-btn" aria-label={$i18n.t('app.telegram.parents.transferTitle')} on:click={() => onTransfer(parent)}><TelegramIcon name="refresh" size={19} /></button>
+                        <button type="button" class="icon-btn" aria-label={$i18n.t('app.telegram.parents.transferTitle')} onclick={() => onTransfer(parent)}><TelegramIcon name="refresh" size={19} /></button>
                     {/if}
                 {:else if parent.status === 'active'}
-                    <button type="button" class="icon-btn danger" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.deactivateParent')} on:click={() => onAction('deactivate', parent)}><TelegramIcon name="unlink" size={19} /></button>
-                    <button type="button" class="icon-btn" disabled={busy} aria-label={$i18n.t('app.telegram.parents.changeRole')} on:click={() => onRoleEdit(parent)}><TelegramIcon name="pencil" size={19} /></button>
+                    <button type="button" class="icon-btn danger" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.deactivateParent')} onclick={() => onAction('deactivate', parent)}><TelegramIcon name="unlink" size={19} /></button>
+                    <button type="button" class="icon-btn" disabled={busy} aria-label={$i18n.t('app.telegram.parents.changeRole')} onclick={() => onRoleEdit(parent)}><TelegramIcon name="pencil" size={19} /></button>
                 {:else if parent.status === 'inactive'}
-                    <button type="button" class="icon-btn ok" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.reactivateParent')} on:click={() => onAction('reactivate', parent)}><TelegramIcon name="play" size={19} /></button>
+                    <button type="button" class="icon-btn ok" disabled={busy} aria-label={$i18n.t('app.workspaceAccess.reactivateParent')} onclick={() => onAction('reactivate', parent)}><TelegramIcon name="play" size={19} /></button>
                 {/if}
             </div>
         </div>

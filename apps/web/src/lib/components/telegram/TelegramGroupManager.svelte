@@ -1,7 +1,6 @@
 <script lang="ts">
     import { stopPropagation } from 'svelte/legacy';
 
-    import { createEventDispatcher } from 'svelte';
     import { useI18n } from '$lib/i18n/context';
     import type { MessageKey } from '$lib/i18n';
     import { appStore, type Task } from '$lib/stores/app';
@@ -20,17 +19,15 @@
         open?: boolean;
         kind?: 'tasks' | 'shop';
         onClose?: () => void;
+        onsave?: (value: { groups: string[]; hiddenGroups: string[] }) => void;
+        ondeleteGroup?: (value: { group: string; moveTo: string | null }) => void;
     }
 
-    let { open = false, kind = 'tasks', onClose = () => {} }: Props = $props();
+    let { open = false, kind = 'tasks', onClose = () => {}, onsave = () => {}, ondeleteGroup = () => {} }: Props = $props();
 
     const i18n = useI18n();
     const taskActions = useTaskActions();
     const rewardActions = useRewardActions();
-    const dispatch = createEventDispatcher<{
-        save: { groups: string[]; hiddenGroups: string[] };
-        deleteGroup: { group: string; moveTo: string | null };
-    }>();
 
     let items = $derived(kind === 'tasks' ? ($appStore.tasks as Task[]) : ($shopItems as ShopItem[]));
     let currentChild = $derived($appStore.children.find((child) => String(child.id) === String($appStore.currentChildId)) ?? null);
@@ -122,7 +119,7 @@
     }
 
     function saveGroupOrder(groups: string[], hidden: string[]) {
-        dispatch('save', { groups, hiddenGroups: hidden });
+        onsave({ groups, hiddenGroups: hidden });
     }
 
     function saveGroupIcon(name: string, icon: string | null) {
@@ -191,7 +188,7 @@
         pendingDeleteGroup = null;
         moveTargetOpen = false;
         if (group == null) return;
-        dispatch('deleteGroup', { group, moveTo });
+        ondeleteGroup({ group, moveTo });
     }
 
     function openReorder() {

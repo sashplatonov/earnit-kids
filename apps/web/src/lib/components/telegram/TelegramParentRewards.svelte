@@ -101,10 +101,10 @@
             await rewardActions.refresh();
         }
     }
-    async function saveGroups(event: CustomEvent<{ groups: string[]; hiddenGroups: string[] }>) {
+    async function saveGroups(event: { groups: string[]; hiddenGroups: string[] }) {
         if ($appStore.currentChildId == null) return;
         groupSaving = true;
-        const result = await rewardActions.saveGroups($appStore.currentChildId, event.detail.groups, event.detail.hiddenGroups);
+        const result = await rewardActions.saveGroups($appStore.currentChildId, event.groups, event.hiddenGroups);
         groupSaving = false;
         groupMessage = result.ok ? $i18n.t('app.telegram.tasks.groupsSaved') : $i18n.t('app.telegram.tasks.groupsSaveError');
         if (result.ok) {
@@ -112,18 +112,18 @@
             appStore.setState({
                 children: $appStore.children.map((child) =>
                     String(child.id) === String($appStore.currentChildId)
-                        ? { ...child, shopGroupOrder: event.detail.groups, hiddenShopGroupOrder: event.detail.hiddenGroups }
+                        ? { ...child, shopGroupOrder: event.groups, hiddenShopGroupOrder: event.hiddenGroups }
                         : child
                 ),
             });
         }
     }
-    async function handleDeleteGroup(event: CustomEvent<{ group: string; moveTo: string | null }>) {
-        const { group, moveTo } = event.detail;
+    async function handleDeleteGroup(event: { group: string; moveTo: string | null }) {
+        const { group, moveTo } = event;
         await rewardActions.deleteGroup(group, moveTo);
         const nextGroups = groups.filter((g) => g !== group);
         const nextHidden = hiddenGroups.filter((g) => g !== group);
-        await saveGroups(new CustomEvent('save', { detail: { groups: nextGroups, hiddenGroups: nextHidden } }));
+        await saveGroups({ groups: nextGroups, hiddenGroups: nextHidden });
     }
 </script>
 
@@ -202,7 +202,7 @@
     {#if grantError}<p class="error" role="alert">{grantError}</p>{/if}
 </div>
 <TelegramRewardForm open={formOpen} item={editingItem} groupSuggestions={groups} onClose={() => formOpen = false} />
-<TelegramGroupManager open={groupEditorOpen} kind="shop" onClose={() => groupEditorOpen = false} on:save={saveGroups} on:deleteGroup={handleDeleteGroup} />
+<TelegramGroupManager open={groupEditorOpen} kind="shop" onClose={() => groupEditorOpen = false} onsave={saveGroups} ondeleteGroup={handleDeleteGroup} />
 
 {#if confirmGrant}
     <TelegramBottomSheet open labelledBy="reward-grant-title" busy={grantingId != null} onClose={() => confirmGrant = null}>

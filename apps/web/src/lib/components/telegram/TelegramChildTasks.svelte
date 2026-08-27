@@ -58,7 +58,7 @@
         <button class="row-action check" type="button" aria-label={$i18n.t('app.telegram.childTasks.request')} disabled={isPending(task.id) || isLimitReached(task)} onclick={() => { selected = { id: task.id, title: task.name }; status = 'idle'; }}><TelegramIcon name={isPending(task.id) ? 'refresh' : 'done'} size={16} label={isPending(task.id) ? $i18n.t('app.telegram.childTasks.pending') : $i18n.t('app.telegram.childTasks.request')} /></button>
     {/snippet}
 </TelegramEntityRow>{/each}</TelegramListSurface>{/if}<TelegramActionStatus state={status} message={message} /></section>
-<TelegramRequestSheet open={selected !== null} title={selected?.title ?? ''} bind:busy on:close={() => selected = null} on:submit={(event) => submit(event.detail)} />
+<TelegramRequestSheet open={selected !== null} title={selected?.title ?? ''} bind:busy onclose={() => selected = null} onsubmit={submit} />
 
 <style>
     section { margin-bottom:1.25rem; } .heading { display:flex; align-items:baseline; justify-content:space-between; gap:.75rem; margin-bottom:.7rem; } h2 { margin:0; color:#18243d; font-size:1.2rem; } .heading > span { color:#66718a; font-size:.8rem; } .today-progress { height:.4rem; margin-bottom:.75rem; overflow:hidden; border-radius:999px; background:#e8e9f4; } .today-progress span { display:block; height:100%; border-radius:inherit; background:#5b63e9; transition:width .3s ease; } .check { background:#3867d6; color:#fff; } .check:disabled { opacity:.5; cursor:not-allowed; } .empty { padding:1rem 0; color:#66718a; text-align:center; }

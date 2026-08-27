@@ -94,10 +94,10 @@
             await taskActions.refresh();
         }
     }
-    async function saveGroups(event: CustomEvent<{ groups: string[]; hiddenGroups: string[] }>) {
+    async function saveGroups(event: { groups: string[]; hiddenGroups: string[] }) {
         if ($appStore.currentChildId == null) return;
         groupSaving = true;
-        const result = await taskActions.saveGroups($appStore.currentChildId, event.detail.groups, event.detail.hiddenGroups);
+        const result = await taskActions.saveGroups($appStore.currentChildId, event.groups, event.hiddenGroups);
         groupSaving = false;
         groupMessage = result.ok ? $i18n.t('app.telegram.tasks.groupsSaved') : $i18n.t('app.telegram.tasks.groupsSaveError');
         if (result.ok) {
@@ -105,18 +105,18 @@
             appStore.setState({
                 children: $appStore.children.map((child) =>
                     String(child.id) === String($appStore.currentChildId)
-                        ? { ...child, taskGroupOrder: event.detail.groups, hiddenTaskGroupOrder: event.detail.hiddenGroups }
+                        ? { ...child, taskGroupOrder: event.groups, hiddenTaskGroupOrder: event.hiddenGroups }
                         : child
                 ),
             });
         }
     }
-    async function handleDeleteGroup(event: CustomEvent<{ group: string; moveTo: string | null }>) {
-        const { group, moveTo } = event.detail;
+    async function handleDeleteGroup(event: { group: string; moveTo: string | null }) {
+        const { group, moveTo } = event;
         await taskActions.deleteGroup(group, moveTo);
         const nextGroups = groups.filter((g) => g !== group);
         const nextHidden = hiddenGroups.filter((g) => g !== group);
-        await saveGroups(new CustomEvent('save', { detail: { groups: nextGroups, hiddenGroups: nextHidden } }));
+        await saveGroups({ groups: nextGroups, hiddenGroups: nextHidden });
     }
 </script>
 
@@ -195,7 +195,7 @@
     {#if completeError}<p class="error" role="alert">{completeError}</p>{/if}
 </div>
 <TelegramTaskForm open={formOpen} task={editingTask} groupSuggestions={groups} onClose={() => formOpen = false} />
-<TelegramGroupManager open={groupEditorOpen} kind="tasks" onClose={() => groupEditorOpen = false} on:save={saveGroups} on:deleteGroup={handleDeleteGroup} />
+<TelegramGroupManager open={groupEditorOpen} kind="tasks" onClose={() => groupEditorOpen = false} onsave={saveGroups} ondeleteGroup={handleDeleteGroup} />
 
 {#if confirmComplete}
     <TelegramBottomSheet open labelledBy="task-complete-title" busy={completingId != null} onClose={() => confirmComplete = null}>

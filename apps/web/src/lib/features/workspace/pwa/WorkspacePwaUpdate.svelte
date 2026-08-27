@@ -70,7 +70,7 @@
                 <span>{$i18n.t('app.pwaUpdate.description')}</span>
             {/if}
         </div>
-        <button type="button" on:click={activateUpdate} disabled={updating} aria-label={$i18n.t('app.pwaUpdate.button')}>
+        <button type="button" onclick={activateUpdate} disabled={updating} aria-label={$i18n.t('app.pwaUpdate.button')}>
             {updating ? $i18n.t('app.pwaUpdate.updating') : $i18n.t('app.pwaUpdate.button')}
         </button>
     </aside>

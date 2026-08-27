@@ -49,7 +49,7 @@
         historyLoading = false;
     }
 
-    async function adjustCoins(event: CustomEvent<{ amount: number; note: string | null }>) {
+    async function adjustCoins(event: { amount: number; note: string | null }) {
         const childId = $appStore.currentChildId;
         if (childId == null) {
             coinError = $i18n.t('app.telegram.family.chooseChildFirst');
@@ -57,7 +57,7 @@
         }
         coinBusy = true;
         coinError = '';
-        const result = await familyActions.awardCoins(childId, event.detail.amount, event.detail.note ?? undefined);
+        const result = await familyActions.awardCoins(childId, event.amount, event.note ?? undefined);
         coinBusy = false;
         if (result) {
             // The production response is applied by the workspace lifecycle owner.
@@ -92,7 +92,7 @@
     <TelegramHistoryList entries={history} loading={historyLoading} hasMore={historyHasMore} error={historyError} onRetry={() => loadHistory(true)} onLoadMore={() => loadHistory()} />
 </section>
 
-<TelegramCoinAdjust open={coinSheetOpen} busy={coinBusy} error={coinError} on:adjust={adjustCoins} on:close={() => { coinSheetOpen = false; coinError = ''; }} />
+<TelegramCoinAdjust open={coinSheetOpen} busy={coinBusy} error={coinError} onadjust={adjustCoins} onclose={() => { coinSheetOpen = false; coinError = ''; }} />
 
 <style>
     .home { display:grid; grid-template-columns:minmax(0,1fr); gap:.9rem; }

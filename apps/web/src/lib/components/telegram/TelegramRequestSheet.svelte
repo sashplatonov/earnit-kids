@@ -1,7 +1,6 @@
 <script lang="ts">
     import { run } from 'svelte/legacy';
 
-    import { createEventDispatcher } from 'svelte';
     import { useI18n } from '$lib/i18n/context';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramBottomSheet from './ui/TelegramBottomSheet.svelte';
@@ -13,22 +12,25 @@
         title?: string;
         actionLabel?: string;
         busy?: boolean;
+        onsubmit?: (note: string | null) => void;
+        onclose?: () => void;
     }
 
     let {
         open = false,
         title = '',
         actionLabel = '',
-        busy = $bindable(false)
+        busy = $bindable(false),
+        onsubmit = () => {},
+        onclose = () => {}
     }: Props = $props();
-    const dispatch = createEventDispatcher<{ submit: string | null; close: void }>();
     let note = $state('');
     run(() => {
         if (!open) note = '';
     });
     let resolvedActionLabel = $derived(actionLabel || $i18n.t('app.telegram.requestSheet.sendRequest'));
     function close() {
-        if (!busy) dispatch('close');
+        if (!busy) onclose();
     }
 </script>
 
@@ -39,7 +41,7 @@
         <textarea id="request-note" maxlength="240" bind:value={note} placeholder={$i18n.t('app.telegram.requestSheet.notePlaceholder')}></textarea>
         <div class="actions">
             <button type="button" onclick={close} disabled={busy}><TelegramIcon name="back" size={18} label={$i18n.t('app.telegram.requestSheet.cancel')} />{$i18n.t('app.telegram.requestSheet.cancel')}</button>
-            <button class="primary" type="button" onclick={() => dispatch('submit', note.trim() || null)} disabled={busy}><TelegramIcon name="request" size={18} label={busy ? $i18n.t('app.telegram.requestSheet.sendingRequest') : resolvedActionLabel} />{busy ? $i18n.t('app.telegram.requestSheet.sending') : resolvedActionLabel}</button>
+            <button class="primary" type="button" onclick={() => onsubmit(note.trim() || null)} disabled={busy}><TelegramIcon name="request" size={18} label={busy ? $i18n.t('app.telegram.requestSheet.sendingRequest') : resolvedActionLabel} />{busy ? $i18n.t('app.telegram.requestSheet.sending') : resolvedActionLabel}</button>
         </div>
     </TelegramBottomSheet>
 {/if}

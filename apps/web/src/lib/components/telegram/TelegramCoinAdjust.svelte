@@ -1,7 +1,6 @@
 <script lang="ts">
     import { run } from 'svelte/legacy';
 
-    import { createEventDispatcher } from 'svelte';
     import { useI18n } from '$lib/i18n/context';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
@@ -13,10 +12,11 @@
         open?: boolean;
         busy?: boolean;
         error?: string;
+        onadjust?: (value: { amount: number; note: string | null }) => void;
+        onclose?: () => void;
     }
 
-    let { open = false, busy = false, error = '' }: Props = $props();
-    const dispatch = createEventDispatcher<{ adjust: { amount: number; note: string | null }; close: void }>();
+    let { open = false, busy = false, error = '', onadjust = () => {}, onclose = () => {} }: Props = $props();
     const MAX_ADJUST = 1_000_000;
     let amount = $state('');
     let note = $state('');
@@ -25,7 +25,7 @@
         if (!open) { amount = ''; note = ''; localError = ''; }
     });
     function close() {
-        if (!busy) dispatch('close');
+        if (!busy) onclose();
     }
     function submit() {
         if (busy) return;
@@ -35,7 +35,7 @@
         if (!Number.isInteger(value) || value === 0) { localError = $i18n.t('app.telegram.coinAdjust.nonZeroWhole'); return; }
         if (Math.abs(value) > MAX_ADJUST) { localError = $i18n.t('app.telegram.coinAdjust.amountTooBig', { max: $i18n.formatNumber(MAX_ADJUST) }); return; }
         localError = '';
-        dispatch('adjust', { amount: value, note: note.trim() || null });
+        onadjust({ amount: value, note: note.trim() || null });
     }
 </script>
 

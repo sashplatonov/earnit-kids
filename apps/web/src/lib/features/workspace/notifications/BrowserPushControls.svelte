@@ -24,7 +24,7 @@
     <label class="switch">
         <input type="checkbox" checked={state === 'subscribed'} aria-labelledby="browser-push-title"
             disabled={busy || !enabled || !['subscribed', 'default', 'unsubscribed', 'error'].includes(state)}
-            on:change={() => void toggle()} />
+            onchange={() => void toggle()} />
         <span class="track"></span>
     </label>
 </section>
