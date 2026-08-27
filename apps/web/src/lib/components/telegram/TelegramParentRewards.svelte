@@ -223,10 +223,11 @@
 <style>
     .rewards { box-sizing:border-box; width:100%; max-width:100%; min-width:0; }
     .page-header { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.45rem; }
-    h1 { margin:0; color:#18243d; font-size:1.35rem; }
-    .header-actions { display:flex; align-items:center; gap:.25rem; }
+    h1 { min-width:0; margin:0; color:#18243d; font-size:1.35rem; }
+    .header-actions { display:flex; align-items:center; gap:.25rem; min-width:0; flex-shrink:1; }
     .add { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; min-width:2.75rem; min-height:2.75rem; padding:.45rem .65rem; border:0; border-radius:.7rem; background:transparent; color:#3867d6; font:inherit; font-weight:750; cursor:pointer; }
-    .catalog { display:inline-flex; align-items:center; gap:.35rem; min-height:2.75rem; padding:.45rem .65rem; border:0; border-radius:.7rem; background:transparent; color:#3867d6; font:inherit; font-weight:750; cursor:pointer; }
+    .catalog { display:inline-flex; align-items:center; gap:.35rem; min-width:0; min-height:2.75rem; padding:.45rem .65rem; overflow:hidden; border:0; border-radius:.7rem; background:transparent; color:#3867d6; font:inherit; font-weight:750; cursor:pointer; }
+    .catalog span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     button:focus-visible { outline:3px solid #80aaff; outline-offset:2px; }
     .empty-group { padding:1rem 0; text-align:center; }
 
