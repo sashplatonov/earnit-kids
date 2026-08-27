@@ -123,7 +123,7 @@ git commit -m "chore(backend): bump Quarkus platform to 3.39.1"
 
 ## TASK P1-1: Update Netty BOM to 4.2.17.Final
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** P0-1
 
