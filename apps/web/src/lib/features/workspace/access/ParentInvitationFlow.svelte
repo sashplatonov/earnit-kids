@@ -347,7 +347,7 @@
             onTransfer={openTransfer}
             onRoleEdit={openRoleEdit}
         >
-    <span slot="admin-note">{$i18n.t('app.telegram.parents.adminProtectionNote')}</span>
+            {#snippet adminNote()}<span>{$i18n.t('app.telegram.parents.adminProtectionNote')}</span>{/snippet}
         </ParentMembershipList>
     {/if}
 

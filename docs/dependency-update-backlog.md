@@ -1251,7 +1251,7 @@ git commit -m "refactor(web): migrate Svelte 4 on:event directives to event attr
 
 ## TASK P1-14: Migrate Svelte 4 `<slot>` to `{@render}` snippets
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** P1-11
 

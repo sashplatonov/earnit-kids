@@ -4,18 +4,37 @@
     import type { MembershipPermission, ParentMembership } from '$lib/types/auth';
     import { useI18n } from '$lib/i18n/context';
 
-    export let parents: ParentMembership[];
-    export let busy = false;
-    export let hasAdmin = false;
-    export let label: (parent: ParentMembership) => string;
-    export let permissionLabel: (permission: MembershipPermission) => string;
-    export let statusLabel: (status: string) => string;
-    export let shouldShowEmail: (parent: ParentMembership) => boolean;
-    export let shouldShowTelegram: (parent: ParentMembership) => boolean;
-    export let telegramLabel: (parent: ParentMembership) => string;
-    export let onAction: (action: string, parent: ParentMembership) => void;
-    export let onTransfer: (parent: ParentMembership) => void;
-    export let onRoleEdit: (parent: ParentMembership) => void;
+    interface Props {
+        parents: ParentMembership[];
+        busy?: boolean;
+        hasAdmin?: boolean;
+        label: (parent: ParentMembership) => string;
+        permissionLabel: (permission: MembershipPermission) => string;
+        statusLabel: (status: string) => string;
+        shouldShowEmail: (parent: ParentMembership) => boolean;
+        shouldShowTelegram: (parent: ParentMembership) => boolean;
+        telegramLabel: (parent: ParentMembership) => string;
+        onAction: (action: string, parent: ParentMembership) => void;
+        onTransfer: (parent: ParentMembership) => void;
+        onRoleEdit: (parent: ParentMembership) => void;
+        adminNote?: import('svelte').Snippet;
+    }
+
+    let {
+        parents,
+        busy = false,
+        hasAdmin = false,
+        label,
+        permissionLabel,
+        statusLabel,
+        shouldShowEmail,
+        shouldShowTelegram,
+        telegramLabel,
+        onAction,
+        onTransfer,
+        onRoleEdit,
+        adminNote
+    }: Props = $props();
     const i18n = useI18n();
 </script>
 
@@ -54,7 +73,7 @@
         </div>
     {/each}
 </div>
-{#if hasAdmin}<p class="note"><slot name="admin-note" /></p>{/if}
+{#if hasAdmin}<p class="note">{@render adminNote?.()}</p>{/if}
 
 <style>
     .parents-list { display: grid; gap: .5rem; }
