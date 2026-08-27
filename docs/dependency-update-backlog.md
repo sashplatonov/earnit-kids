@@ -317,7 +317,7 @@ git commit -m "chore(backend): bump jsoup, google-api-client, assertj, rest-assu
 
 ## TASK P1-4: Update BouncyCastle and web-push library
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** P0-1
 
