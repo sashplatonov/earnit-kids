@@ -184,7 +184,7 @@ git commit -m "chore(backend): bump Netty to 4.2.17.Final"
 
 ## TASK P1-2: Update Jackson databind to 2.22.2
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** P0-1
 

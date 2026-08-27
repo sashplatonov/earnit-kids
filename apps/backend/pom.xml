@@ -17,7 +17,7 @@
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.version>3.39.1</quarkus.platform.version>
-        <jackson.databind.version>2.21.4</jackson.databind.version>
+        <jackson.databind.version>2.22.2</jackson.databind.version>
         <netty.version>4.2.17.Final</netty.version>
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.5.4</surefire-plugin.version>
