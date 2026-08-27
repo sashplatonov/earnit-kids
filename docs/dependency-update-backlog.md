@@ -971,7 +971,7 @@ git commit -m "chore(docker): update base images and New Relic agent"
 
 ## TASK P2-4: Verify Telegram SDK load strategy
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** -
 
