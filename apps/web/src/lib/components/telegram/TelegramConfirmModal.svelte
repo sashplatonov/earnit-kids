@@ -14,9 +14,9 @@
         onCancel?: () => void | Promise<void>;
     };
 
-    $: isOpen = $modalStore.open === 'confirm-modal';
-    $: modalData = (($modalStore.data ?? {}) as ConfirmModalData);
-    $: tone = modalData.tone ?? 'neutral';
+    let isOpen = $derived($modalStore.open === 'confirm-modal');
+    let modalData = $derived((($modalStore.data ?? {}) as ConfirmModalData));
+    let tone = $derived(modalData.tone ?? 'neutral');
 
     let pending = false;
     const i18n = useI18n();

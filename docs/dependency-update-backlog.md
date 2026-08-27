@@ -1108,7 +1108,7 @@ git commit -m "refactor(web): migrate Svelte 4 export let props to $props() rune
 
 ## TASK P1-12: Migrate Svelte 4 `$:` reactives to `$derived`/`$effect`
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** P1-11
 
