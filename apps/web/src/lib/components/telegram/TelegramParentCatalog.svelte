@@ -14,29 +14,33 @@
     import TelegramCatalogDetails from './TelegramCatalogDetails.svelte';
     import TelegramCatalogGroupMap from './TelegramCatalogGroupMap.svelte';
 
-    export let kind: 'task' | 'reward' = 'task';
-    export let onBack: () => void = () => {};
+    interface Props {
+        kind?: 'task' | 'reward';
+        onBack?: () => void;
+    }
+
+    let { kind = 'task', onBack = () => {} }: Props = $props();
 
     const i18n = useI18n();
     const taskActions = useTaskActions();
     const rewardActions = useRewardActions();
 
-    $: isAdmin = $appStore.isAdmin;
-    $: resolvedChildId = $appStore.currentChildId ?? $appStore.children[0]?.id ?? null;
-    $: currentChild = ($appStore.children.find((child) => String(child.id) === String(resolvedChildId))
+    let isAdmin = $derived($appStore.isAdmin);
+    let resolvedChildId = $derived($appStore.currentChildId ?? $appStore.children[0]?.id ?? null);
+    let currentChild = $derived(($appStore.children.find((child) => String(child.id) === String(resolvedChildId))
         ?? $appStore.children[0]
-        ?? null) as Child | null;
+        ?? null) as Child | null);
 
-    $: familyItems = kind === 'task' ? $appStore.tasks : $shopItems;
-    $: familyGroups = [...new Set(familyItems.map((item) => item.groupName).filter((group): group is string => Boolean(group)))];
+    let familyItems = $derived(kind === 'task' ? $appStore.tasks : $shopItems);
+    let familyGroups = $derived([...new Set(familyItems.map((item) => item.groupName).filter((group): group is string => Boolean(group)))]);
 
-    let detailsOpen = false;
-    let detailsTemplate: CatalogTaskTemplate | CatalogRewardTemplate | null = null;
-    let groupMapOpen = false;
+    let detailsOpen = $state(false);
+    let detailsTemplate: CatalogTaskTemplate | CatalogRewardTemplate | null = $state(null);
+    let groupMapOpen = $state(false);
     let pendingTemplates: Array<CatalogTaskTemplate | CatalogRewardTemplate> = [];
-    let pendingGroupName: string | null = null;
-    let bulkSummaryOpen = false;
-    let bulkSummary: { willAdd: number; already: number; groups: Record<string, number> } | null = null;
+    let pendingGroupName: string | null = $state(null);
+    let bulkSummaryOpen = $state(false);
+    let bulkSummary: { willAdd: number; already: number; groups: Record<string, number> } | null = $state(null);
 
     function openDetails(template: CatalogTaskTemplate | CatalogRewardTemplate) {
         detailsTemplate = template;
@@ -141,7 +145,7 @@
 
 <div class="catalog-screen">
         <div class="header">
-            <button class="back" type="button" aria-label={$i18n.t('app.telegram.readyCatalog.back')} on:click={back}>
+            <button class="back" type="button" aria-label={$i18n.t('app.telegram.readyCatalog.back')} onclick={back}>
                 <TelegramIcon name="back" size={18} label={$i18n.t('app.telegram.readyCatalog.back')} />
             </button>
             <div class="title-block">
@@ -162,7 +166,7 @@
 <TelegramCatalogGroupMap open={groupMapOpen} groupName={pendingGroupName} {familyGroups} onChoose={chooseGroup} onClose={() => groupMapOpen = false} />
 
 {#if bulkSummaryOpen && bulkSummary}
-    <div class="sheet-backdrop" role="presentation" on:click={() => bulkSummaryOpen = false}></div>
+    <div class="sheet-backdrop" role="presentation" onclick={() => bulkSummaryOpen = false}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="bulk-summary-title" tabindex="-1">
         <h2 id="bulk-summary-title">
             {$i18n.t('app.telegram.readyCatalog.bulkTitle', {
@@ -182,10 +186,10 @@
                 <p>{group || $i18n.t('app.telegram.readyCatalog.withoutGroup')} · {count}</p>
             {/each}
         </div>
-        <button class="primary" type="button" on:click={confirmBulk}>
+        <button class="primary" type="button" onclick={confirmBulk}>
             {$i18n.t('app.telegram.readyCatalog.bulkAdd', { count: bulkSummary.willAdd })}
         </button>
-        <button class="close" type="button" on:click={() => bulkSummaryOpen = false}>{$i18n.t('app.telegram.readyCatalog.back')}</button>
+        <button class="close" type="button" onclick={() => bulkSummaryOpen = false}>{$i18n.t('app.telegram.readyCatalog.back')}</button>
     </div>
 {/if}
 

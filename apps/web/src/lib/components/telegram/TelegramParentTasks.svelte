@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { stopPropagation } from 'svelte/legacy';
+
     import { appStore, type Task } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
     import { useTaskActions } from '$lib/telegram/services/taskActions';
@@ -21,24 +23,24 @@
     const i18n = useI18n();
     const taskActions = useTaskActions();
 
-    $: rawGroups = [...new Set($appStore.tasks.map((task) => task.groupName).filter((group): group is string => Boolean(group)))];
-    $: currentChild = $appStore.children.find((child) => String(child.id) === String($appStore.currentChildId)) ?? null;
-    $: groups = orderGroups(rawGroups, currentChild?.taskGroupOrder);
-    $: hiddenGroups = currentChild?.hiddenTaskGroupOrder ?? [];
-    let selectedGroup = '';
-    let sortMode: CatalogSortMode = 'group';
-    let catalogOpen = false;
-    $: filteredTasks = sortCatalogItems(selectedGroup
+    let rawGroups = $derived([...new Set($appStore.tasks.map((task) => task.groupName).filter((group): group is string => Boolean(group)))]);
+    let currentChild = $derived($appStore.children.find((child) => String(child.id) === String($appStore.currentChildId)) ?? null);
+    let groups = $derived(orderGroups(rawGroups, currentChild?.taskGroupOrder));
+    let hiddenGroups = $derived(currentChild?.hiddenTaskGroupOrder ?? []);
+    let selectedGroup = $state('');
+    let sortMode: CatalogSortMode = $state('group');
+    let catalogOpen = $state(false);
+    let filteredTasks = $derived(sortCatalogItems(selectedGroup
         ? $appStore.tasks.filter((task) => task.groupName === selectedGroup)
-        : $appStore.tasks, sortMode, groups, (task) => task.groupName ?? '', (task) => task.coins);
-    $: canEdit = $appStore.permission !== 'viewer';
-    let groupMessage = '';
-    let groupEditorOpen = false;
+        : $appStore.tasks, sortMode, groups, (task) => task.groupName ?? '', (task) => task.coins));
+    let canEdit = $derived($appStore.permission !== 'viewer');
+    let groupMessage = $state('');
+    let groupEditorOpen = $state(false);
     let groupSaving = false;
-    let openMenuId: string | number | null = null;
+    let openMenuId: string | number | null = $state(null);
     let menuTrigger: HTMLButtonElement | null = null;
-    let formOpen = false;
-    let editingTask: Task | null = null;
+    let formOpen = $state(false);
+    let editingTask: Task | null = $state(null);
     function toggleMenu(id: string | number, button: HTMLButtonElement) {
         if (openMenuId === id) closeMenu(true);
         else { menuTrigger = button; openMenuId = id; }
@@ -74,9 +76,9 @@
     }
     // EXPLAIN: Parent directly completes a task for the current child, awarding
     // EXPLAIN: coins without a child request. Reuses earnCoins (POST /complete).
-    let completingId: string | number | null = null;
-    let completeError = '';
-    let confirmComplete: Task | null = null;
+    let completingId: string | number | null = $state(null);
+    let completeError = $state('');
+    let confirmComplete: Task | null = $state(null);
     async function completeForChild(task: Task) {
         if ($appStore.currentChildId == null || completingId != null) return;
         closeMenu();
@@ -118,14 +120,14 @@
     }
 </script>
 
-<svelte:window on:click={() => openMenuId = null} on:keydown={handleWindowKeydown} />
+<svelte:window onclick={() => openMenuId = null} onkeydown={handleWindowKeydown} />
 
 <div class="tasks">
     <div class="page-header">
         <h1 id="tasks-title">{$i18n.t('app.telegram.tasks.title')}</h1>
         <div class="header-actions">
-            {#if canEdit}<button class="add" type="button" aria-label={$i18n.t('app.telegram.tasks.addTask')} on:click={add}><TelegramIcon name="add" size={18} label={$i18n.t('app.telegram.tasks.addTask')} /></button>{/if}
-            <button class="catalog" type="button" on:click={() => catalogOpen = true}><TelegramIcon name="book" size={18} label={$i18n.t('app.telegram.readyCatalog.catalogTasks')} /><span>{$i18n.t('app.telegram.tasks.catalogShort')}</span></button>
+            {#if canEdit}<button class="add" type="button" aria-label={$i18n.t('app.telegram.tasks.addTask')} onclick={add}><TelegramIcon name="add" size={18} label={$i18n.t('app.telegram.tasks.addTask')} /></button>{/if}
+            <button class="catalog" type="button" onclick={() => catalogOpen = true}><TelegramIcon name="book" size={18} label={$i18n.t('app.telegram.readyCatalog.catalogTasks')} /><span>{$i18n.t('app.telegram.tasks.catalogShort')}</span></button>
         </div>
     </div>
 
@@ -149,28 +151,34 @@
         {:else}
         <TelegramListSurface label={$i18n.t('app.telegram.tasks.title')}>
             {#each filteredTasks as task (task.id)}
-                <TelegramEntityRow interactive={canEdit} archived={task.isActive === false} compact>
-                    <span slot="icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'task', title: task.name, group: task.groupName, semantic: task.icon ?? null })} size={20} label={$i18n.t('app.telegram.tasks.task')} /></span>
-                    <button slot="title" class="row-main" type="button" aria-label={$i18n.t('app.telegram.tasks.editItem', { name: stripLeadingEmoji(task.name) })} on:click={() => edit(task)}>
-                        <span class="title">{stripLeadingEmoji(task.name)}</span>
-                        <span class="row-metadata"><span class="meta"><TelegramCoin size={13} />{task.coins} · {task.groupName || $i18n.t('app.telegram.tasks.ungrouped')}</span>{#if task.lastCompletedAt}<span class="meta meta--last">{$i18n.t('app.telegram.tasks.lastCompleted', { when: formatLastUsedTime(task.lastCompletedAt, $i18n.locale) })}</span>{:else}<span class="meta meta--last">{$i18n.t('app.telegram.tasks.neverCompleted')}</span>{/if}</span>
-                    </button>
-                    <svelte:fragment slot="interactive">
-                    {#if canEdit}
-                        <button class="row-action check" type="button" aria-label={$i18n.t('app.telegram.tasks.completeShort')} disabled={task.isActive === false || completingId != null} on:click|stopPropagation={() => confirmComplete = task}><TelegramIcon name="done" size={16} label={$i18n.t('app.telegram.tasks.completeShort')} /></button>
-                        <div class="menu-wrap">
-                            <button class="row-action more" type="button" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: stripLeadingEmoji(task.name) })} aria-haspopup="menu" aria-expanded={openMenuId === task.id} on:click|stopPropagation={(event) => toggleMenu(task.id, event.currentTarget as HTMLButtonElement)}><TelegramIcon name="more" size={20} label={$i18n.t('app.telegram.tasks.moreActions')} /></button>
-                            {#if openMenuId === task.id}
-                                <div class="menu" role="menu" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: stripLeadingEmoji(task.name) })}>
-                                    <button role="menuitem" type="button" on:click={() => edit(task)}><TelegramIcon name="edit" size={16} label={$i18n.t('app.telegram.tasks.edit')} /><span>{$i18n.t('app.telegram.tasks.edit')}</span></button>
-                                    <button role="menuitem" type="button" on:click={() => toggleArchive(task)}><TelegramIcon name="archive" size={16} label={task.isActive === false ? $i18n.t('app.telegram.tasks.unarchive') : $i18n.t('app.telegram.tasks.archive')} /><span>{task.isActive === false ? $i18n.t('app.telegram.tasks.unarchive') : $i18n.t('app.telegram.tasks.archive')}</span></button>
-                                    <div class="menu-divider" role="presentation"></div>
-                                    <button role="menuitem" class="danger" type="button" on:click={() => void remove(task)}><TelegramIcon name="delete" size={16} label={$i18n.t('app.telegram.tasks.delete')} /><span>{$i18n.t('app.telegram.tasks.delete')}</span></button>
-                                </div>
-                            {/if}
-                        </div>
-                    {/if}
-                    </svelte:fragment>
+                <TelegramEntityRow isInteractive={canEdit} archived={task.isActive === false} compact>
+                    {#snippet icon()}
+                                                        <span ><TelegramIcon name={getTelegramEntityIcon({ kind: 'task', title: task.name, group: task.groupName, semantic: task.icon ?? null })} size={20} label={$i18n.t('app.telegram.tasks.task')} /></span>
+                                                    {/snippet}
+                    {#snippet title()}
+                                                        <button  class="row-main" type="button" aria-label={$i18n.t('app.telegram.tasks.editItem', { name: stripLeadingEmoji(task.name) })} onclick={() => edit(task)}>
+                            <span class="title">{stripLeadingEmoji(task.name)}</span>
+                            <span class="row-metadata"><span class="meta"><TelegramCoin size={13} />{task.coins} · {task.groupName || $i18n.t('app.telegram.tasks.ungrouped')}</span>{#if task.lastCompletedAt}<span class="meta meta--last">{$i18n.t('app.telegram.tasks.lastCompleted', { when: formatLastUsedTime(task.lastCompletedAt, $i18n.locale) })}</span>{:else}<span class="meta meta--last">{$i18n.t('app.telegram.tasks.neverCompleted')}</span>{/if}</span>
+                        </button>
+                                                    {/snippet}
+                    {#snippet interactive()}
+
+                        {#if canEdit}
+                            <button class="row-action check" type="button" aria-label={$i18n.t('app.telegram.tasks.completeShort')} disabled={task.isActive === false || completingId != null} onclick={stopPropagation(() => confirmComplete = task)}><TelegramIcon name="done" size={16} label={$i18n.t('app.telegram.tasks.completeShort')} /></button>
+                            <div class="menu-wrap">
+                                <button class="row-action more" type="button" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: stripLeadingEmoji(task.name) })} aria-haspopup="menu" aria-expanded={openMenuId === task.id} onclick={stopPropagation((event) => toggleMenu(task.id, event.currentTarget as HTMLButtonElement))}><TelegramIcon name="more" size={20} label={$i18n.t('app.telegram.tasks.moreActions')} /></button>
+                                {#if openMenuId === task.id}
+                                    <div class="menu" role="menu" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: stripLeadingEmoji(task.name) })}>
+                                        <button role="menuitem" type="button" onclick={() => edit(task)}><TelegramIcon name="edit" size={16} label={$i18n.t('app.telegram.tasks.edit')} /><span>{$i18n.t('app.telegram.tasks.edit')}</span></button>
+                                        <button role="menuitem" type="button" onclick={() => toggleArchive(task)}><TelegramIcon name="archive" size={16} label={task.isActive === false ? $i18n.t('app.telegram.tasks.unarchive') : $i18n.t('app.telegram.tasks.archive')} /><span>{task.isActive === false ? $i18n.t('app.telegram.tasks.unarchive') : $i18n.t('app.telegram.tasks.archive')}</span></button>
+                                        <div class="menu-divider" role="presentation"></div>
+                                        <button role="menuitem" class="danger" type="button" onclick={() => void remove(task)}><TelegramIcon name="delete" size={16} label={$i18n.t('app.telegram.tasks.delete')} /><span>{$i18n.t('app.telegram.tasks.delete')}</span></button>
+                                    </div>
+                                {/if}
+                            </div>
+                        {/if}
+
+                                                    {/snippet}
                 </TelegramEntityRow>
             {/each}
         </TelegramListSurface>
@@ -178,7 +186,7 @@
     {/if}
 
     {#if !catalogOpen && canEdit}
-        <button class="groups" type="button" on:click={() => groupEditorOpen = true}>
+        <button class="groups" type="button" onclick={() => groupEditorOpen = true}>
             <TelegramIcon name="filter" size={16} label={$i18n.t('app.telegram.tasks.manageGroups')} />
             <span>{$i18n.t('app.telegram.tasks.manageGroups')}</span>
         </button>
@@ -199,8 +207,8 @@
         <div class="delta"><span>{$i18n.t('app.telegram.tasks.completeChild')}</span><b>{$appStore.childNickname || $i18n.t('app.telegram.header.child')}</b></div>
         <div class="delta"><span>{$i18n.t('app.telegram.tasks.completeAward')}</span><b class="award">+{confirmComplete.coins} <TelegramCoin size={13} /></b></div>
         <div class="actions">
-            <button class="cancel" type="button" on:click={() => confirmComplete = null}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.tasks.cancel')} />{$i18n.t('app.telegram.tasks.cancel')}</button>
-            <button class="primary" type="button" disabled={completingId != null} on:click={() => confirmComplete && void completeForChild(confirmComplete)}><TelegramIcon name="done" size={16} label={$i18n.t('app.telegram.tasks.completeShort')} />{$i18n.t('app.telegram.tasks.completeShort')}</button>
+            <button class="cancel" type="button" onclick={() => confirmComplete = null}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.tasks.cancel')} />{$i18n.t('app.telegram.tasks.cancel')}</button>
+            <button class="primary" type="button" disabled={completingId != null} onclick={() => confirmComplete && void completeForChild(confirmComplete)}><TelegramIcon name="done" size={16} label={$i18n.t('app.telegram.tasks.completeShort')} />{$i18n.t('app.telegram.tasks.completeShort')}</button>
         </div>
     </TelegramBottomSheet>
 {/if}

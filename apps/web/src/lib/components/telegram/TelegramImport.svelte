@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { appStore } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
     import { importTasks } from '$lib/services/api';
@@ -15,9 +17,13 @@ import { importShopItems } from '$lib/telegram/services/shopApi';
     } from '$lib/telegram/services/csvImport';
     import TelegramIcon from './TelegramIcon.svelte';
 
-    export let open = false;
-    export let onClose: () => void = () => {};
-    export let demoMode = false;
+    interface Props {
+        open?: boolean;
+        onClose?: () => void;
+        demoMode?: boolean;
+    }
+
+    let { open = false, onClose = () => {}, demoMode = false }: Props = $props();
 
     const i18n = useI18n();
     const taskActions = useTaskActions();
@@ -25,39 +31,19 @@ import { importShopItems } from '$lib/telegram/services/shopApi';
 
     type Screen = 'pick' | 'tasks' | 'shop';
 
-    let screen: Screen = 'pick';
-    let csvText = '';
-    let showFormat = false;
-    let showErrors = false;
-    let copied = false;
-    let busy = false;
-    let error = '';
-    let serverErrors: CsvImportValidationError[] = [];
-    let imported = false;
-    let fileInput: HTMLInputElement | undefined = undefined;
+    let screen: Screen = $state('pick');
+    let csvText = $state('');
+    let showFormat = $state(false);
+    let showErrors = $state(false);
+    let copied = $state(false);
+    let busy = $state(false);
+    let error = $state('');
+    let serverErrors: CsvImportValidationError[] = $state([]);
+    let imported = $state(false);
+    let fileInput: HTMLInputElement | undefined = $state(undefined);
 
-    $: if (open) {
-        screen = 'pick';
-        csvText = '';
-        showFormat = false;
-        showErrors = false;
-        copied = false;
-        busy = false;
-        error = '';
-        serverErrors = [];
-        imported = false;
-    }
 
-    $: parsed = screen !== 'pick' && csvText.trim()
-        ? parseCsvImport(screen as CsvImportKind, csvText)
-        : null;
 
-    $: readyCount = parsed ? parsed.normalizedRows.length : 0;
-    $: validRowCount = parsed ? parsed.rows.filter((row) => row.errors.length === 0).length : 0;
-    $: invalidRowCount = parsed ? parsed.rows.length - validRowCount : 0;
-    $: headerIssueCount = parsed ? parsed.errors.filter((e) => e.row === 0).length : 0;
-    $: errorCount = invalidRowCount + headerIssueCount;
-    $: allErrors = dedupeErrors([...serverErrors, ...(parsed?.errors ?? [])]);
 
     function dedupeErrors(errors: CsvImportValidationError[]): CsvImportValidationError[] {
         const seen: Record<string, boolean> = {};
@@ -209,10 +195,32 @@ import { importShopItems } from '$lib/telegram/services/shopApi';
             serverErrors = result.validationErrors ?? [];
         }
     }
+    run(() => {
+        if (open) {
+            screen = 'pick';
+            csvText = '';
+            showFormat = false;
+            showErrors = false;
+            copied = false;
+            busy = false;
+            error = '';
+            serverErrors = [];
+            imported = false;
+        }
+    });
+    let parsed = $derived(screen !== 'pick' && csvText.trim()
+        ? parseCsvImport(screen as CsvImportKind, csvText)
+        : null);
+    let readyCount = $derived(parsed ? parsed.normalizedRows.length : 0);
+    let validRowCount = $derived(parsed ? parsed.rows.filter((row) => row.errors.length === 0).length : 0);
+    let invalidRowCount = $derived(parsed ? parsed.rows.length - validRowCount : 0);
+    let headerIssueCount = $derived(parsed ? parsed.errors.filter((e) => e.row === 0).length : 0);
+    let errorCount = $derived(invalidRowCount + headerIssueCount);
+    let allErrors = $derived(dedupeErrors([...serverErrors, ...(parsed?.errors ?? [])]));
 </script>
 
 {#if open}
-    <div class="sheet-backdrop" role="presentation" on:click={onClose}></div>
+    <div class="sheet-backdrop" role="presentation" onclick={onClose}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="import-title" tabindex="-1">
         <h2 id="import-title">{$i18n.t('app.telegram.import.title')}</h2>
         {#if demoMode}<p class="demo-notice" role="note">{$i18n.t('app.liveDemo.demoActionNotice')}</p>{/if}
@@ -220,10 +228,10 @@ import { importShopItems } from '$lib/telegram/services/shopApi';
         {#if screen === 'pick'}
             <h3 class="sheet-subtitle">{$i18n.t('app.telegram.import.whatToImport')}</h3>
             <div class="mode-list">
-                <button class="mode" type="button" on:click={() => screen = 'tasks'}><span class="setting-icon"><TelegramIcon name="task" size={20} label={$i18n.t('app.telegram.import.kindTasks')} /></span><span class="grow">{$i18n.t('app.telegram.import.kindTasks')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('app.telegram.import.kindTasks')} /></button>
-                <button class="mode" type="button" on:click={() => screen = 'shop'}><span class="setting-icon"><TelegramIcon name="reward" size={20} label={$i18n.t('app.telegram.import.kindRewards')} /></span><span class="grow">{$i18n.t('app.telegram.import.kindRewards')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('app.telegram.import.kindRewards')} /></button>
+                <button class="mode" type="button" onclick={() => screen = 'tasks'}><span class="setting-icon"><TelegramIcon name="task" size={20} label={$i18n.t('app.telegram.import.kindTasks')} /></span><span class="grow">{$i18n.t('app.telegram.import.kindTasks')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('app.telegram.import.kindTasks')} /></button>
+                <button class="mode" type="button" onclick={() => screen = 'shop'}><span class="setting-icon"><TelegramIcon name="reward" size={20} label={$i18n.t('app.telegram.import.kindRewards')} /></span><span class="grow">{$i18n.t('app.telegram.import.kindRewards')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('app.telegram.import.kindRewards')} /></button>
             </div>
-            <button class="close" type="button" on:click={onClose}>
+            <button class="close" type="button" onclick={onClose}>
                 <TelegramIcon name="close" size={17} label={$i18n.t('app.telegram.import.close')} />
                 {$i18n.t('app.telegram.import.close')}
             </button>
@@ -235,7 +243,7 @@ import { importShopItems } from '$lib/telegram/services/shopApi';
             </h3>
 
             <div class="file-row">
-                <button class="secondary" type="button" on:click={pickFile}><TelegramIcon name="upload" size={18} label={$i18n.t('app.telegram.import.chooseCsv')} />{$i18n.t('app.telegram.import.chooseCsv')}</button>
+                <button class="secondary" type="button" onclick={pickFile}><TelegramIcon name="upload" size={18} label={$i18n.t('app.telegram.import.chooseCsv')} />{$i18n.t('app.telegram.import.chooseCsv')}</button>
                 <span class="muted">{$i18n.t('app.telegram.import.orPaste')}</span>
             </div>
             <input
@@ -243,7 +251,7 @@ import { importShopItems } from '$lib/telegram/services/shopApi';
                 class="hidden-file"
                 type="file"
                 accept=".csv,text/csv,text/plain"
-                on:change={onFileChange}
+                onchange={onFileChange}
                 aria-label={$i18n.t('app.telegram.import.chooseCsv')}
             />
             <textarea
@@ -251,14 +259,14 @@ import { importShopItems } from '$lib/telegram/services/shopApi';
                 bind:value={csvText}
                 rows="4"
                 placeholder={$i18n.t('app.telegram.import.pastePlaceholder')}
-                on:input={() => { showErrors = false; }}
+                oninput={() => { showErrors = false; }}
             ></textarea>
 
             {#if csvText.trim() && parsed}
                 <p class="field-label">{$i18n.t('app.telegram.import.formatTitle')}</p>
                 <div class="format-row">
-                    <button class="linkish" type="button" on:click={() => showFormat = !showFormat}>{showFormat ? '−' : '+'} {$i18n.t('app.telegram.import.viewFormat')}</button>
-                    <button class="linkish" type="button" on:click={copyFormat}><TelegramIcon name="copy" size={16} label={$i18n.t('app.telegram.import.copyFormat')} />{$i18n.t('app.telegram.import.copyFormat')}</button>
+                    <button class="linkish" type="button" onclick={() => showFormat = !showFormat}>{showFormat ? '−' : '+'} {$i18n.t('app.telegram.import.viewFormat')}</button>
+                    <button class="linkish" type="button" onclick={copyFormat}><TelegramIcon name="copy" size={16} label={$i18n.t('app.telegram.import.copyFormat')} />{$i18n.t('app.telegram.import.copyFormat')}</button>
                 </div>
                 {#if copied}
                     <p class="copied" role="status">{$i18n.t('app.telegram.import.copied')}</p>
@@ -272,7 +280,7 @@ import { importShopItems } from '$lib/telegram/services/shopApi';
                     <span class="ready-badge">{$i18n.t('app.telegram.import.readyCount', { ready: readyCount })}</span>
                     <span class="error-badge">{$i18n.t('app.telegram.import.errorCount', { errors: errorCount })}</span>
                     {#if errorCount > 0}
-                        <button class="linkish" type="button" on:click={() => showErrors = !showErrors}>{$i18n.t('app.telegram.import.viewErrors')}</button>
+                        <button class="linkish" type="button" onclick={() => showErrors = !showErrors}>{$i18n.t('app.telegram.import.viewErrors')}</button>
                     {/if}
                 </div>
                 {#if showErrors && allErrors.length > 0}
@@ -292,14 +300,14 @@ import { importShopItems } from '$lib/telegram/services/shopApi';
             {#if error}<p class="error" role="alert">{error}</p>{/if}
             {#if imported}<p class="saved" role="status">{$i18n.t('app.telegram.import.importSuccess', { count: readyCount })}</p>{/if}
 
-            <button class="primary" type="button" disabled={busy || readyCount === 0} on:click={runImport}>
+            <button class="primary" type="button" disabled={busy || readyCount === 0} onclick={runImport}>
                 {busy
                     ? $i18n.t('app.telegram.import.importing')
                     : $i18n.t('app.telegram.import.importButton', { count: readyCount })}
             </button>
             <div class="button-row">
-                <button class="close" type="button" on:click={() => screen = 'pick'}>{$i18n.t('app.telegram.import.back')}</button>
-                <button class="close" type="button" on:click={onClose}>
+                <button class="close" type="button" onclick={() => screen = 'pick'}>{$i18n.t('app.telegram.import.back')}</button>
+                <button class="close" type="button" onclick={onClose}>
                     <TelegramIcon name="close" size={17} label={$i18n.t('app.telegram.import.close')} />
                     {$i18n.t('app.telegram.import.close')}
                 </button>

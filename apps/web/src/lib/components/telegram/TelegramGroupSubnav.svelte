@@ -1,34 +1,50 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import TelegramIcon from './TelegramIcon.svelte';
     import { useI18n } from '$lib/i18n/context';
     import { loadGroupUsage, rankGroups, recordGroupUsage, type GroupUsageKind } from './telegramGroupUsage';
 
-    export let groups: string[] = [];
-    export let selected = '';
-    export let kind: GroupUsageKind = 'tasks';
-    export let allLabel = '';
-    export let moreLabel = '';
-    export let allGroupsTitle = '';
-    export let onSelect: (group: string) => void = () => {};
+    interface Props {
+        groups?: string[];
+        selected?: string;
+        kind?: GroupUsageKind;
+        allLabel?: string;
+        moreLabel?: string;
+        allGroupsTitle?: string;
+        onSelect?: (group: string) => void;
+    }
+
+    let {
+        groups = [],
+        selected = '',
+        kind = 'tasks',
+        allLabel = '',
+        moreLabel = '',
+        allGroupsTitle = '',
+        onSelect = () => {}
+    }: Props = $props();
 
     const i18n = useI18n();
 
     const MAX_RANKED = 2;
 
-    let ranked: string[] = [];
-    let moreOpen = false;
-    $: closeLabel = $i18n.t('app.telegram.groupSubnav.close');
+    let ranked: string[] = $state([]);
+    let moreOpen = $state(false);
+    let closeLabel = $derived($i18n.t('app.telegram.groupSubnav.close'));
 
     // Recompute ranking at a stable boundary (screen entry / data refresh),
     // never immediately after a tap, so the submenu does not visibly jump.
-    $: if (moreOpen === false) {
-        ranked = rankGroups(groups, loadGroupUsage(kind));
-    }
+    run(() => {
+        if (moreOpen === false) {
+            ranked = rankGroups(groups, loadGroupUsage(kind));
+        }
+    });
 
-    $: visible = ranked.slice(0, MAX_RANKED);
+    let visible = $derived(ranked.slice(0, MAX_RANKED));
     // The "Ещё" sheet shows the remaining groups in canonical/default order
     // (the order passed in `groups`), not in usage-ranked order.
-    $: hidden = groups.filter((group) => !visible.includes(group));
+    let hidden = $derived(groups.filter((group) => !visible.includes(group)));
 
     function choose(group: string) {
         recordGroupUsage(kind, group);
@@ -42,7 +58,7 @@
         onSelect('');
     }
 
-    $: hasHidden = hidden.length > 0;
+    let hasHidden = $derived(hidden.length > 0);
 </script>
 
 {#if groups.length > 1}
@@ -53,7 +69,7 @@
                 class="chip chip--all"
                 class:active={selected === ''}
                 aria-pressed={selected === ''}
-                on:click={chooseAll}
+                onclick={chooseAll}
             >{allLabel}</button>
             {#each visible as group (group)}
                 <button
@@ -61,7 +77,7 @@
                     class="chip chip--grow"
                     class:active={selected === group}
                     aria-pressed={selected === group}
-                    on:click={() => choose(group)}
+                    onclick={() => choose(group)}
                 ><span class="chip-label">{group}</span></button>
             {/each}
             {#if hasHidden}
@@ -70,23 +86,23 @@
                     class="chip chip--more"
                     aria-haspopup="dialog"
                     aria-expanded={moreOpen}
-                    on:click={() => moreOpen = true}
+                    onclick={() => moreOpen = true}
                 >{moreLabel}<TelegramIcon name="chevronDown" size={14} label={moreLabel} /></button>
             {/if}
         </div>
     </div>
 
     {#if moreOpen}
-        <div class="sheet-backdrop" role="presentation" on:click={() => moreOpen = false}></div>
+        <div class="sheet-backdrop" role="presentation" onclick={() => moreOpen = false}></div>
         <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="group-subnav-title" tabindex="-1">
             <h2 id="group-subnav-title">{allGroupsTitle}</h2>
             <div class="flat">
-                <button type="button" class="sheet-item" class:active={selected === ''} on:click={chooseAll}>{allLabel}</button>
+                <button type="button" class="sheet-item" class:active={selected === ''} onclick={chooseAll}>{allLabel}</button>
                 {#each groups as group (group)}
-                    <button type="button" class="sheet-item" class:active={selected === group} on:click={() => choose(group)}>{group}</button>
+                    <button type="button" class="sheet-item" class:active={selected === group} onclick={() => choose(group)}>{group}</button>
                 {/each}
             </div>
-            <button class="close" type="button" on:click={() => moreOpen = false}>{closeLabel}</button>
+            <button class="close" type="button" onclick={() => moreOpen = false}>{closeLabel}</button>
         </div>
     {/if}
 {/if}

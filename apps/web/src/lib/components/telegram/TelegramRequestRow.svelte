@@ -6,28 +6,48 @@
     import type { TelegramRequestPresentation } from './telegramRequestPresentation';
     import { formatLastUsedTime } from './telegramLastUsed';
 
-    export let presentation: TelegramRequestPresentation;
-    export let locale: string = 'en';
-    export let actionsInTrailing = false;
+    interface Props {
+        presentation: TelegramRequestPresentation;
+        locale?: string;
+        actionsInTrailing?: boolean;
+        children?: import('svelte').Snippet;
+    }
 
-    $: title = stripLeadingEmoji(presentation.title);
+    let {
+        presentation,
+        locale = 'en',
+        actionsInTrailing = false,
+        children
+    }: Props = $props();
+
+    let title = $derived(stripLeadingEmoji(presentation.title));
 </script>
 
 <TelegramEntityRow hasTrailingActions={actionsInTrailing}>
-    <span slot="icon" aria-hidden="true"><TelegramIcon name={presentation.entityIcon} size={20} label={presentation.kindLabel} /></span>
-    <h3 slot="title">{title}</h3>
-    <div class="request-status" slot="trailing">
-        <span class="status-chip status-chip--{presentation.statusTone}">{presentation.statusLabel}</span>
-        {#if actionsInTrailing && $$slots.default}<div class="trailing-actions"><slot /></div>{/if}
-    </div>
-    <span slot="metadata">{presentation.metadata}</span>
-    <div slot="actions" class="content-footer">
-        <div class="request-summary">
-            <p class="amount" class:spend={presentation.isReward}><TelegramCoin size={13} />{presentation.amountSign}{presentation.amount}</p>
-            {#if presentation.createdAt}<time datetime={presentation.createdAt}>{formatLastUsedTime(presentation.createdAt, locale as 'en' | 'ru')}</time>{/if}
+    {#snippet icon()}
+        <span  aria-hidden="true"><TelegramIcon name={presentation.entityIcon} size={20} label={presentation.kindLabel} /></span>
+    {/snippet}
+    {#snippet title()}
+        <h3 >{title}</h3>
+    {/snippet}
+    {#snippet trailing()}
+        <div class="request-status" >
+            <span class="status-chip status-chip--{presentation.statusTone}">{presentation.statusLabel}</span>
+            {#if actionsInTrailing && children}<div class="trailing-actions">{@render children?.()}</div>{/if}
         </div>
-        {#if !actionsInTrailing && presentation.statusTone === 'pending'}<div class="request-actions"><slot /></div>{/if}
-    </div>
+    {/snippet}
+    {#snippet metadata()}
+        <span >{presentation.metadata}</span>
+    {/snippet}
+    {#snippet actions()}
+        <div  class="content-footer">
+            <div class="request-summary">
+                <p class="amount" class:spend={presentation.isReward}><TelegramCoin size={13} />{presentation.amountSign}{presentation.amount}</p>
+                {#if presentation.createdAt}<time datetime={presentation.createdAt}>{formatLastUsedTime(presentation.createdAt, locale as 'en' | 'ru')}</time>{/if}
+            </div>
+            {#if !actionsInTrailing && presentation.statusTone === 'pending'}<div class="request-actions">{@render children?.()}</div>{/if}
+        </div>
+    {/snippet}
 </TelegramEntityRow>
 
 <style>

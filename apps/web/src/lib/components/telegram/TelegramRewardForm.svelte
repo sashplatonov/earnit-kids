@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { useI18n } from '$lib/i18n/context';
     import type { MessageKey } from '$lib/i18n';
     import type { ShopItem } from '$lib/telegram/stores/types';
@@ -12,38 +14,50 @@
     import TelegramGroupPicker from './TelegramGroupPicker.svelte';
     import TelegramBottomSheet from './ui/TelegramBottomSheet.svelte';
 
-    export let open = false;
-    export let item: ShopItem | null = null;
-    export let groupSuggestions: string[] = [];
-    export let onClose: () => void = () => {};
-    export let onSaved: () => void = () => {};
+    interface Props {
+        open?: boolean;
+        item?: ShopItem | null;
+        groupSuggestions?: string[];
+        onClose?: () => void;
+        onSaved?: () => void;
+    }
+
+    let {
+        open = false,
+        item = null,
+        groupSuggestions = [],
+        onClose = () => {},
+        onSaved = () => {}
+    }: Props = $props();
 
     const i18n = useI18n();
     const rewardActions = useRewardActions();
 
-    let title = '';
-    let groupName = '';
-    let price = 50;
-    let icon: string | null = null;
-    let graphicOpen = false;
-    let groupPickerOpen = false;
-    let error = '';
+    let title = $state('');
+    let groupName = $state('');
+    let price = $state(50);
+    let icon: string | null = $state(null);
+    let graphicOpen = $state(false);
+    let groupPickerOpen = $state(false);
+    let error = $state('');
 
-    $: isEdit = item != null;
-    $: currentGraphic = getSemanticGraphic(icon);
-    $: currentGraphicLabel = $i18n.t(`app.telegram.graphics.labels.${currentGraphic.key}` as MessageKey);
+    let isEdit = $derived(item != null);
+    let currentGraphic = $derived(getSemanticGraphic(icon));
+    let currentGraphicLabel = $derived($i18n.t(`app.telegram.graphics.labels.${currentGraphic.key}` as MessageKey));
 
-    $: if (open && item) {
-        title = item.name ?? '';
-        groupName = item.groupName ?? '';
-        price = item.price ?? 50;
-        icon = item.icon ?? null;
-        error = '';
-    } else if (open && !item) {
-        title = ''; groupName = ''; price = 50; icon = null; error = '';
-    }
+    run(() => {
+        if (open && item) {
+            title = item.name ?? '';
+            groupName = item.groupName ?? '';
+            price = item.price ?? 50;
+            icon = item.icon ?? null;
+            error = '';
+        } else if (open && !item) {
+            title = ''; groupName = ''; price = 50; icon = null; error = '';
+        }
+    });
 
-    $: suggestions = [...new Set(groupSuggestions.filter(Boolean))];
+    let suggestions = $derived([...new Set(groupSuggestions.filter(Boolean))]);
 
     function save() {
         if (!title.trim()) { error = $i18n.t('app.telegram.rewardForm.nameRequired'); return; }
@@ -73,7 +87,7 @@
         <input id="reward-name" class="input" bind:value={title} placeholder={$i18n.t('app.telegram.rewardForm.namePlaceholder')} />
 
         <label for="reward-graphic">{$i18n.t('app.telegram.rewardForm.graphicLabel')}</label>
-        <button class="field" id="reward-graphic" type="button" on:click={() => graphicOpen = true}>
+        <button class="field" id="reward-graphic" type="button" onclick={() => graphicOpen = true}>
             <span class="gico"><TelegramIcon name={currentGraphic.key} size={20} label={currentGraphicLabel} /></span>
             <span class="grow">{currentGraphicLabel}</span>
             <TelegramIcon name="chevronDown" size={18} label={$i18n.t('common.actions.open')} />
@@ -82,7 +96,7 @@
         <label for="reward-price">{$i18n.t('app.telegram.rewardForm.priceLabel')}</label>
         <input id="reward-price" class="input" type="number" inputmode="numeric" bind:value={price} min="0" />
 
-        <button class="field" id="reward-group" type="button" on:click={() => groupPickerOpen = true}>
+        <button class="field" id="reward-group" type="button" onclick={() => groupPickerOpen = true}>
             <span class="gico"><TelegramIcon name={getTelegramEntityIcon({ kind: 'reward', group: groupName })} size={20} label={groupName || $i18n.t('app.telegram.rewardForm.groupPlaceholder')} /></span>
             <span class="grow">{groupName || $i18n.t('app.telegram.rewardForm.groupPlaceholder')}</span>
             <TelegramIcon name="chevronDown" size={18} label={$i18n.t('common.actions.open')} />
@@ -90,8 +104,8 @@
 
         {#if error}<p class="error" role="alert">{error}</p>{/if}
 
-        <button class="primary" type="button" on:click={save}><TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.rewardForm.save')} />{$i18n.t('app.telegram.rewardForm.save')}</button>
-        <button class="close" type="button" on:click={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.rewardForm.cancel')} />{$i18n.t('app.telegram.rewardForm.cancel')}</button>
+        <button class="primary" type="button" onclick={save}><TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.rewardForm.save')} />{$i18n.t('app.telegram.rewardForm.save')}</button>
+        <button class="close" type="button" onclick={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.rewardForm.cancel')} />{$i18n.t('app.telegram.rewardForm.cancel')}</button>
     </TelegramBottomSheet>
 {/if}
 

@@ -1,3 +1,4 @@
+
 <script lang="ts">
     import { onMount } from 'svelte';
     import { requestGoogleLoginUrl } from '$lib/auth/googleOAuth';

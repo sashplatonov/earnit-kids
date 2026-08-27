@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
 import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
     import {
@@ -12,22 +14,22 @@ import { useI18n } from '$lib/i18n/context';
     import BrowserPushControls from '$lib/features/workspace/notifications/BrowserPushControls.svelte';
     import { isTelegramMiniApp } from '$lib/services/telegram';
 
-    export let open = false;
-    export let onClose: () => void = () => {};
-    export let demoMode = false;
+    interface Props {
+        open?: boolean;
+        onClose?: () => void;
+        demoMode?: boolean;
+    }
+
+    let { open = false, onClose = () => {}, demoMode = false }: Props = $props();
 
     const i18n = useI18n();
 
-    // EXPLAIN: The live demo keeps notification choices local and must not wait
-    // for, or start, a browser-push integration.
-    $: showBrowserPush = !demoMode && !isTelegramMiniApp();
 
-    let settings: FamilyNotificationSettings | null = null;
+    let settings: FamilyNotificationSettings | null = $state(null);
     let demoSettings: FamilyNotificationSettings | null = null;
-    let loading = false;
-    let error = '';
+    let loading = $state(false);
+    let error = $state('');
 
-    $: if (open) void reload();
 
     async function reload() {
         loading = true;
@@ -155,10 +157,16 @@ import { useI18n } from '$lib/i18n/context';
             void reload();
         }
     }
+    // EXPLAIN: The live demo keeps notification choices local and must not wait
+    // for, or start, a browser-push integration.
+    let showBrowserPush = $derived(!demoMode && !isTelegramMiniApp());
+    run(() => {
+        if (open) void reload();
+    });
 </script>
 
 {#if open}
-    <div class="sheet-backdrop" role="presentation" on:click={onClose}></div>
+    <div class="sheet-backdrop" role="presentation" onclick={onClose}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="notifications-title" tabindex="-1">
         <h2 id="notifications-title">{$i18n.t('app.telegram.notifications.title')}</h2>
         {#if demoMode}<p class="demo-notice" role="note">{$i18n.t('app.liveDemo.demoActionNotice')}</p>{/if}
@@ -177,7 +185,7 @@ import { useI18n } from '$lib/i18n/context';
                             <span class="setting-meta">{parentHint(pref.key)}</span>
                         </span>
                         <label class="switch">
-                            <input type="checkbox" checked={pref.enabled} aria-label={parentLabel(pref.key)} on:change={() => toggleParent(pref)} />
+                            <input type="checkbox" checked={pref.enabled} aria-label={parentLabel(pref.key)} onchange={() => toggleParent(pref)} />
                             <span class="track"></span>
                         </label>
                     </div>
@@ -191,7 +199,7 @@ import { useI18n } from '$lib/i18n/context';
                             <span class="setting-meta">{parentHint(pref.key)}</span>
                         </span>
                         <label class="switch">
-                            <input type="checkbox" checked={pref.enabled} aria-label={parentLabel(pref.key)} on:change={() => toggleParent(pref)} />
+                            <input type="checkbox" checked={pref.enabled} aria-label={parentLabel(pref.key)} onchange={() => toggleParent(pref)} />
                             <span class="track"></span>
                         </label>
                     </div>
@@ -210,7 +218,7 @@ import { useI18n } from '$lib/i18n/context';
                                 <span class="setting-meta">{childHint(pref.key)}</span>
                             </span>
                             <label class="switch">
-                                <input type="checkbox" checked={pref.enabled} aria-label={childLabel(pref.key)} on:change={() => toggleChild(child.childId, pref)} />
+                                <input type="checkbox" checked={pref.enabled} aria-label={childLabel(pref.key)} onchange={() => toggleChild(child.childId, pref)} />
                                 <span class="track"></span>
                             </label>
                         </div>
@@ -224,7 +232,7 @@ import { useI18n } from '$lib/i18n/context';
                                 <span class="setting-meta">{childHint(pref.key)}</span>
                             </span>
                             <label class="switch">
-                                <input type="checkbox" checked={pref.enabled} aria-label={childLabel(pref.key)} on:change={() => toggleChild(child.childId, pref)} />
+                                <input type="checkbox" checked={pref.enabled} aria-label={childLabel(pref.key)} onchange={() => toggleChild(child.childId, pref)} />
                                 <span class="track"></span>
                             </label>
                         </div>
@@ -234,7 +242,7 @@ import { useI18n } from '$lib/i18n/context';
         {/if}
 
         {#if error}<p class="error" role="alert">{error}</p>{/if}
-        <button class="close" type="button" on:click={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.header.close')} />{$i18n.t('app.telegram.header.close')}</button>
+        <button class="close" type="button" onclick={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.header.close')} />{$i18n.t('app.telegram.header.close')}</button>
     </div>
 {/if}
 

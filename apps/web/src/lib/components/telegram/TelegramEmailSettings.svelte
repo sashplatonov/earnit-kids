@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { useI18n } from '$lib/i18n/context';
     import {
         changeAccountEmail,
@@ -9,23 +11,26 @@
     } from '$lib/services/api';
     import TelegramIcon from './TelegramIcon.svelte';
 
-    export let open = false;
-    export let onClose: () => void = () => {};
-    export let demoMode = false;
+    interface Props {
+        open?: boolean;
+        onClose?: () => void;
+        demoMode?: boolean;
+    }
+
+    let { open = false, onClose = () => {}, demoMode = false }: Props = $props();
 
     const i18n = useI18n();
 
-    let account: AccountConnection | null = null;
+    let account: AccountConnection | null = $state(null);
     let demoAccount: AccountConnection | null = null;
-    let error = '';
-    let busy = false;
-    let view: 'main' | 'change' | 'password' = 'main';
-    let newEmail = '';
-    let currentPassword = '';
-    let newPassword = '';
-    let confirmUnlink = false;
+    let error = $state('');
+    let busy = $state(false);
+    let view: 'main' | 'change' | 'password' = $state('main');
+    let newEmail = $state('');
+    let currentPassword = $state('');
+    let newPassword = $state('');
+    let confirmUnlink = $state(false);
 
-    $: if (open) void reload();
 
     async function reload() {
         if (demoMode) {
@@ -86,10 +91,13 @@
             error = result.error || $i18n.t('app.telegram.emailSettings.error');
         }
     }
+    run(() => {
+        if (open) void reload();
+    });
 </script>
 
 {#if open}
-    <div class="sheet-backdrop" role="presentation" on:click={onClose}></div>
+    <div class="sheet-backdrop" role="presentation" onclick={onClose}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="email-settings-title" tabindex="-1">
         <h2 id="email-settings-title">{$i18n.t('app.telegram.emailSettings.title')}</h2>
         {#if demoMode}<p class="demo-notice" role="note">{$i18n.t('app.liveDemo.demoActionNotice')}</p>{/if}
@@ -99,35 +107,35 @@
                 <div class="current-email"><TelegramIcon name="mail" size={18} label={$i18n.t('app.telegram.emailSettings.title')} /><span class="grow"><span class="setting-title">{maskEmail(account.email)}</span><span class="setting-meta">{$i18n.t('app.telegram.emailSettings.linked')}</span></span></div>
             {/if}
             <div class="flat">
-                <button class="row" type="button" on:click={() => { view = 'change'; error = ''; }}><span class="setting-icon"><TelegramIcon name="edit" size={18} label={$i18n.t('app.telegram.emailSettings.change')} /></span><span class="grow">{$i18n.t('app.telegram.emailSettings.change')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
-                <button class="row" type="button" on:click={() => { confirmUnlink = true; error = ''; }}><span class="setting-icon"><TelegramIcon name="unlink" size={18} label={$i18n.t('app.telegram.emailSettings.unlink')} /></span><span class="grow">{$i18n.t('app.telegram.emailSettings.unlink')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
-                <button class="row" type="button" on:click={() => { view = 'password'; error = ''; }}><span class="setting-icon"><TelegramIcon name="key" size={18} label={$i18n.t('app.telegram.emailSettings.changePassword')} /></span><span class="grow">{$i18n.t('app.telegram.emailSettings.changePassword')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
+                <button class="row" type="button" onclick={() => { view = 'change'; error = ''; }}><span class="setting-icon"><TelegramIcon name="edit" size={18} label={$i18n.t('app.telegram.emailSettings.change')} /></span><span class="grow">{$i18n.t('app.telegram.emailSettings.change')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
+                <button class="row" type="button" onclick={() => { confirmUnlink = true; error = ''; }}><span class="setting-icon"><TelegramIcon name="unlink" size={18} label={$i18n.t('app.telegram.emailSettings.unlink')} /></span><span class="grow">{$i18n.t('app.telegram.emailSettings.unlink')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
+                <button class="row" type="button" onclick={() => { view = 'password'; error = ''; }}><span class="setting-icon"><TelegramIcon name="key" size={18} label={$i18n.t('app.telegram.emailSettings.changePassword')} /></span><span class="grow">{$i18n.t('app.telegram.emailSettings.changePassword')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
             </div>
 
             {#if confirmUnlink}
                 <div class="confirm">
                     <p class="confirm-title">{$i18n.t('app.telegram.emailSettings.unlinkConfirm')}</p>
                     <p class="confirm-meta">{$i18n.t('app.telegram.emailSettings.unlinkDescription')}</p>
-                    <button class="deactivate" type="button" disabled={busy} on:click={submitUnlink}>{$i18n.t('app.telegram.emailSettings.unlinkConfirmLabel')}</button>
-                    <button class="close" type="button" disabled={busy} on:click={() => confirmUnlink = false}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.emailSettings.cancel')} />{$i18n.t('app.telegram.emailSettings.cancel')}</button>
+                    <button class="deactivate" type="button" disabled={busy} onclick={submitUnlink}>{$i18n.t('app.telegram.emailSettings.unlinkConfirmLabel')}</button>
+                    <button class="close" type="button" disabled={busy} onclick={() => confirmUnlink = false}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.emailSettings.cancel')} />{$i18n.t('app.telegram.emailSettings.cancel')}</button>
                 </div>
             {/if}
         {:else if view === 'change'}
             <label for="email-new">{$i18n.t('app.telegram.emailSettings.newEmailLabel')}</label>
             <input id="email-new" class="input" type="email" bind:value={newEmail} placeholder="name@example.com" />
-            <button class="primary" type="button" disabled={busy} on:click={submitChange}>{$i18n.t('app.telegram.emailSettings.continue')}</button>
-            <button class="close" type="button" on:click={() => { view = 'main'; error = ''; }}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.emailSettings.cancel')} />{$i18n.t('app.telegram.emailSettings.cancel')}</button>
+            <button class="primary" type="button" disabled={busy} onclick={submitChange}>{$i18n.t('app.telegram.emailSettings.continue')}</button>
+            <button class="close" type="button" onclick={() => { view = 'main'; error = ''; }}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.emailSettings.cancel')} />{$i18n.t('app.telegram.emailSettings.cancel')}</button>
         {:else}
             <label for="password-current">{$i18n.t('app.telegram.emailSettings.currentPasswordLabel')}</label>
             <input id="password-current" class="input" type="password" bind:value={currentPassword} />
             <label for="password-new">{$i18n.t('app.telegram.emailSettings.newPasswordLabel')}</label>
             <input id="password-new" class="input" type="password" bind:value={newPassword} />
-            <button class="primary" type="button" disabled={busy} on:click={submitPassword}>{$i18n.t('app.telegram.emailSettings.changePassword')}</button>
-            <button class="close" type="button" on:click={() => { view = 'main'; error = ''; }}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.emailSettings.cancel')} />{$i18n.t('app.telegram.emailSettings.cancel')}</button>
+            <button class="primary" type="button" disabled={busy} onclick={submitPassword}>{$i18n.t('app.telegram.emailSettings.changePassword')}</button>
+            <button class="close" type="button" onclick={() => { view = 'main'; error = ''; }}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.emailSettings.cancel')} />{$i18n.t('app.telegram.emailSettings.cancel')}</button>
         {/if}
 
         {#if error}<p class="error" role="alert">{error}</p>{/if}
-        <button class="close" type="button" on:click={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.header.close')} />{$i18n.t('app.telegram.header.close')}</button>
+        <button class="close" type="button" onclick={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.header.close')} />{$i18n.t('app.telegram.header.close')}</button>
     </div>
 {/if}
 

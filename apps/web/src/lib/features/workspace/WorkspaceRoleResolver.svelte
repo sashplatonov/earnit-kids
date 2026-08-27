@@ -5,14 +5,26 @@
     import BrowserPushControls from './notifications/BrowserPushControls.svelte';
     import type { MembershipPermission } from '$lib/types/auth';
 
-    export let role = '';
-    export let publicOrigin = '';
-    export let allowPreview = false;
-    export let showBrowserPush = true;
-    export let showSessionActions = false;
-    export let showAccessPanel = false;
-    export let permission: MembershipPermission | null = null;
-    let viewAsChild = false;
+    interface Props {
+        role?: string;
+        publicOrigin?: string;
+        allowPreview?: boolean;
+        showBrowserPush?: boolean;
+        showSessionActions?: boolean;
+        showAccessPanel?: boolean;
+        permission?: MembershipPermission | null;
+    }
+
+    let {
+        role = '',
+        publicOrigin = '',
+        allowPreview = false,
+        showBrowserPush = true,
+        showSessionActions = false,
+        showAccessPanel = false,
+        permission = null
+    }: Props = $props();
+    let viewAsChild = $state(false);
 
     function showChildPreview() {
         if (allowPreview) viewAsChild = true;

@@ -14,20 +14,25 @@
     const familyActions = useFamilyActions();
     const historyActions = useHistoryActions();
 
-    // EXPLAIN: Bot deep links (history/coins) open the exact home sub-context.
-    export let initialContext = '';
-    let showAll = false;
-    let history: HistoryEntry[] = [];
-    let historyLoading = false;
-    let historyHasMore = false;
-    let historyPage = 0;
-    let historyError = '';
-    let coinSheetOpen = false;
-    let coinBusy = false;
-    let coinError = '';
 
-    $: pending = $appStore.requests.filter((request) => request.status === 'pending');
-    $: visibleRequests = showAll ? pending : pending.slice(0, 2);
+    interface Props {
+        // EXPLAIN: Bot deep links (history/coins) open the exact home sub-context.
+        initialContext?: string;
+    }
+
+    let { initialContext = '' }: Props = $props();
+    let showAll = $state(false);
+    let history: HistoryEntry[] = $state([]);
+    let historyLoading = $state(false);
+    let historyHasMore = $state(false);
+    let historyPage = 0;
+    let historyError = $state('');
+    let coinSheetOpen = $state(false);
+    let coinBusy = $state(false);
+    let coinError = $state('');
+
+    let pending = $derived($appStore.requests.filter((request) => request.status === 'pending'));
+    let visibleRequests = $derived(showAll ? pending : pending.slice(0, 2));
 
     async function loadHistory(reset = false) {
         if (historyLoading || $appStore.currentChildId == null) return;
@@ -76,12 +81,12 @@
     {/if}
     <TelegramRequestList requests={visibleRequests} canDecide childId={$appStore.currentChildId} showHeading={false} emptyText={pending.length ? '' : $i18n.t('app.telegram.home.nothingNeedsAttention')} onDecision={() => loadHistory(true)} />
     {#if pending.length > 2}
-        <button class="see-all" type="button" on:click={() => showAll = !showAll}><span>{showAll ? $i18n.t('app.telegram.home.showFewer') : $i18n.t('app.telegram.home.allRequests', { count: pending.length })}</span><TelegramIcon name="arrowRight" size={18} label={showAll ? $i18n.t('app.telegram.home.showFewerRequests') : $i18n.t('app.telegram.home.allRequestsAria')} /></button>
+        <button class="see-all" type="button" onclick={() => showAll = !showAll}><span>{showAll ? $i18n.t('app.telegram.home.showFewer') : $i18n.t('app.telegram.home.allRequests', { count: pending.length })}</span><TelegramIcon name="arrowRight" size={18} label={showAll ? $i18n.t('app.telegram.home.showFewerRequests') : $i18n.t('app.telegram.home.allRequestsAria')} /></button>
     {/if}
 
     <h2 class="section-title">{$i18n.t('app.telegram.home.quickActions')}</h2>
     <div class="quick-actions" aria-label={$i18n.t('app.telegram.home.quickActions')}>
-        <button type="button" on:click={() => coinSheetOpen = true}><TelegramIcon name="coinAdjustment" size={20} label={$i18n.t('app.telegram.home.addCoins')} /><span>{$i18n.t('app.telegram.home.addCoins')}</span></button>
+        <button type="button" onclick={() => coinSheetOpen = true}><TelegramIcon name="coinAdjustment" size={20} label={$i18n.t('app.telegram.home.addCoins')} /><span>{$i18n.t('app.telegram.home.addCoins')}</span></button>
     </div>
 
     <TelegramHistoryList entries={history} loading={historyLoading} hasMore={historyHasMore} error={historyError} onRetry={() => loadHistory(true)} onLoadMore={() => loadHistory()} />

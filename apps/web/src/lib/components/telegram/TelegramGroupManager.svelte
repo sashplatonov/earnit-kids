@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { stopPropagation } from 'svelte/legacy';
+
     import { createEventDispatcher } from 'svelte';
     import { useI18n } from '$lib/i18n/context';
     import type { MessageKey } from '$lib/i18n';
@@ -14,9 +16,13 @@
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramGraphicsPicker from './TelegramGraphicsPicker.svelte';
 
-    export let open = false;
-    export let kind: 'tasks' | 'shop' = 'tasks';
-    export let onClose: () => void = () => {};
+    interface Props {
+        open?: boolean;
+        kind?: 'tasks' | 'shop';
+        onClose?: () => void;
+    }
+
+    let { open = false, kind = 'tasks', onClose = () => {} }: Props = $props();
 
     const i18n = useI18n();
     const taskActions = useTaskActions();
@@ -26,30 +32,30 @@
         deleteGroup: { group: string; moveTo: string | null };
     }>();
 
-    $: items = kind === 'tasks' ? ($appStore.tasks as Task[]) : ($shopItems as ShopItem[]);
-    $: currentChild = $appStore.children.find((child) => String(child.id) === String($appStore.currentChildId)) ?? null;
-    $: groups = [...new Set(items.map((item) => item.groupName).filter((group): group is string => Boolean(group)))];
-    $: hiddenGroups = kind === 'tasks'
+    let items = $derived(kind === 'tasks' ? ($appStore.tasks as Task[]) : ($shopItems as ShopItem[]));
+    let currentChild = $derived($appStore.children.find((child) => String(child.id) === String($appStore.currentChildId)) ?? null);
+    let groups = $derived([...new Set(items.map((item) => item.groupName).filter((group): group is string => Boolean(group)))]);
+    let hiddenGroups = $derived(kind === 'tasks'
         ? (currentChild?.hiddenTaskGroupOrder ?? [])
-        : (currentChild?.hiddenShopGroupOrder ?? []);
-    $: orderedGroups = [...groups];
+        : (currentChild?.hiddenShopGroupOrder ?? []));
+    let orderedGroups = $derived([...groups]);
 
-    let formOpen = false;
-    let editingGroup: string | null = null;
-    let groupName = '';
-    let groupIcon: string | null = null;
-    let graphicOpen = false;
-    let openMenuId: string | null = null;
+    let formOpen = $state(false);
+    let editingGroup: string | null = $state(null);
+    let groupName = $state('');
+    let groupIcon: string | null = $state(null);
+    let graphicOpen = $state(false);
+    let openMenuId: string | null = $state(null);
     let menuTrigger: HTMLButtonElement | null = null;
-    let error = '';
-    let moveTargetOpen = false;
-    let pendingDeleteGroup: string | null = null;
-    let reorderOpen = false;
-    let reorderDraft: string[] = [];
+    let error = $state('');
+    let moveTargetOpen = $state(false);
+    let pendingDeleteGroup: string | null = $state(null);
+    let reorderOpen = $state(false);
+    let reorderDraft: string[] = $state([]);
 
-    $: title = kind === 'tasks'
+    let title = $derived(kind === 'tasks'
         ? $i18n.t('app.telegram.groupManager.taskTitle')
-        : $i18n.t('app.telegram.groupManager.rewardTitle');
+        : $i18n.t('app.telegram.groupManager.rewardTitle'));
 
     function countFor(group: string): number {
         return items.filter((item) => item.groupName === group).length;
@@ -206,18 +212,18 @@
         reorderOpen = false;
     }
 
-    $: currentGraphic = getSemanticGraphic(groupIcon);
-    $: currentGraphicLabel = $i18n.t(`app.telegram.graphics.labels.${currentGraphic.key}` as MessageKey);
+    let currentGraphic = $derived(getSemanticGraphic(groupIcon));
+    let currentGraphicLabel = $derived($i18n.t(`app.telegram.graphics.labels.${currentGraphic.key}` as MessageKey));
 </script>
 
-<svelte:window on:click={() => openMenuId = null} on:keydown={handleWindowKeydown} />
+<svelte:window onclick={() => openMenuId = null} onkeydown={handleWindowKeydown} />
 
 {#if open}
-    <div class="sheet-backdrop" role="presentation" on:click={onClose}></div>
+    <div class="sheet-backdrop" role="presentation" onclick={onClose}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="group-manager-title" tabindex="-1">
         <div class="sheet-header">
             <h2 id="group-manager-title">{title}</h2>
-            <button class="add" type="button" on:click={openCreate}><TelegramIcon name="add" size={18} label={$i18n.t('app.telegram.groupManager.addGroup')} /><span>{$i18n.t('app.telegram.groupManager.newGroup')}</span></button>
+            <button class="add" type="button" onclick={openCreate}><TelegramIcon name="add" size={18} label={$i18n.t('app.telegram.groupManager.addGroup')} /><span>{$i18n.t('app.telegram.groupManager.newGroup')}</span></button>
         </div>
 
         {#if !orderedGroups.length}
@@ -232,14 +238,14 @@
                             <span class="meta">{plural(countFor(group))}</span>
                         </span>
                         <div class="menu-wrap">
-                            <button class="more" type="button" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: group })} aria-haspopup="menu" aria-expanded={openMenuId === group} on:click|stopPropagation={(event) => toggleMenu(group, event.currentTarget as HTMLButtonElement)}><TelegramIcon name="more" size={20} label={$i18n.t('app.telegram.tasks.moreActions')} /></button>
+                            <button class="more" type="button" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: group })} aria-haspopup="menu" aria-expanded={openMenuId === group} onclick={stopPropagation((event) => toggleMenu(group, event.currentTarget as HTMLButtonElement))}><TelegramIcon name="more" size={20} label={$i18n.t('app.telegram.tasks.moreActions')} /></button>
                             {#if openMenuId === group}
                                 <div class="menu" role="menu" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: group })}>
-                                    <button role="menuitem" type="button" on:click={() => openEdit(group)}><TelegramIcon name="edit" size={16} label={$i18n.t('app.telegram.groupManager.edit')} /><span>{$i18n.t('app.telegram.groupManager.edit')}</span></button>
-                                    <button role="menuitem" type="button" on:click={() => { closeMenu(true); reorderOpen = true; }}><TelegramIcon name="reorder" size={16} label={$i18n.t('app.telegram.groupManager.reorder')} /><span>{$i18n.t('app.telegram.groupManager.reorder')}</span></button>
-                                    <button role="menuitem" type="button" on:click={() => toggleArchive(group)}><TelegramIcon name="archive" size={16} label={hiddenGroups.includes(group) ? $i18n.t('app.telegram.groupManager.unarchive') : $i18n.t('app.telegram.groupManager.archive')} /><span>{hiddenGroups.includes(group) ? $i18n.t('app.telegram.groupManager.unarchive') : $i18n.t('app.telegram.groupManager.archive')}</span></button>
+                                    <button role="menuitem" type="button" onclick={() => openEdit(group)}><TelegramIcon name="edit" size={16} label={$i18n.t('app.telegram.groupManager.edit')} /><span>{$i18n.t('app.telegram.groupManager.edit')}</span></button>
+                                    <button role="menuitem" type="button" onclick={() => { closeMenu(true); reorderOpen = true; }}><TelegramIcon name="reorder" size={16} label={$i18n.t('app.telegram.groupManager.reorder')} /><span>{$i18n.t('app.telegram.groupManager.reorder')}</span></button>
+                                    <button role="menuitem" type="button" onclick={() => toggleArchive(group)}><TelegramIcon name="archive" size={16} label={hiddenGroups.includes(group) ? $i18n.t('app.telegram.groupManager.unarchive') : $i18n.t('app.telegram.groupManager.archive')} /><span>{hiddenGroups.includes(group) ? $i18n.t('app.telegram.groupManager.unarchive') : $i18n.t('app.telegram.groupManager.archive')}</span></button>
                                     <div class="menu-divider" role="presentation"></div>
-                                    <button role="menuitem" class="danger" type="button" on:click={() => void removeGroup(group)}><TelegramIcon name="delete" size={16} label={$i18n.t('app.telegram.groupManager.delete')} /><span>{$i18n.t('app.telegram.groupManager.delete')}</span></button>
+                                    <button role="menuitem" class="danger" type="button" onclick={() => void removeGroup(group)}><TelegramIcon name="delete" size={16} label={$i18n.t('app.telegram.groupManager.delete')} /><span>{$i18n.t('app.telegram.groupManager.delete')}</span></button>
                                 </div>
                             {/if}
                         </div>
@@ -248,12 +254,12 @@
             </div>
         {/if}
 
-        <button class="close" type="button" on:click={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.groupManager.close')} />{$i18n.t('app.telegram.groupManager.close')}</button>
+        <button class="close" type="button" onclick={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.groupManager.close')} />{$i18n.t('app.telegram.groupManager.close')}</button>
     </div>
 {/if}
 
 {#if formOpen}
-    <div class="sheet-backdrop" role="presentation" on:click={() => formOpen = false}></div>
+    <div class="sheet-backdrop" role="presentation" onclick={() => formOpen = false}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="group-form-title" tabindex="-1">
         <h2 id="group-form-title">{editingGroup != null ? $i18n.t('app.telegram.groupManager.editGroup') : $i18n.t('app.telegram.groupManager.newGroup')}</h2>
 
@@ -261,7 +267,7 @@
         <input id="group-name" class="input" bind:value={groupName} placeholder={$i18n.t('app.telegram.groupManager.groupNamePlaceholder')} />
 
         <label for="group-graphic">{$i18n.t('app.telegram.taskForm.graphicLabel')}</label>
-        <button class="field" id="group-graphic" type="button" on:click={() => graphicOpen = true}>
+        <button class="field" id="group-graphic" type="button" onclick={() => graphicOpen = true}>
             <span class="gico"><TelegramIcon name={currentGraphic.key} size={20} label={currentGraphicLabel} /></span>
             <span class="grow">{currentGraphicLabel}</span>
             <TelegramIcon name="chevronDown" size={18} label={$i18n.t('common.actions.open')} />
@@ -269,29 +275,29 @@
 
         {#if error}<p class="error" role="alert">{error}</p>{/if}
 
-        <button class="primary" type="button" on:click={saveGroup}><TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.groupManager.save')} />{$i18n.t('app.telegram.groupManager.save')}</button>
-        <button class="close" type="button" on:click={() => formOpen = false}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.groupManager.cancel')} />{$i18n.t('app.telegram.groupManager.cancel')}</button>
+        <button class="primary" type="button" onclick={saveGroup}><TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.groupManager.save')} />{$i18n.t('app.telegram.groupManager.save')}</button>
+        <button class="close" type="button" onclick={() => formOpen = false}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.groupManager.cancel')} />{$i18n.t('app.telegram.groupManager.cancel')}</button>
     </div>
 {/if}
 
 <TelegramGraphicsPicker open={graphicOpen} title={$i18n.t('app.telegram.taskForm.graphicLabel')} initial={groupIcon} onSelect={(key) => groupIcon = key} onClose={() => graphicOpen = false} />
 
 {#if moveTargetOpen}
-    <div class="sheet-backdrop" role="presentation" on:click={() => moveTargetOpen = false}></div>
+    <div class="sheet-backdrop" role="presentation" onclick={() => moveTargetOpen = false}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="move-target-title" tabindex="-1">
         <h2 id="move-target-title">{$i18n.t('app.telegram.groupManager.moveToTitle')}</h2>
         <div class="list" role="list">
             {#each orderedGroups.filter((g) => g !== pendingDeleteGroup) as group (group)}
-                <button class="sheet-item" type="button" on:click={() => confirmMoveTarget(group)}>{group}</button>
+                <button class="sheet-item" type="button" onclick={() => confirmMoveTarget(group)}>{group}</button>
             {/each}
-            <button class="sheet-item" type="button" on:click={() => confirmMoveTarget(null)}>{$i18n.t('app.telegram.groupManager.leaveUngrouped')}</button>
+            <button class="sheet-item" type="button" onclick={() => confirmMoveTarget(null)}>{$i18n.t('app.telegram.groupManager.leaveUngrouped')}</button>
         </div>
-        <button class="close" type="button" on:click={() => moveTargetOpen = false}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.groupManager.cancel')} />{$i18n.t('app.telegram.groupManager.cancel')}</button>
+        <button class="close" type="button" onclick={() => moveTargetOpen = false}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.groupManager.cancel')} />{$i18n.t('app.telegram.groupManager.cancel')}</button>
     </div>
 {/if}
 
 {#if reorderOpen}
-    <div class="sheet-backdrop" role="presentation" on:click={() => reorderOpen = false}></div>
+    <div class="sheet-backdrop" role="presentation" onclick={() => reorderOpen = false}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="reorder-title" tabindex="-1">
         <h2 id="reorder-title">{$i18n.t('app.telegram.groupManager.reorderTitle')}</h2>
         <div class="list" role="list">
@@ -300,14 +306,14 @@
                     <span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: kind === 'tasks' ? 'task' : 'reward', group })} size={20} label={$i18n.t('app.telegram.groupManager.groupIcon', { name: group })} /></span>
                     <span class="entity-text"><span class="title">{group}</span></span>
                     <div class="reorder-actions">
-                        <button class="reorder-btn" type="button" aria-label={$i18n.t('app.telegram.groupManager.moveUp')} disabled={index === 0} on:click={() => moveReorder(index, -1)}><TelegramIcon name="arrowUp" size={18} label={$i18n.t('app.telegram.groupManager.moveUp')} /></button>
-                        <button class="reorder-btn" type="button" aria-label={$i18n.t('app.telegram.groupManager.moveDown')} disabled={index === reorderDraft.length - 1} on:click={() => moveReorder(index, 1)}><TelegramIcon name="arrowDown" size={18} label={$i18n.t('app.telegram.groupManager.moveDown')} /></button>
+                        <button class="reorder-btn" type="button" aria-label={$i18n.t('app.telegram.groupManager.moveUp')} disabled={index === 0} onclick={() => moveReorder(index, -1)}><TelegramIcon name="arrowUp" size={18} label={$i18n.t('app.telegram.groupManager.moveUp')} /></button>
+                        <button class="reorder-btn" type="button" aria-label={$i18n.t('app.telegram.groupManager.moveDown')} disabled={index === reorderDraft.length - 1} onclick={() => moveReorder(index, 1)}><TelegramIcon name="arrowDown" size={18} label={$i18n.t('app.telegram.groupManager.moveDown')} /></button>
                     </div>
                 </div>
             {/each}
         </div>
-        <button class="primary" type="button" on:click={saveReorder}><TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.groupManager.done')} />{$i18n.t('app.telegram.groupManager.done')}</button>
-        <button class="close" type="button" on:click={() => reorderOpen = false}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.groupManager.cancel')} />{$i18n.t('app.telegram.groupManager.cancel')}</button>
+        <button class="primary" type="button" onclick={saveReorder}><TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.groupManager.done')} />{$i18n.t('app.telegram.groupManager.done')}</button>
+        <button class="close" type="button" onclick={() => reorderOpen = false}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.groupManager.cancel')} />{$i18n.t('app.telegram.groupManager.cancel')}</button>
     </div>
 {/if}
 

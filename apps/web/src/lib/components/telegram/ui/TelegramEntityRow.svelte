@@ -1,25 +1,49 @@
 <script lang="ts">
     import { telegramUi } from './telegramUi';
 
-    export let interactive = false;
-    export let archived = false;
-    export let compact = false;
-    export let hasSelection = false;
-    export let hasTrailingActions = false;
+    interface Props {
+        isInteractive?: boolean;
+        archived?: boolean;
+        compact?: boolean;
+        hasSelection?: boolean;
+        hasTrailingActions?: boolean;
+        selection?: import('svelte').Snippet;
+        icon?: import('svelte').Snippet;
+        title?: import('svelte').Snippet;
+        trailing?: import('svelte').Snippet;
+        metadata?: import('svelte').Snippet;
+        actions?: import('svelte').Snippet;
+        interactive?: import('svelte').Snippet;
+    }
+
+    let {
+        isInteractive = false,
+        archived = false,
+        compact = false,
+        hasSelection = false,
+        hasTrailingActions = false,
+        selection,
+        icon,
+        title,
+        trailing,
+        metadata,
+        actions,
+        interactive
+    }: Props = $props();
 </script>
 
 <div class:archived class:compact class:has-selection={hasSelection} class:has-trailing-actions={hasTrailingActions} class="entity-row row" role="listitem" style={`--telegram-divider:${telegramUi.colors.divider};--telegram-focus:${telegramUi.colors.focus};`}>
-    {#if hasSelection && $$slots.selection}<div class="entity-selection"><slot name="selection" /></div>{/if}
-    <div class="entity-icon"><slot name="icon" /></div>
+    {#if hasSelection && selection}<div class="entity-selection">{@render selection()}</div>{/if}
+    <div class="entity-icon">{@render icon?.()}</div>
     <div class="entity-content">
         <div class="entity-heading">
-            <div class="entity-title"><slot name="title" /></div>
-            <div class="entity-trailing"><slot name="trailing" /></div>
+            <div class="entity-title">{@render title?.()}</div>
+            <div class="entity-trailing">{@render trailing?.()}</div>
         </div>
-        <div class="entity-meta"><slot name="metadata" /></div>
-        <div class="entity-actions"><slot name="actions" /></div>
+        <div class="entity-meta">{@render metadata?.()}</div>
+        <div class="entity-actions">{@render actions?.()}</div>
     </div>
-    {#if interactive}<div class="entity-interactive"><slot name="interactive" /></div>{/if}
+    {#if isInteractive}<div class="entity-interactive">{@render interactive?.()}</div>{/if}
 </div>
 
 <style>

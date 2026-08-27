@@ -2,11 +2,15 @@
     import { useI18n } from '$lib/i18n/context';
     import type { PageData } from './$types';
 
-    export let data: PageData;
+    interface Props {
+        data: PageData;
+    }
+
+    let { data }: Props = $props();
 
     const i18n = useI18n();
-    let submitting = '';
-    let error = '';
+    let submitting = $state('');
+    let error = $state('');
 
     async function selectFamily(familyId: string) {
         submitting = familyId;
@@ -52,7 +56,7 @@
                         type="button"
                         class:blocked={choice.blocked}
                         disabled={choice.blocked || !!submitting}
-                        on:click={() => selectFamily(choice.familyId)}
+                        onclick={() => selectFamily(choice.familyId)}
                     >
                         <span>{choice.familyName}</span>
                         <small>{choice.blocked ? $i18n.t('auth.login.chooseFamilyBlockedBadge') : $i18n.t('auth.login.chooseFamilySelect')}</small>

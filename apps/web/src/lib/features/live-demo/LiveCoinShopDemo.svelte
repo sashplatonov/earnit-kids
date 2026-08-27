@@ -16,7 +16,11 @@
     import { createLiveCoinShopDemoWorkspace } from './liveCoinShopDemoWorkspace';
 
     const i18n = useI18n();
-    export let publicOrigin = '';
+    interface Props {
+        publicOrigin?: string;
+    }
+
+    let { publicOrigin = '' }: Props = $props();
     const session = createLiveCoinShopDemoSession($i18n.locale);
     const workspace = createLiveCoinShopDemoWorkspace(session);
     provideWorkspaceActions(workspace.workspace);
@@ -29,10 +33,10 @@
     // TelegramChildRewards receives the demo action before it is created.
     provideRewardRequestActions(session.actions);
 
-    let mounted = false;
-    let demoView: 'parent' | 'child' = 'parent';
-    let shellRevision = 0;
-    let announcement = '';
+    let mounted = $state(false);
+    let demoView: 'parent' | 'child' = $state('parent');
+    let shellRevision = $state(0);
+    let announcement = $state('');
 
     onMount(() => {
         session.initialize();
@@ -69,8 +73,8 @@
     <div class="demo-toolbar">
         <p class="notice" role="note">{$i18n.t('app.liveDemo.temporaryData')}</p>
         <LocaleSwitcher mode="route" compact />
-        <a class="public-link" href={publicSiteHref()} on:click={leaveDemo}><TelegramIcon name="logout" size={16} label={undefined} />{$i18n.t('app.liveDemo.publicSite')}</a>
-        <button class="reset" type="button" on:click={resetDemo}><TelegramIcon name="refresh" size={16} label={undefined} />{$i18n.t('app.liveDemo.reset')}</button>
+        <a class="public-link" href={publicSiteHref()} onclick={leaveDemo}><TelegramIcon name="logout" size={16} label={undefined} />{$i18n.t('app.liveDemo.publicSite')}</a>
+        <button class="reset" type="button" onclick={resetDemo}><TelegramIcon name="refresh" size={16} label={undefined} />{$i18n.t('app.liveDemo.reset')}</button>
     </div>
     <p class="announcement" aria-live="polite">{announcement}</p>
     {#if mounted}

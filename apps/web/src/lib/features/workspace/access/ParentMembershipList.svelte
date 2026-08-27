@@ -1,3 +1,4 @@
+
 <script lang="ts">
     import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
     import type { MembershipPermission, ParentMembership } from '$lib/types/auth';

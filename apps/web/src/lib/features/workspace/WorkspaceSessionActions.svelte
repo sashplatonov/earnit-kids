@@ -4,9 +4,13 @@
     import { logout } from '$lib/services/api';
 
     const i18n = useI18n();
-    export let inline = false;
-    let pending = false;
-    let error = false;
+    interface Props {
+        inline?: boolean;
+    }
+
+    let { inline = false }: Props = $props();
+    let pending = $state(false);
+    let error = $state(false);
 
     async function signOut() {
         if (pending) return;
@@ -24,7 +28,7 @@
 </script>
 
 <div class:session-actions-inline={inline} class="session-actions" role={inline ? undefined : 'group'} aria-label={$i18n.t('app.sessionActions.label')}>
-    <button class="logout" type="button" disabled={pending} on:click={() => void signOut()}>
+    <button class="logout" type="button" disabled={pending} onclick={() => void signOut()}>
         <TelegramIcon name="logout" size={18} label={undefined} />
         {pending ? $i18n.t('app.sessionActions.pending') : $i18n.t('app.sessionActions.logout')}
     </button>

@@ -1,21 +1,31 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { useI18n } from '$lib/i18n/context';
     import { getAccountConnection, getTelegramAccountConnection, type AccountConnection } from '$lib/services/api';
     import TelegramIcon from './TelegramIcon.svelte';
 
-    export let open = false;
-    export let onClose: () => void = () => {};
-    export let onOpenEmail: () => void = () => {};
-    export let demoMode = false;
+    interface Props {
+        open?: boolean;
+        onClose?: () => void;
+        onOpenEmail?: () => void;
+        demoMode?: boolean;
+    }
+
+    let {
+        open = false,
+        onClose = () => {},
+        onOpenEmail = () => {},
+        demoMode = false
+    }: Props = $props();
 
     const i18n = useI18n();
 
-    let account: AccountConnection | null = null;
+    let account: AccountConnection | null = $state(null);
     let demoAccount: AccountConnection | null = null;
     let loading = false;
-    let error = '';
+    let error = $state('');
 
-    $: if (open) void reload();
 
     async function reload() {
         if (demoMode) {
@@ -54,10 +64,13 @@
         const username = account.telegramUsername?.trim();
         return username ? `@${username}` : displayName || '';
     }
+    run(() => {
+        if (open) void reload();
+    });
 </script>
 
 {#if open}
-    <div class="sheet-backdrop" role="presentation" on:click={onClose}></div>
+    <div class="sheet-backdrop" role="presentation" onclick={onClose}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="my-account-title" tabindex="-1">
         <h2 id="my-account-title">{$i18n.t('app.telegram.myAccount.title')}</h2>
         {#if demoMode}<p class="demo-notice" role="note">{$i18n.t('app.liveDemo.demoActionNotice')}</p>{/if}
@@ -66,12 +79,12 @@
         <div class="flat">
             <div class="row"><span class="setting-icon"><TelegramIcon name="send" size={18} label={$i18n.t('app.telegram.myAccount.telegram')} /></span><span class="grow"><span class="setting-title">{$i18n.t('app.telegram.myAccount.telegram')}</span>{#if account?.telegramLinked && telegramIdentity()}<span class="setting-meta">{telegramIdentity()}</span>{/if}</span><span class:badge-active={account?.telegramLinked} class="manage-badge">{account?.telegramLinked ? $i18n.t('app.telegram.myAccount.linked') : $i18n.t('app.telegram.myAccount.notLinked')}</span></div>
             {#if account?.emailLinked}
-                <button class="row" type="button" on:click={onOpenEmail}><span class="setting-icon"><TelegramIcon name="mail" size={18} label={$i18n.t('app.telegram.myAccount.email')} /></span><span class="grow"><span class="setting-title">{$i18n.t('app.telegram.myAccount.email')}</span><span class="setting-meta">{account ? $i18n.t('app.telegram.myAccount.emailMeta', { email: maskEmail(account.email), status: $i18n.t('app.telegram.myAccount.linked') }) : ''}</span></span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('app.telegram.myAccount.openEmail')} /></button>
+                <button class="row" type="button" onclick={onOpenEmail}><span class="setting-icon"><TelegramIcon name="mail" size={18} label={$i18n.t('app.telegram.myAccount.email')} /></span><span class="grow"><span class="setting-title">{$i18n.t('app.telegram.myAccount.email')}</span><span class="setting-meta">{account ? $i18n.t('app.telegram.myAccount.emailMeta', { email: maskEmail(account.email), status: $i18n.t('app.telegram.myAccount.linked') }) : ''}</span></span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('app.telegram.myAccount.openEmail')} /></button>
             {/if}
         </div>
 
         {#if error}<p class="error" role="alert">{error}</p>{/if}
-        <button class="close" type="button" on:click={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.header.close')} />{$i18n.t('app.telegram.header.close')}</button>
+        <button class="close" type="button" onclick={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.header.close')} />{$i18n.t('app.telegram.header.close')}</button>
     </div>
 {/if}
 

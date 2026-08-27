@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { stopPropagation } from 'svelte/legacy';
+
     import { appStore } from '$lib/stores/app';
     import { useI18n } from '$lib/i18n/context';
     import type { ShopItem } from '$lib/telegram/stores/types';
@@ -23,24 +25,24 @@
     const i18n = useI18n();
     const rewardActions = useRewardActions();
 
-    $: rawGroups = [...new Set($shopItems.map((item) => item.groupName).filter((group): group is string => Boolean(group)))];
-    $: currentChild = $appStore.children.find((child) => String(child.id) === String($appStore.currentChildId)) ?? null;
-    $: groups = orderGroups(rawGroups, currentChild?.shopGroupOrder);
-    $: hiddenGroups = currentChild?.hiddenShopGroupOrder ?? [];
-    let selectedGroup = '';
-    let sortMode: CatalogSortMode = 'group';
-    let catalogOpen = false;
-    $: filteredItems = sortCatalogItems(selectedGroup
+    let rawGroups = $derived([...new Set($shopItems.map((item) => item.groupName).filter((group): group is string => Boolean(group)))]);
+    let currentChild = $derived($appStore.children.find((child) => String(child.id) === String($appStore.currentChildId)) ?? null);
+    let groups = $derived(orderGroups(rawGroups, currentChild?.shopGroupOrder));
+    let hiddenGroups = $derived(currentChild?.hiddenShopGroupOrder ?? []);
+    let selectedGroup = $state('');
+    let sortMode: CatalogSortMode = $state('group');
+    let catalogOpen = $state(false);
+    let filteredItems = $derived(sortCatalogItems(selectedGroup
         ? $shopItems.filter((item) => item.groupName === selectedGroup)
-        : $shopItems, sortMode, groups, (item) => item.groupName ?? '', (item) => item.price);
-    $: canEdit = $appStore.permission !== 'viewer';
-    let groupMessage = '';
-    let groupEditorOpen = false;
+        : $shopItems, sortMode, groups, (item) => item.groupName ?? '', (item) => item.price));
+    let canEdit = $derived($appStore.permission !== 'viewer');
+    let groupMessage = $state('');
+    let groupEditorOpen = $state(false);
     let groupSaving = false;
-    let openMenuId: string | number | null = null;
+    let openMenuId: string | number | null = $state(null);
     let menuTrigger: HTMLButtonElement | null = null;
-    let formOpen = false;
-    let editingItem: ShopItem | null = null;
+    let formOpen = $state(false);
+    let editingItem: ShopItem | null = $state(null);
     function toggleMenu(id: string | number, button: HTMLButtonElement) {
         if (openMenuId === id) closeMenu(true);
         else { menuTrigger = button; openMenuId = id; }
@@ -76,9 +78,9 @@
     }
     // EXPLAIN: Parent directly grants a reward to the current child, spending
     // EXPLAIN: coins without a child request. Reuses buyItem (POST /purchase).
-    let grantingId: string | number | null = null;
-    let grantError = '';
-    let confirmGrant: ShopItem | null = null;
+    let grantingId: string | number | null = $state(null);
+    let grantError = $state('');
+    let confirmGrant: ShopItem | null = $state(null);
     async function grantToChild(item: ShopItem) {
         if ($appStore.currentChildId == null || grantingId != null) return;
         closeMenu();
@@ -125,14 +127,14 @@
     }
 </script>
 
-<svelte:window on:click={() => openMenuId = null} on:keydown={handleWindowKeydown} />
+<svelte:window onclick={() => openMenuId = null} onkeydown={handleWindowKeydown} />
 
 <div class="rewards">
     <div class="page-header">
         <h1 id="rewards-title">{$i18n.t('app.telegram.rewards.title')}</h1>
         <div class="header-actions">
-            {#if canEdit}<button class="add" type="button" aria-label={$i18n.t('app.telegram.rewards.addReward')} on:click={add}><TelegramIcon name="add" size={18} label={$i18n.t('app.telegram.rewards.addReward')} /></button>{/if}
-            <button class="catalog" type="button" on:click={() => catalogOpen = true}><TelegramIcon name="gift" size={18} label={$i18n.t('app.telegram.readyCatalog.catalogRewards')} /><span>{$i18n.t('app.telegram.tasks.catalogShort')}</span></button>
+            {#if canEdit}<button class="add" type="button" aria-label={$i18n.t('app.telegram.rewards.addReward')} onclick={add}><TelegramIcon name="add" size={18} label={$i18n.t('app.telegram.rewards.addReward')} /></button>{/if}
+            <button class="catalog" type="button" onclick={() => catalogOpen = true}><TelegramIcon name="gift" size={18} label={$i18n.t('app.telegram.readyCatalog.catalogRewards')} /><span>{$i18n.t('app.telegram.tasks.catalogShort')}</span></button>
         </div>
     </div>
 
@@ -156,28 +158,34 @@
         {:else}
         <TelegramListSurface label={$i18n.t('app.telegram.rewards.title')}>
             {#each filteredItems as item (item.id)}
-                <TelegramEntityRow interactive={canEdit} archived={item.isActive === false} compact>
-                    <span slot="icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'reward', title: item.name, group: item.groupName, semantic: item.icon ?? null })} size={20} label={$i18n.t('app.telegram.rewards.reward')} /></span>
-                    <button slot="title" class="row-main" type="button" aria-label={$i18n.t('app.telegram.tasks.editItem', { name: stripLeadingEmoji(item.name) })} on:click={() => edit(item)}>
-                        <span class="title">{stripLeadingEmoji(item.name)}</span>
-                        <span class="row-metadata"><span class="meta"><TelegramCoin size={13} />{item.price} · {item.groupName || $i18n.t('app.telegram.tasks.ungrouped')}</span>{#if item.lastPurchasedAt}<span class="meta meta--last">{$i18n.t('app.telegram.rewards.lastUsed', { when: formatLastUsedTime(item.lastPurchasedAt, $i18n.locale) })}</span>{:else}<span class="meta meta--last">{$i18n.t('app.telegram.rewards.neverUsed')}</span>{/if}</span>
-                    </button>
-                    <svelte:fragment slot="interactive">
-                    {#if canEdit}
-                        <button class="row-action grant" type="button" disabled={item.isActive === false || grantingId != null} on:click|stopPropagation={() => confirmGrant = item}><TelegramIcon name="award" size={16} label={$i18n.t('app.telegram.rewards.grantShort')} /></button>
-                        <div class="menu-wrap">
-                            <button class="row-action more" type="button" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: stripLeadingEmoji(item.name) })} aria-haspopup="menu" aria-expanded={openMenuId === item.id} on:click|stopPropagation={(event) => toggleMenu(item.id, event.currentTarget as HTMLButtonElement)}><TelegramIcon name="more" size={20} label={$i18n.t('app.telegram.tasks.moreActions')} /></button>
-                            {#if openMenuId === item.id}
-                                <div class="menu" role="menu" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: stripLeadingEmoji(item.name) })}>
-                                    <button role="menuitem" type="button" on:click={() => edit(item)}><TelegramIcon name="edit" size={16} label={$i18n.t('app.telegram.tasks.edit')} /><span>{$i18n.t('app.telegram.tasks.edit')}</span></button>
-                                    <button role="menuitem" type="button" on:click={() => toggleArchive(item)}><TelegramIcon name="archive" size={16} label={item.isActive === false ? $i18n.t('app.telegram.tasks.unarchive') : $i18n.t('app.telegram.tasks.archive')} /><span>{item.isActive === false ? $i18n.t('app.telegram.tasks.unarchive') : $i18n.t('app.telegram.tasks.archive')}</span></button>
-                                    <div class="menu-divider" role="presentation"></div>
-                                    <button role="menuitem" class="danger" type="button" on:click={() => void remove(item)}><TelegramIcon name="delete" size={16} label={$i18n.t('app.telegram.tasks.delete')} /><span>{$i18n.t('app.telegram.tasks.delete')}</span></button>
-                                </div>
-                            {/if}
-                        </div>
-                    {/if}
-                    </svelte:fragment>
+                <TelegramEntityRow isInteractive={canEdit} archived={item.isActive === false} compact>
+                    {#snippet icon()}
+                                                        <span ><TelegramIcon name={getTelegramEntityIcon({ kind: 'reward', title: item.name, group: item.groupName, semantic: item.icon ?? null })} size={20} label={$i18n.t('app.telegram.rewards.reward')} /></span>
+                                                    {/snippet}
+                    {#snippet title()}
+                                                        <button  class="row-main" type="button" aria-label={$i18n.t('app.telegram.tasks.editItem', { name: stripLeadingEmoji(item.name) })} onclick={() => edit(item)}>
+                            <span class="title">{stripLeadingEmoji(item.name)}</span>
+                            <span class="row-metadata"><span class="meta"><TelegramCoin size={13} />{item.price} · {item.groupName || $i18n.t('app.telegram.tasks.ungrouped')}</span>{#if item.lastPurchasedAt}<span class="meta meta--last">{$i18n.t('app.telegram.rewards.lastUsed', { when: formatLastUsedTime(item.lastPurchasedAt, $i18n.locale) })}</span>{:else}<span class="meta meta--last">{$i18n.t('app.telegram.rewards.neverUsed')}</span>{/if}</span>
+                        </button>
+                                                    {/snippet}
+                    {#snippet interactive()}
+
+                        {#if canEdit}
+                            <button class="row-action grant" type="button" disabled={item.isActive === false || grantingId != null} onclick={stopPropagation(() => confirmGrant = item)}><TelegramIcon name="award" size={16} label={$i18n.t('app.telegram.rewards.grantShort')} /></button>
+                            <div class="menu-wrap">
+                                <button class="row-action more" type="button" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: stripLeadingEmoji(item.name) })} aria-haspopup="menu" aria-expanded={openMenuId === item.id} onclick={stopPropagation((event) => toggleMenu(item.id, event.currentTarget as HTMLButtonElement))}><TelegramIcon name="more" size={20} label={$i18n.t('app.telegram.tasks.moreActions')} /></button>
+                                {#if openMenuId === item.id}
+                                    <div class="menu" role="menu" aria-label={$i18n.t('app.telegram.tasks.actionsFor', { name: stripLeadingEmoji(item.name) })}>
+                                        <button role="menuitem" type="button" onclick={() => edit(item)}><TelegramIcon name="edit" size={16} label={$i18n.t('app.telegram.tasks.edit')} /><span>{$i18n.t('app.telegram.tasks.edit')}</span></button>
+                                        <button role="menuitem" type="button" onclick={() => toggleArchive(item)}><TelegramIcon name="archive" size={16} label={item.isActive === false ? $i18n.t('app.telegram.tasks.unarchive') : $i18n.t('app.telegram.tasks.archive')} /><span>{item.isActive === false ? $i18n.t('app.telegram.tasks.unarchive') : $i18n.t('app.telegram.tasks.archive')}</span></button>
+                                        <div class="menu-divider" role="presentation"></div>
+                                        <button role="menuitem" class="danger" type="button" onclick={() => void remove(item)}><TelegramIcon name="delete" size={16} label={$i18n.t('app.telegram.tasks.delete')} /><span>{$i18n.t('app.telegram.tasks.delete')}</span></button>
+                                    </div>
+                                {/if}
+                            </div>
+                        {/if}
+
+                                                    {/snippet}
                 </TelegramEntityRow>
             {/each}
         </TelegramListSurface>
@@ -185,7 +193,7 @@
     {/if}
 
     {#if !catalogOpen && canEdit}
-        <button class="groups" type="button" on:click={() => groupEditorOpen = true}>
+        <button class="groups" type="button" onclick={() => groupEditorOpen = true}>
             <TelegramIcon name="filter" size={16} label={$i18n.t('app.telegram.tasks.manageGroups')} />
             <span>{$i18n.t('app.telegram.tasks.manageGroups')}</span>
         </button>
@@ -206,8 +214,8 @@
         <div class="delta"><span>{$i18n.t('app.telegram.rewards.grantChild')}</span><b>{$appStore.childNickname || $i18n.t('app.telegram.header.child')}</b></div>
         <div class="delta"><span>{$i18n.t('app.telegram.rewards.grantBalance')}</span><b>{$appStore.balance} → {Math.max(0, ($appStore.balance ?? 0) - (confirmGrant.price ?? 0))}</b></div>
         <div class="actions">
-            <button class="cancel" type="button" on:click={() => confirmGrant = null}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.rewards.cancel')} />{$i18n.t('app.telegram.rewards.cancel')}</button>
-            <button class="primary" type="button" disabled={grantingId != null} on:click={() => confirmGrant && void grantToChild(confirmGrant)}><TelegramIcon name="award" size={16} label={$i18n.t('app.telegram.rewards.grantFor', { amount: confirmGrant.price })} />{$i18n.t('app.telegram.rewards.grantFor', { amount: confirmGrant.price })}</button>
+            <button class="cancel" type="button" onclick={() => confirmGrant = null}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.rewards.cancel')} />{$i18n.t('app.telegram.rewards.cancel')}</button>
+            <button class="primary" type="button" disabled={grantingId != null} onclick={() => confirmGrant && void grantToChild(confirmGrant)}><TelegramIcon name="award" size={16} label={$i18n.t('app.telegram.rewards.grantFor', { amount: confirmGrant.price })} />{$i18n.t('app.telegram.rewards.grantFor', { amount: confirmGrant.price })}</button>
         </div>
     </TelegramBottomSheet>
 {/if}

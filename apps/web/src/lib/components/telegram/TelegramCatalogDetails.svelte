@@ -7,27 +7,37 @@
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
 
-    export let open = false;
-    export let kind: 'task' | 'reward' = 'task';
-    export let template: CatalogTaskTemplate | CatalogRewardTemplate | null = null;
-    export let onAdd: (template: CatalogTaskTemplate | CatalogRewardTemplate) => void = () => {};
-    export let onClose: () => void = () => {};
+    interface Props {
+        open?: boolean;
+        kind?: 'task' | 'reward';
+        template?: CatalogTaskTemplate | CatalogRewardTemplate | null;
+        onAdd?: (template: CatalogTaskTemplate | CatalogRewardTemplate) => void;
+        onClose?: () => void;
+    }
+
+    let {
+        open = false,
+        kind = 'task',
+        template = null,
+        onAdd = () => {},
+        onClose = () => {}
+    }: Props = $props();
 
     const i18n = useI18n();
 
-    $: familyItems = kind === 'task' ? $appStore.tasks : $shopItems;
-    $: added = template != null && isAlreadyAdded(template, familyItems);
-    $: amount = template != null
+    let familyItems = $derived(kind === 'task' ? $appStore.tasks : $shopItems);
+    let added = $derived(template != null && isAlreadyAdded(template, familyItems));
+    let amount = $derived(template != null
         ? (kind === 'task' ? (template as CatalogTaskTemplate).coins : (template as CatalogRewardTemplate).price)
-        : 0;
-    $: freq = template != null ? formatFrequency(template.frequencyLimit, template.frequencyPeriod, $i18n.locale) : '';
-    $: ageRange = template != null
+        : 0);
+    let freq = $derived(template != null ? formatFrequency(template.frequencyLimit, template.frequencyPeriod, $i18n.locale) : '');
+    let ageRange = $derived(template != null
         ? $i18n.t('app.telegram.readyCatalog.ageRange', { min: template.minAge ?? 6, max: template.maxAge ?? 14 })
-        : '';
+        : '');
 </script>
 
 {#if open && template}
-    <div class="sheet-backdrop" role="presentation" on:click={onClose}></div>
+    <div class="sheet-backdrop" role="presentation" onclick={onClose}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="catalog-details-title" tabindex="-1">
         <h2 id="catalog-details-title">{template.title}</h2>
 
@@ -45,12 +55,12 @@
         {#if added}
             <button class="added" type="button" disabled><TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.readyCatalog.added')} />{$i18n.t('app.telegram.readyCatalog.added')}</button>
         {:else}
-            <button class="primary" type="button" on:click={() => onAdd(template)}>
+            <button class="primary" type="button" onclick={() => onAdd(template)}>
                 <TelegramIcon name="add" size={18} label={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.addToMyTasks') : $i18n.t('app.telegram.readyCatalog.addToMyRewards')} />
                 {kind === 'task' ? $i18n.t('app.telegram.readyCatalog.addToMyTasks') : $i18n.t('app.telegram.readyCatalog.addToMyRewards')}
             </button>
         {/if}
-        <button class="close" type="button" on:click={onClose}>{$i18n.t('app.telegram.readyCatalog.done')}</button>
+        <button class="close" type="button" onclick={onClose}>{$i18n.t('app.telegram.readyCatalog.done')}</button>
     </div>
 {/if}
 

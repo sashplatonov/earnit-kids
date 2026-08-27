@@ -2,12 +2,23 @@
     import TelegramIcon from '../TelegramIcon.svelte';
     import { telegramUi, type TelegramAsyncState as AsyncState } from './telegramUi';
 
-    export let state: AsyncState;
-    export let loadingLabel = '';
-    export let emptyLabel = '';
-    export let errorMessage = '';
-    export let retryLabel = '';
-    export let onRetry: () => void = () => {};
+    interface Props {
+        state: AsyncState;
+        loadingLabel?: string;
+        emptyLabel?: string;
+        errorMessage?: string;
+        retryLabel?: string;
+        onRetry?: () => void;
+    }
+
+    let {
+        state,
+        loadingLabel = '',
+        emptyLabel = '',
+        errorMessage = '',
+        retryLabel = '',
+        onRetry = () => {}
+    }: Props = $props();
 </script>
 
 {#if state === 'loading'}
@@ -15,7 +26,7 @@
 {:else if state === 'empty'}
     <div class="async-state state-empty" role="status"><TelegramIcon name="checkCircle" size={18} label={emptyLabel} /><span>{emptyLabel}</span></div>
 {:else if state === 'error'}
-    <div class="async-state state-error" role="alert" style={`--telegram-focus:${telegramUi.colors.focus};`}><TelegramIcon name="alert" size={18} label={errorMessage} /><p>{errorMessage}</p><button type="button" on:click={onRetry}><TelegramIcon name="refresh" size={18} label={retryLabel} />{retryLabel}</button></div>
+    <div class="async-state state-error" role="alert" style={`--telegram-focus:${telegramUi.colors.focus};`}><TelegramIcon name="alert" size={18} label={errorMessage} /><p>{errorMessage}</p><button type="button" onclick={onRetry}><TelegramIcon name="refresh" size={18} label={retryLabel} />{retryLabel}</button></div>
 {/if}
 
 <style>

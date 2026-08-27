@@ -1,13 +1,25 @@
 <script lang="ts">
     import { tick } from 'svelte';
 
-    export let open = false;
-    export let labelledBy = '';
-    export let busy = false;
-    export let closeOnBackdrop = true;
-    export let onClose: () => void = () => {};
+    interface Props {
+        open?: boolean;
+        labelledBy?: string;
+        busy?: boolean;
+        closeOnBackdrop?: boolean;
+        onClose?: () => void;
+        children?: import('svelte').Snippet;
+    }
 
-    let dialog: HTMLDivElement;
+    let {
+        open = false,
+        labelledBy = '',
+        busy = false,
+        closeOnBackdrop = true,
+        onClose = () => {},
+        children
+    }: Props = $props();
+
+    let dialog: HTMLDivElement | undefined = $state();
 
     const focusableSelector = [
         'a[href]', 'button:not([disabled])', 'input:not([disabled])',
@@ -43,6 +55,7 @@
             return;
         }
         if (event.key !== 'Tab') return;
+        if (!dialog) return;
 
         const focusable = [...dialog.querySelectorAll<HTMLElement>(focusableSelector)];
         if (!focusable.length) {
@@ -67,7 +80,7 @@
 </script>
 
 {#if open}
-    <div class="backdrop" role="presentation" on:click={handleBackdropClick}></div>
+    <div class="backdrop" role="presentation" onclick={handleBackdropClick}></div>
     <div
         class="sheet"
         bind:this={dialog}
@@ -76,9 +89,9 @@
         aria-labelledby={labelledBy || undefined}
         tabindex="-1"
         use:manageFocus
-        on:keydown={handleKeydown}
+        onkeydown={handleKeydown}
     >
-        <slot />
+        {@render children?.()}
     </div>
 {/if}
 

@@ -3,11 +3,15 @@
     import TelegramIcon from './TelegramIcon.svelte';
     import { useI18n } from '$lib/i18n/context';
 
-    export let open = false;
-    export let onClose: () => void = () => {};
-    export let demoMode = false;
-    let demoEmail = '';
-    let demoMessage = '';
+    interface Props {
+        open?: boolean;
+        onClose?: () => void;
+        demoMode?: boolean;
+    }
+
+    let { open = false, onClose = () => {}, demoMode = false }: Props = $props();
+    let demoEmail = $state('');
+    let demoMessage = $state('');
     const i18n = useI18n();
 
     function saveDemoAccess() {
@@ -16,19 +20,19 @@
 </script>
 
 {#if open}
-    <div class="sheet-backdrop" role="presentation" on:click={onClose}></div>
+    <div class="sheet-backdrop" role="presentation" onclick={onClose}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-label={$i18n.t('app.telegram.parents.title')} tabindex="-1">
         {#if demoMode}
             <h2>{$i18n.t('app.telegram.parents.title')}</h2>
             <p class="demo-notice" role="note">{$i18n.t('app.liveDemo.demoActionNotice')}</p>
             <label for="demo-parent-email">Email</label>
             <input id="demo-parent-email" type="email" bind:value={demoEmail} placeholder="parent@example.com" />
-            <button class="primary" type="button" on:click={saveDemoAccess}>{$i18n.t('common.actions.save')}</button>
+            <button class="primary" type="button" onclick={saveDemoAccess}>{$i18n.t('common.actions.save')}</button>
             {#if demoMessage}<p class="demo-message" role="status">{demoMessage}</p>{/if}
         {:else}
             <ParentAccessPanel embedded compact hideTitle={false} />
         {/if}
-        <button class="close" type="button" on:click={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.header.close')} />{$i18n.t('app.telegram.header.close')}</button>
+        <button class="close" type="button" onclick={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.header.close')} />{$i18n.t('app.telegram.header.close')}</button>
     </div>
 {/if}
 

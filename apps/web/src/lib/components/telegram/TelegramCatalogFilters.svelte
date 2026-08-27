@@ -1,19 +1,32 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { useI18n } from '$lib/i18n/context';
     import TelegramIcon from './TelegramIcon.svelte';
     import type { CatalogFilters, AgeFilter, DifficultyFilter, FrequencyFilter } from '$lib/telegram/services/catalogFilter';
     import TelegramBottomSheet from './ui/TelegramBottomSheet.svelte';
 
-    export let open = false;
-    export let filters: CatalogFilters;
-    export let onApply: (filters: CatalogFilters) => void = () => {};
-    export let onClose: () => void = () => {};
+    interface Props {
+        open?: boolean;
+        filters: CatalogFilters;
+        onApply?: (filters: CatalogFilters) => void;
+        onClose?: () => void;
+    }
+
+    let {
+        open = false,
+        filters,
+        onApply = () => {},
+        onClose = () => {}
+    }: Props = $props();
 
     const i18n = useI18n();
 
-    let draft: CatalogFilters = { ...filters };
+    let draft: CatalogFilters = $state({ ...filters });
 
-    $: if (open) draft = { ...filters };
+    run(() => {
+        if (open) draft = { ...filters };
+    });
 
     function setAge(age: AgeFilter) {
         draft = { ...draft, age };
@@ -43,36 +56,36 @@
         <div class="section">
             <h3>{$i18n.t('app.telegram.readyCatalog.age')}</h3>
             <div class="pills">
-                <button type="button" class="pill" class:on={draft.age === '6-8'} on:click={() => setAge('6-8')}>{$i18n.t('app.telegram.readyCatalog.age6_8')}</button>
-                <button type="button" class="pill" class:on={draft.age === '9-11'} on:click={() => setAge('9-11')}>{$i18n.t('app.telegram.readyCatalog.age9_11')}</button>
-                <button type="button" class="pill" class:on={draft.age === '12-14'} on:click={() => setAge('12-14')}>{$i18n.t('app.telegram.readyCatalog.age12_14')}</button>
+                <button type="button" class="pill" class:on={draft.age === '6-8'} onclick={() => setAge('6-8')}>{$i18n.t('app.telegram.readyCatalog.age6_8')}</button>
+                <button type="button" class="pill" class:on={draft.age === '9-11'} onclick={() => setAge('9-11')}>{$i18n.t('app.telegram.readyCatalog.age9_11')}</button>
+                <button type="button" class="pill" class:on={draft.age === '12-14'} onclick={() => setAge('12-14')}>{$i18n.t('app.telegram.readyCatalog.age12_14')}</button>
             </div>
         </div>
 
         <div class="section">
             <h3>{$i18n.t('app.telegram.readyCatalog.difficulty')}</h3>
             <div class="pills">
-                <button type="button" class="pill" class:on={draft.difficulty === 'simple'} on:click={() => setDifficulty('simple')}>{$i18n.t('app.telegram.readyCatalog.difficultySimple')}</button>
-                <button type="button" class="pill" class:on={draft.difficulty === 'normal'} on:click={() => setDifficulty('normal')}>{$i18n.t('app.telegram.readyCatalog.difficultyNormal')}</button>
-                <button type="button" class="pill" class:on={draft.difficulty === 'advanced'} on:click={() => setDifficulty('advanced')}>{$i18n.t('app.telegram.readyCatalog.difficultyAdvanced')}</button>
+                <button type="button" class="pill" class:on={draft.difficulty === 'simple'} onclick={() => setDifficulty('simple')}>{$i18n.t('app.telegram.readyCatalog.difficultySimple')}</button>
+                <button type="button" class="pill" class:on={draft.difficulty === 'normal'} onclick={() => setDifficulty('normal')}>{$i18n.t('app.telegram.readyCatalog.difficultyNormal')}</button>
+                <button type="button" class="pill" class:on={draft.difficulty === 'advanced'} onclick={() => setDifficulty('advanced')}>{$i18n.t('app.telegram.readyCatalog.difficultyAdvanced')}</button>
             </div>
         </div>
 
         <div class="section">
             <h3>{$i18n.t('app.telegram.readyCatalog.frequency')}</h3>
             <div class="pills">
-                <button type="button" class="pill" class:on={draft.frequency === 'daily'} on:click={() => setFrequency('daily')}>{$i18n.t('app.telegram.readyCatalog.frequencyDaily')}</button>
-                <button type="button" class="pill" class:on={draft.frequency === 'weekly'} on:click={() => setFrequency('weekly')}>{$i18n.t('app.telegram.readyCatalog.frequencyWeekly')}</button>
-                <button type="button" class="pill" class:on={draft.frequency === 'unlimited'} on:click={() => setFrequency('unlimited')}>{$i18n.t('app.telegram.readyCatalog.frequencyUnlimited')}</button>
+                <button type="button" class="pill" class:on={draft.frequency === 'daily'} onclick={() => setFrequency('daily')}>{$i18n.t('app.telegram.readyCatalog.frequencyDaily')}</button>
+                <button type="button" class="pill" class:on={draft.frequency === 'weekly'} onclick={() => setFrequency('weekly')}>{$i18n.t('app.telegram.readyCatalog.frequencyWeekly')}</button>
+                <button type="button" class="pill" class:on={draft.frequency === 'unlimited'} onclick={() => setFrequency('unlimited')}>{$i18n.t('app.telegram.readyCatalog.frequencyUnlimited')}</button>
             </div>
         </div>
 
         <div class="actions">
-            <button class="primary" type="button" on:click={apply}>{$i18n.t('app.telegram.readyCatalog.apply')}</button>
-            <button class="reset" type="button" on:click={reset}>{$i18n.t('app.telegram.readyCatalog.reset')}</button>
+            <button class="primary" type="button" onclick={apply}>{$i18n.t('app.telegram.readyCatalog.apply')}</button>
+            <button class="reset" type="button" onclick={reset}>{$i18n.t('app.telegram.readyCatalog.reset')}</button>
         </div>
 
-        <button class="close" type="button" on:click={onClose}>{$i18n.t('app.telegram.readyCatalog.done')}</button>
+        <button class="close" type="button" onclick={onClose}>{$i18n.t('app.telegram.readyCatalog.done')}</button>
     </TelegramBottomSheet>
 {/if}
 

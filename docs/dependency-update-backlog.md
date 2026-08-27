@@ -1036,7 +1036,7 @@ git commit -m "chore(web): verify Telegram Mini App SDK compatibility"
 
 ## TASK P1-11: Migrate Svelte 4 props to `$props()` runes
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** P1-8
 

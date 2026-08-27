@@ -1,23 +1,38 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { useI18n } from '$lib/i18n/context';
     import { getTelegramEntityIcon } from './telegramEntityIcons';
     import TelegramIcon from './TelegramIcon.svelte';
 
-    export let open = false;
-    export let groups: string[] = [];
-    export let selected = '';
-    export let title = '';
-    export let onSelect: (group: string) => void = () => {};
-    export let onClose: () => void = () => {};
+    interface Props {
+        open?: boolean;
+        groups?: string[];
+        selected?: string;
+        title?: string;
+        onSelect?: (group: string) => void;
+        onClose?: () => void;
+    }
+
+    let {
+        open = false,
+        groups = [],
+        selected = '',
+        title = '',
+        onSelect = () => {},
+        onClose = () => {}
+    }: Props = $props();
 
     const i18n = useI18n();
 
-    let query = '';
-    $: if (open) query = '';
-    $: filtered = query.trim()
+    let query = $state('');
+    run(() => {
+        if (open) query = '';
+    });
+    let filtered = $derived(query.trim()
         ? groups.filter((group) => group.toLowerCase().includes(query.trim().toLowerCase()))
-        : groups;
-    $: showSearch = groups.length > 8;
+        : groups);
+    let showSearch = $derived(groups.length > 8);
 
     function choose(group: string) {
         onSelect(group);
@@ -26,7 +41,7 @@
 </script>
 
 {#if open}
-    <div class="sheet-backdrop" role="presentation" on:click={onClose}></div>
+    <div class="sheet-backdrop" role="presentation" onclick={onClose}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="group-picker-title" tabindex="-1">
         <h2 id="group-picker-title">{title}</h2>
 
@@ -39,7 +54,7 @@
 
         <div class="flat">
             {#each filtered as group (group)}
-                <button type="button" class="pick" class:active={selected === group} on:click={() => choose(group)}>
+                <button type="button" class="pick" class:active={selected === group} onclick={() => choose(group)}>
                     <span class="gico"><TelegramIcon name={getTelegramEntityIcon({ kind: 'task', group })} size={20} label={$i18n.t('app.telegram.groupManager.groupIcon', { name: group })} /></span>
                     <span class="grow">{group}</span>
                     {#if selected === group}<TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.groupPicker.selected')} />{/if}
@@ -50,7 +65,7 @@
             {/if}
         </div>
 
-        <button class="close" type="button" on:click={onClose}>{$i18n.t('app.telegram.groupPicker.close')}</button>
+        <button class="close" type="button" onclick={onClose}>{$i18n.t('app.telegram.groupPicker.close')}</button>
     </div>
 {/if}
 

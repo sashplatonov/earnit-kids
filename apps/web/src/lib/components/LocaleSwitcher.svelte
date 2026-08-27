@@ -4,14 +4,24 @@
     import { useI18n } from '$lib/i18n/context';
     import { updateFamilyLocale } from '$lib/services/api';
 
-    export let compact: boolean = false;
-    export let familyManaged: boolean = false;
-    export let mode: 'family' | 'route' = familyManaged ? 'family' : 'route';
-    export let onLocaleChange: ((locale: Locale) => Promise<void> | void) | null = null;
-    export let readOnly: boolean = false;
-    let busy = false;
-    let failedLocale: Locale | null = null;
-    let retryButton: HTMLButtonElement;
+    interface Props {
+        compact?: boolean;
+        familyManaged?: boolean;
+        mode?: 'family' | 'route';
+        onLocaleChange?: ((locale: Locale) => Promise<void> | void) | null;
+        readOnly?: boolean;
+    }
+
+    let {
+        compact = false,
+        familyManaged = false,
+        mode = familyManaged ? 'family' : 'route',
+        onLocaleChange = null,
+        readOnly = false
+    }: Props = $props();
+    let busy = $state(false);
+    let failedLocale: Locale | null = $state(null);
+    let retryButton: HTMLButtonElement | undefined = $state();
 
     const i18n = useI18n();
 
@@ -100,7 +110,7 @@
                     aria-label={$i18n.t(`common.locale.select.${locale}`)}
                     aria-pressed={$i18n.locale === locale}
                     disabled={busy || readOnly || $i18n.locale === locale}
-                    on:click={() => handleChange(locale)}
+                    onclick={() => handleChange(locale)}
                 >
                     <svg class="locale-switcher__flag" viewBox="0 0 24 16" aria-hidden="true" focusable="false">
                         {#if locale === 'ru'}
@@ -127,7 +137,7 @@
                 class="locale-switcher__retry"
                 type="button"
                 disabled={busy}
-                on:click={() => failedLocale && handleChange(failedLocale)}
+                onclick={() => failedLocale && handleChange(failedLocale)}
             >{$i18n.t('common.locale.retry')}</button>
         </div>
     {/if}

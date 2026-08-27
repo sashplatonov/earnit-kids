@@ -19,14 +19,18 @@
     import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
     import ParentMembershipList from './ParentMembershipList.svelte';
 
-    export let hideTitle = false;
-    export let compact = false;
+    interface Props {
+        hideTitle?: boolean;
+        compact?: boolean;
+    }
 
-    let parents: ParentMembership[] = [];
-    let loading = true;
-    let busy = false;
-    let error = '';
-    let status = '';
+    let { hideTitle = false, compact = false }: Props = $props();
+
+    let parents: ParentMembership[] = $state([]);
+    let loading = $state(true);
+    let busy = $state(false);
+    let error = $state('');
+    let status = $state('');
     const i18n = useI18n();
 
     // Focus management: remember the element that opened a sheet so we can restore focus on close.
@@ -51,29 +55,29 @@
     }
 
     // Admin-transfer sheet state
-    let transferOpen = false;
-    let transferTarget: ParentMembership | null = null;
-    let transferBusy = false;
-    let transferError = '';
+    let transferOpen = $state(false);
+    let transferTarget: ParentMembership | null = $state(null);
+    let transferBusy = $state(false);
+    let transferError = $state('');
 
     // Wizard state
-    let wizardOpen = false;
-    let wizardStep: 1 | 2 | 3 = 1;
-    let wizardName = '';
-    let wizardRole: MembershipPermission = 'editor';
-    let wizardMethod: 'email' | 'telegram' = 'email';
-    let wizardEmail = '';
-    let wizardLink = '';
-    let wizardBusy = false;
-    let wizardError = '';
-    let wizardCopied = false;
+    let wizardOpen = $state(false);
+    let wizardStep: 1 | 2 | 3 = $state(1);
+    let wizardName = $state('');
+    let wizardRole: MembershipPermission = $state('editor');
+    let wizardMethod: 'email' | 'telegram' = $state('email');
+    let wizardEmail = $state('');
+    let wizardLink = $state('');
+    let wizardBusy = $state(false);
+    let wizardError = $state('');
+    let wizardCopied = $state(false);
 
     // Change-role sheet state
-    let roleEditOpen = false;
-    let roleEditParent: ParentMembership | null = null;
-    let roleEditValue: MembershipPermission = 'editor';
-    let roleEditBusy = false;
-    let roleEditError = '';
+    let roleEditOpen = $state(false);
+    let roleEditParent: ParentMembership | null = $state(null);
+    let roleEditValue: MembershipPermission = $state('editor');
+    let roleEditBusy = $state(false);
+    let roleEditError = $state('');
 
     function openRoleEdit(parent: ParentMembership): void {
         lastFocused = captureLastFocused();
@@ -139,11 +143,11 @@
     }
 
     // True when the current account is the target of a pending transfer (approval sheet).
-    $: isTransferTarget = parents.some((p) => p.transferRequestStatus === 'pending' && p.transferRequestRole === 'target');
+    let isTransferTarget = $derived(parents.some((p) => p.transferRequestStatus === 'pending' && p.transferRequestRole === 'target'));
 
     // Precise row identification: the target row drives the approval sheet, the actor row the cancel action.
-    $: pendingTransferTargetRow = parents.find((p) => p.transferRequestStatus === 'pending' && p.transferRequestRole === 'target') ?? null;
-    $: pendingTransferActorRow = parents.find((p) => p.transferRequestStatus === 'pending' && p.transferRequestRole === 'actor') ?? null;
+    let pendingTransferTargetRow = $derived(parents.find((p) => p.transferRequestStatus === 'pending' && p.transferRequestRole === 'target') ?? null);
+    let pendingTransferActorRow = $derived(parents.find((p) => p.transferRequestStatus === 'pending' && p.transferRequestRole === 'actor') ?? null);
 
     async function cancelPendingTransfer(): Promise<void> {
         const requestId = pendingTransferActorRow?.transferRequestId;
@@ -225,8 +229,8 @@
 
     function openWizardLink(): void { window.open(wizardLink, '_blank', 'noopener'); }
 
-    $: wizardNameValid = wizardName.trim().length > 0;
-    $: wizardEmailValid = wizardEmail.trim().length > 0;
+    let wizardNameValid = $derived(wizardName.trim().length > 0);
+    let wizardEmailValid = $derived(wizardEmail.trim().length > 0);
 
     async function submitWizard(): Promise<void> {
         wizardBusy = true;
@@ -298,7 +302,7 @@
         return $i18n.t('app.workspaceAccess.pending');
     }
 
-    $: hasAdmin = parents.some((p) => p.status === 'active' && p.permission === 'family_admin');
+    let hasAdmin = $derived(parents.some((p) => p.status === 'active' && p.permission === 'family_admin'));
 
     async function run(action: Promise<ApiActionResult<unknown>>, success: string): Promise<void> {
         busy = true;
@@ -323,7 +327,7 @@
 <section class:compact class="access-flow" aria-labelledby="parent-access-heading">
     <div class="access-header">
         {#if !hideTitle}<h2 id="parent-access-heading">{$i18n.t('app.workspaceAccess.title')}</h2>{:else}<span id="parent-access-heading" class="sr-only">{$i18n.t('app.workspaceAccess.title')}</span>{/if}
-        <button type="button" class="btn add-parent" aria-label={$i18n.t('app.telegram.parents.addParent')} on:click={openWizard}><TelegramIcon name="add" size={18} /><span class="add-parent-label">{$i18n.t('app.telegram.parents.addParent')}</span></button>
+        <button type="button" class="btn add-parent" aria-label={$i18n.t('app.telegram.parents.addParent')} onclick={openWizard}><TelegramIcon name="add" size={18} /><span class="add-parent-label">{$i18n.t('app.telegram.parents.addParent')}</span></button>
     </div>
 
     {#if loading}<p class="hint" aria-live="polite">{$i18n.t('app.workspaceAccess.loading')}</p>
@@ -343,7 +347,7 @@
             onTransfer={openTransfer}
             onRoleEdit={openRoleEdit}
         >
-            <span slot="admin-note">{$i18n.t('app.telegram.parents.adminProtectionNote')}</span>
+    <span slot="admin-note">{$i18n.t('app.telegram.parents.adminProtectionNote')}</span>
         </ParentMembershipList>
     {/if}
 
@@ -352,7 +356,7 @@
 </section>
 
 {#if wizardOpen}
-    <div class="sheet-backdrop" role="presentation" on:click={closeWizard}></div>
+    <div class="sheet-backdrop" role="presentation" onclick={closeWizard}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="parent-wizard-title" tabindex="-1" use:focusOnMount>
         <h2 id="parent-wizard-title">{$i18n.t('app.telegram.parents.addTitle')}</h2>
 
@@ -372,11 +376,11 @@
                 <div>
                     <span class="label">{$i18n.t('app.workspaceAccess.permission')}</span>
                     <div class="role-grid">
-                        <button type="button" class:active={wizardRole === 'editor'} class="role-card" on:click={() => wizardRole = 'editor'}>
+                        <button type="button" class:active={wizardRole === 'editor'} class="role-card" onclick={() => wizardRole = 'editor'}>
                             <span class="role-icon"><TelegramIcon name="pencilLine" size={18} /></span>
                             <span class="role-text"><span class="role-name">{$i18n.t('app.telegram.parents.roleEditor')}</span><span class="role-desc">{$i18n.t('app.telegram.parents.roleEditorDesc')}</span></span>
                         </button>
-                        <button type="button" class:active={wizardRole === 'viewer'} class="role-card" on:click={() => wizardRole = 'viewer'}>
+                        <button type="button" class:active={wizardRole === 'viewer'} class="role-card" onclick={() => wizardRole = 'viewer'}>
                             <span class="role-icon"><TelegramIcon name="eye" size={18} /></span>
                             <span class="role-text"><span class="role-name">{$i18n.t('app.telegram.parents.roleViewer')}</span><span class="role-desc">{$i18n.t('app.telegram.parents.roleViewerDesc')}</span></span>
                         </button>
@@ -385,14 +389,14 @@
                 <p class="warn">{$i18n.t('app.telegram.parents.adminRoleNotSelectable')}</p>
             </div>
             <div class="action-grid">
-                <button type="button" class="cancel" on:click={closeWizard}><TelegramIcon name="close" size={16} />{$i18n.t('app.telegram.parents.cancel')}</button>
-                <button type="button" class="btn" disabled={!wizardNameValid || wizardBusy} on:click={() => wizardStep = 2}><TelegramIcon name="arrowRight" size={16} />{$i18n.t('app.telegram.parents.next')}</button>
+                <button type="button" class="cancel" onclick={closeWizard}><TelegramIcon name="close" size={16} />{$i18n.t('app.telegram.parents.cancel')}</button>
+                <button type="button" class="btn" disabled={!wizardNameValid || wizardBusy} onclick={() => wizardStep = 2}><TelegramIcon name="arrowRight" size={16} />{$i18n.t('app.telegram.parents.next')}</button>
             </div>
         {:else if wizardStep === 2}
             <p class="screen-sub">{$i18n.t('app.telegram.parents.accountStep')}</p>
-            <div class="tabs" role="tablist" aria-label={$i18n.t('app.telegram.parents.methodEmail')} tabindex="0" on:keydown={onWizardTabsKeydown}>
-                <button type="button" id="wizard-tab-email" class:active={wizardMethod === 'email'} class="tab" role="tab" aria-selected={wizardMethod === 'email'} aria-controls="wizard-panel-email" tabindex={wizardMethod === 'email' ? 0 : -1} on:click={() => selectWizardMethod('email')}><TelegramIcon name="mail" size={16} />{$i18n.t('app.telegram.parents.methodEmail')}</button>
-                <button type="button" id="wizard-tab-telegram" class:active={wizardMethod === 'telegram'} class="tab" role="tab" aria-selected={wizardMethod === 'telegram'} aria-controls="wizard-panel-telegram" tabindex={wizardMethod === 'telegram' ? 0 : -1} on:click={() => selectWizardMethod('telegram')}><TelegramIcon name="send" size={16} />{$i18n.t('app.telegram.parents.methodTelegram')}</button>
+            <div class="tabs" role="tablist" aria-label={$i18n.t('app.telegram.parents.methodEmail')} tabindex="0" onkeydown={onWizardTabsKeydown}>
+                <button type="button" id="wizard-tab-email" class:active={wizardMethod === 'email'} class="tab" role="tab" aria-selected={wizardMethod === 'email'} aria-controls="wizard-panel-email" tabindex={wizardMethod === 'email' ? 0 : -1} onclick={() => selectWizardMethod('email')}><TelegramIcon name="mail" size={16} />{$i18n.t('app.telegram.parents.methodEmail')}</button>
+                <button type="button" id="wizard-tab-telegram" class:active={wizardMethod === 'telegram'} class="tab" role="tab" aria-selected={wizardMethod === 'telegram'} aria-controls="wizard-panel-telegram" tabindex={wizardMethod === 'telegram' ? 0 : -1} onclick={() => selectWizardMethod('telegram')}><TelegramIcon name="send" size={16} />{$i18n.t('app.telegram.parents.methodTelegram')}</button>
             </div>
             {#if wizardMethod === 'email'}
                 <div id="wizard-panel-email" role="tabpanel" aria-labelledby="wizard-tab-email" tabindex="0">
@@ -401,8 +405,8 @@
                     <p class="info">{$i18n.t('app.workspaceAccess.pendingHint')}</p>
                 </div>
                 <div class="action-grid">
-                    <button type="button" class="ghost" disabled={wizardBusy} on:click={() => wizardStep = 1}><TelegramIcon name="back" size={16} />{$i18n.t('app.telegram.parents.back')}</button>
-                    <button type="button" class="btn" disabled={!wizardEmailValid || wizardBusy} on:click={submitWizard}><TelegramIcon name="add" size={16} />{wizardBusy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.telegram.parents.createParent')}</button>
+                    <button type="button" class="ghost" disabled={wizardBusy} onclick={() => wizardStep = 1}><TelegramIcon name="back" size={16} />{$i18n.t('app.telegram.parents.back')}</button>
+                    <button type="button" class="btn" disabled={!wizardEmailValid || wizardBusy} onclick={submitWizard}><TelegramIcon name="add" size={16} />{wizardBusy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.telegram.parents.createParent')}</button>
                 </div>
                 </div>
             {:else}
@@ -413,8 +417,8 @@
                     <p class="warn">{$i18n.t('app.telegram.parents.telegramWarn')}</p>
                 </div>
                 <div class="action-grid">
-                    <button type="button" class="ghost" disabled={wizardBusy} on:click={() => wizardStep = 1}><TelegramIcon name="back" size={16} />{$i18n.t('app.telegram.parents.back')}</button>
-                    <button type="button" class="btn" disabled={wizardBusy} on:click={submitWizard}><TelegramIcon name="link" size={16} />{wizardBusy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.telegram.parents.createLink')}</button>
+                    <button type="button" class="ghost" disabled={wizardBusy} onclick={() => wizardStep = 1}><TelegramIcon name="back" size={16} />{$i18n.t('app.telegram.parents.back')}</button>
+                    <button type="button" class="btn" disabled={wizardBusy} onclick={submitWizard}><TelegramIcon name="link" size={16} />{wizardBusy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.telegram.parents.createLink')}</button>
                 </div>
                 </div>
             {/if}
@@ -437,15 +441,15 @@
                     <div class="label">{$i18n.t('app.telegram.parents.linkReady')}</div>
                     <div class="link-box">
                         <div class="link-value">{wizardLink}</div>
-                        <button type="button" class="icon-btn" aria-label={$i18n.t('app.telegram.parents.copyLink')} on:click={copyWizardLink}><TelegramIcon name="copy" size={19} /></button>
+                        <button type="button" class="icon-btn" aria-label={$i18n.t('app.telegram.parents.copyLink')} onclick={copyWizardLink}><TelegramIcon name="copy" size={19} /></button>
                     </div>
                     <p class="small link-note">{$i18n.t('app.telegram.parents.linkExpiryNote')}</p>
                     {#if wizardCopied}<p class="success" role="status" aria-live="polite">{$i18n.t('app.telegram.parents.copied')}</p>{/if}
                 </div>
             {/if}
             <div class="action-grid">
-                <button type="button" class="cancel" on:click={closeWizard}><TelegramIcon name="close" size={16} />{$i18n.t('app.telegram.parents.close')}</button>
-                <button type="button" class="btn" on:click={openWizardLink}><TelegramIcon name="send" size={16} />{$i18n.t('app.telegram.parents.openInTelegram')}</button>
+                <button type="button" class="cancel" onclick={closeWizard}><TelegramIcon name="close" size={16} />{$i18n.t('app.telegram.parents.close')}</button>
+                <button type="button" class="btn" onclick={openWizardLink}><TelegramIcon name="send" size={16} />{$i18n.t('app.telegram.parents.openInTelegram')}</button>
             </div>
         {/if}
         {#if wizardError}<p class="error" role="alert">{wizardError}</p>{/if}
@@ -453,7 +457,7 @@
 {/if}
 
 {#if roleEditOpen && roleEditParent}
-    <div class="sheet-backdrop" role="presentation" on:click={closeRoleEdit}></div>
+    <div class="sheet-backdrop" role="presentation" onclick={closeRoleEdit}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="role-edit-title" tabindex="-1" use:focusOnMount>
         <h2 id="role-edit-title">{$i18n.t('app.telegram.parents.changeRole')}</h2>
         <p class="screen-sub">{label(roleEditParent)}</p>
@@ -461,11 +465,11 @@
             <div>
                 <span class="label">{$i18n.t('app.workspaceAccess.permission')}</span>
                 <div class="role-grid">
-                    <button type="button" class:active={roleEditValue === 'editor'} class="role-card" on:click={() => roleEditValue = 'editor'}>
+                    <button type="button" class:active={roleEditValue === 'editor'} class="role-card" onclick={() => roleEditValue = 'editor'}>
                         <span class="role-icon"><TelegramIcon name="pencilLine" size={18} /></span>
                         <span class="role-text"><span class="role-name">{$i18n.t('app.telegram.parents.roleEditor')}</span><span class="role-desc">{$i18n.t('app.telegram.parents.roleEditorDesc')}</span></span>
                     </button>
-                    <button type="button" class:active={roleEditValue === 'viewer'} class="role-card" on:click={() => roleEditValue = 'viewer'}>
+                    <button type="button" class:active={roleEditValue === 'viewer'} class="role-card" onclick={() => roleEditValue = 'viewer'}>
                         <span class="role-icon"><TelegramIcon name="eye" size={18} /></span>
                         <span class="role-text"><span class="role-name">{$i18n.t('app.telegram.parents.roleViewer')}</span><span class="role-desc">{$i18n.t('app.telegram.parents.roleViewerDesc')}</span></span>
                     </button>
@@ -474,14 +478,14 @@
         </div>
         {#if roleEditError}<p class="error" role="alert">{roleEditError}</p>{/if}
         <div class="action-grid">
-            <button type="button" class="cancel" disabled={roleEditBusy} on:click={closeRoleEdit}><TelegramIcon name="close" size={16} />{$i18n.t('app.parentAccess.cancelButton')}</button>
-            <button type="button" class="btn" disabled={roleEditBusy} on:click={submitRoleEdit}>{roleEditBusy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.parentAccess.saveButton')}</button>
+            <button type="button" class="cancel" disabled={roleEditBusy} onclick={closeRoleEdit}><TelegramIcon name="close" size={16} />{$i18n.t('app.parentAccess.cancelButton')}</button>
+            <button type="button" class="btn" disabled={roleEditBusy} onclick={submitRoleEdit}>{roleEditBusy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.parentAccess.saveButton')}</button>
         </div>
     </div>
 {/if}
 
 {#if transferOpen}
-    <div class="sheet-backdrop" role="presentation" on:click={closeTransfer}></div>
+    <div class="sheet-backdrop" role="presentation" onclick={closeTransfer}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="transfer-title" tabindex="-1" use:focusOnMount>
         <h2 id="transfer-title">{$i18n.t('app.telegram.parents.transferTitle')}</h2>
         <p class="screen-sub">{$i18n.t('app.telegram.parents.transferSelectSub')}</p>
@@ -497,7 +501,7 @@
                                 <div class="avatar">{label(candidate).charAt(0).toUpperCase()}</div>
                                 <div class="main"><div class="name">{label(candidate)}</div><div class="role">{$i18n.t('app.telegram.parents.transferEligible')}</div></div>
                             </div>
-                            <button type="button" class="btn select-btn" disabled={transferBusy} on:click={() => transferTarget = candidate}><TelegramIcon name="check" size={16} />{$i18n.t('app.telegram.parents.transferSelect')}</button>
+                            <button type="button" class="btn select-btn" disabled={transferBusy} onclick={() => transferTarget = candidate}><TelegramIcon name="check" size={16} />{$i18n.t('app.telegram.parents.transferSelect')}</button>
                         </div>
                     </div>
                 {/each}
@@ -516,14 +520,14 @@
         </div>
         {#if transferError}<p class="error" role="alert">{transferError}</p>{/if}
         <div class="action-grid">
-            <button type="button" class="cancel" disabled={transferBusy} on:click={closeTransfer}><TelegramIcon name="close" size={16} />{$i18n.t('app.parentAccess.cancelButton')}</button>
-            <button type="button" class="btn" disabled={!transferTarget || transferBusy} on:click={submitTransfer}>{transferBusy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.telegram.parents.sendRequest')}</button>
+            <button type="button" class="cancel" disabled={transferBusy} onclick={closeTransfer}><TelegramIcon name="close" size={16} />{$i18n.t('app.parentAccess.cancelButton')}</button>
+            <button type="button" class="btn" disabled={!transferTarget || transferBusy} onclick={submitTransfer}>{transferBusy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.telegram.parents.sendRequest')}</button>
         </div>
     </div>
 {/if}
 
 {#if isTransferTarget && pendingTransferTargetRow}
-    <div class="sheet-backdrop" role="presentation" on:click={() => {}}></div>
+    <div class="sheet-backdrop" role="presentation" onclick={() => {}}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="transfer-approve-title" tabindex="-1">
         <h2 id="transfer-approve-title">{$i18n.t('app.telegram.parents.acceptAdmin')}</h2>
         <div class="preview">
@@ -537,8 +541,8 @@
                 <div class="box"><div class="box-title">{$i18n.t('app.telegram.parents.transferWhen')}</div><div class="box-value">{$i18n.t('app.telegram.parents.transferWhenValue')}</div><div class="box-sub">{$i18n.t('app.telegram.parents.transferWhenSub')}</div></div>
             </div>
             <div class="preview-actions">
-                <button type="button" class="cancel" disabled={busy} on:click={declinePendingTransfer}><TelegramIcon name="close" size={16} />{$i18n.t('app.telegram.parents.declineAdmin')}</button>
-                <button type="button" class="btn ok-btn" disabled={busy} on:click={acceptPendingTransfer} use:focusAccept>{busy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.telegram.parents.acceptAdmin')}</button>
+                <button type="button" class="cancel" disabled={busy} onclick={declinePendingTransfer}><TelegramIcon name="close" size={16} />{$i18n.t('app.telegram.parents.declineAdmin')}</button>
+                <button type="button" class="btn ok-btn" disabled={busy} onclick={acceptPendingTransfer} use:focusAccept>{busy ? $i18n.t('app.workspaceAccess.saving') : $i18n.t('app.telegram.parents.acceptAdmin')}</button>
             </div>
         </div>
         <p class="warn">{$i18n.t('app.telegram.parents.transferConfirmWarn')}</p>

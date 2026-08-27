@@ -4,16 +4,20 @@
     import TelegramIcon from './TelegramIcon.svelte';
     import type { CatalogSortMode } from '$lib/telegram/services/catalogSort';
 
-    export let mode: CatalogSortMode = 'group';
-    export let onChange: (mode: CatalogSortMode) => void = () => {};
+    interface Props {
+        mode?: CatalogSortMode;
+        onChange?: (mode: CatalogSortMode) => void;
+    }
+
+    let { mode = 'group', onChange = () => {} }: Props = $props();
     const i18n = useI18n();
 </script>
 
 <div class="sort-control" role="group" aria-label={$i18n.t('app.telegram.sort.title')}>
-    <button type="button" class:active={mode === 'group'} aria-label={$i18n.t('app.telegram.sort.groups')} aria-pressed={mode === 'group'} on:click={() => onChange('group')}>
+    <button type="button" class:active={mode === 'group'} aria-label={$i18n.t('app.telegram.sort.groups')} aria-pressed={mode === 'group'} onclick={() => onChange('group')}>
         <TelegramIcon name="table" size={16} />
     </button>
-    <button type="button" class="coins" class:active={mode === 'coins'} aria-label={$i18n.t('app.telegram.sort.coins')} aria-pressed={mode === 'coins'} on:click={() => onChange('coins')}>
+    <button type="button" class="coins" class:active={mode === 'coins'} aria-label={$i18n.t('app.telegram.sort.coins')} aria-pressed={mode === 'coins'} onclick={() => onChange('coins')}>
         <TelegramCoin size={14} />
         <TelegramIcon name="arrowDown" size={13} />
     </button>

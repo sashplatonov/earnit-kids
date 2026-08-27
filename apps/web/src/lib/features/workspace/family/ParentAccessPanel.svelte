@@ -1,9 +1,18 @@
 <script lang="ts">
     import ParentInvitationFlow from '../access/ParentInvitationFlow.svelte';
-export let open = true;
-export let embedded = false;
-export let compact = false;
-export let hideTitle: boolean | undefined = undefined;
+    interface Props {
+        open?: boolean;
+        embedded?: boolean;
+        compact?: boolean;
+        hideTitle?: boolean | undefined;
+    }
+
+    let {
+        open = true,
+        embedded = false,
+        compact = false,
+        hideTitle = undefined
+    }: Props = $props();
 </script>
 
 {#if open}<div class:embedded class:compact class="panel"><ParentInvitationFlow hideTitle={hideTitle ?? embedded} {compact} /></div>{/if}

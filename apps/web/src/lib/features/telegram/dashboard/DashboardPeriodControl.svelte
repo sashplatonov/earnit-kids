@@ -1,8 +1,19 @@
 <script lang="ts">
-    export let selectedPeriod: string;
-    export let loading = false;
-    export let updatedAt: string;
-    export let onChange: (period: string) => void;
+    interface Props {
+        selectedPeriod: string;
+        loading?: boolean;
+        updatedAt: string;
+        onChange: (period: string) => void;
+        label?: import('svelte').Snippet<[{ period: string }]>;
+    }
+
+    let {
+        selectedPeriod,
+        loading = false,
+        updatedAt,
+        onChange,
+        label
+    }: Props = $props();
 
     const periods = ['7d', '30d', '90d', 'all'];
 </script>
@@ -16,9 +27,9 @@
                 class:active={selectedPeriod === period}
                 disabled={loading}
                 aria-pressed={selectedPeriod === period}
-                on:click={() => onChange(period)}
+                onclick={() => onChange(period)}
             >
-                <slot name="label" period={period}>{period}</slot>
+                {#if label}{@render label({ period, })}{:else}{period}{/if}
             </button>
         {/each}
     </div>

@@ -20,26 +20,36 @@
     const i18n = useI18n();
     const workspaceActions = useWorkspaceActions();
 
-    export let publicOrigin = '';
-    export let onViewAsChild: () => void = () => {};
-    export let showSessionActions = false;
-    export let permission: MembershipPermission | null = null;
-    export let demoMode = false;
+    interface Props {
+        publicOrigin?: string;
+        onViewAsChild?: () => void;
+        showSessionActions?: boolean;
+        permission?: MembershipPermission | null;
+        demoMode?: boolean;
+    }
+
+    let {
+        publicOrigin = '',
+        onViewAsChild = () => {},
+        showSessionActions = false,
+        permission = null,
+        demoMode = false
+    }: Props = $props();
 
     // EXPLAIN: Bot deep links pass ?context= so the exact Mini App context opens.
     const context = typeof window === 'undefined'
         ? '' : new URLSearchParams(window.location.search).get('context') ?? '';
     const workspaceContext = parseTelegramWorkspaceContext(context);
-    let view: ParentTab = workspaceContext.parentTab;
-    let loading = true;
-    let error = '';
-    $: pending = $appStore.requests.filter((request) => request.status === 'pending');
-    $: tabs = [
+    let view: ParentTab = $state(workspaceContext.parentTab);
+    let loading = $state(true);
+    let error = $state('');
+    let pending = $derived($appStore.requests.filter((request) => request.status === 'pending'));
+    let tabs = $derived([
         { id: 'home', icon: 'home', label: $i18n.t('app.telegram.shell.home'), count: pending.length },
         { id: 'tasks', icon: 'task', label: $i18n.t('app.telegram.shell.tasks') },
         { id: 'rewards', icon: 'reward', label: $i18n.t('app.telegram.shell.rewards') },
         { id: 'family', icon: 'family', label: $i18n.t('app.telegram.shell.family') },
-    ] satisfies readonly TelegramTab[];
+    ] satisfies readonly TelegramTab[]);
 
     onMount(async () => {
         loading = true;

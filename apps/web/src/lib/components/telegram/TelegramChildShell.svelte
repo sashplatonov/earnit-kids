@@ -25,33 +25,37 @@
     const workspaceActions = useWorkspaceActions();
     const requestActions = useRequestActions();
 
-    export let publicOrigin = '';
-    export let onExitPreview: (() => void) | null = null;
-    export let showSessionActions = false;
+    interface Props {
+        publicOrigin?: string;
+        onExitPreview?: (() => void) | null;
+        showSessionActions?: boolean;
+    }
+
+    let { publicOrigin = '', onExitPreview = null, showSessionActions = false }: Props = $props();
 
     // EXPLAIN: Bot deep links pass ?context= so the exact Mini App context opens.
     const context = typeof window === 'undefined'
         ? '' : new URLSearchParams(window.location.search).get('context') ?? '';
     const workspaceContext = parseTelegramWorkspaceContext(context);
-    let loading = true;
-    let error = '';
-    let refreshing = false;
-    let view: ChildTab = workspaceContext.childTab;
-    let activityView: ActivityTab = workspaceContext.activityTab;
-    let history: HistoryEntry[] = [];
+    let loading = $state(true);
+    let error = $state('');
+    let refreshing = $state(false);
+    let view: ChildTab = $state(workspaceContext.childTab);
+    let activityView: ActivityTab = $state(workspaceContext.activityTab);
+    let history: HistoryEntry[] = $state([]);
     let historyPage = 0;
-    let historyHasMore = false;
-    let historyLoading = false;
-    let historyError = '';
-    $: tabs = [
+    let historyHasMore = $state(false);
+    let historyLoading = $state(false);
+    let historyError = $state('');
+    let tabs = $derived([
         { id: 'tasks', icon: 'task', label: $i18n.t('app.telegram.childShell.tasks') },
         { id: 'rewards', icon: 'reward', label: $i18n.t('app.telegram.childShell.rewards') },
         { id: 'activity', icon: 'activity', label: $i18n.t('app.telegram.childShell.activity') },
-    ] satisfies readonly TelegramTab[];
-    $: activityTabs = [
+    ] satisfies readonly TelegramTab[]);
+    let activityTabs = $derived([
         { id: 'history', icon: 'history', label: $i18n.t('app.telegram.history.history') },
         { id: 'requests', icon: 'request', label: $i18n.t('app.telegram.childShell.requests') },
-    ] satisfies readonly TelegramTab[];
+    ] satisfies readonly TelegramTab[]);
 
     onMount(async () => {
         const ok = await workspaceActions.initialize();
@@ -82,8 +86,8 @@
         activityView = next as ActivityTab;
         if (next === 'history') void loadHistory(true);
     }
-    let cancellingIds: Array<string | number> = [];
-    let cancelError = '';
+    let cancellingIds: Array<string | number> = $state([]);
+    let cancelError = $state('');
     async function handleCancel(request: Request) {
         if (request.status !== 'pending') return;
         if (cancellingIds.some((id) => String(id) === String(request.id))) return;
@@ -107,7 +111,7 @@
     }
 </script>
 
-<svelte:window on:visibilitychange={onVisibility} />
+<svelte:window onvisibilitychange={onVisibility} />
 <main class="child-workspace" aria-labelledby="child-workspace-title">
     {#if onExitPreview}<TelegramParentReturn onClick={onExitPreview} />{/if}
     <TelegramBalanceHeader headingId="child-workspace-title" nickname={$appStore.childNickname} balance={$appStore.balance} loading={loading || Boolean(error)} />

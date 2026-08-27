@@ -12,13 +12,24 @@
 
     const i18n = useI18n();
 
-    export let entries: HistoryEntry[] = [];
-    export let loading = false;
-    export let hasMore = false;
-    export let onLoadMore: () => void = () => {};
-    export let onRetry: () => void = () => {};
-    export let error = '';
-    $: asyncState = (loading && !entries.length ? 'loading' : error ? 'error' : !entries.length ? 'empty' : 'success') as AsyncState;
+    interface Props {
+        entries?: HistoryEntry[];
+        loading?: boolean;
+        hasMore?: boolean;
+        onLoadMore?: () => void;
+        onRetry?: () => void;
+        error?: string;
+    }
+
+    let {
+        entries = [],
+        loading = false,
+        hasMore = false,
+        onLoadMore = () => {},
+        onRetry = () => {},
+        error = ''
+    }: Props = $props();
+    let asyncState = $derived((loading && !entries.length ? 'loading' : error ? 'error' : !entries.length ? 'empty' : 'success') as AsyncState);
     function historyTitle(entry: HistoryEntry): string {
         return entry.description || entry.title || entry.taskName || entry.itemName || $i18n.t('app.telegram.history.activity');
     }
@@ -32,12 +43,20 @@
 <section aria-label={$i18n.t('app.telegram.history.history')}>
     {#if asyncState !== 'success'}<TelegramAsyncState state={asyncState} loadingLabel={$i18n.t('app.telegram.history.loadingActivity')} emptyLabel={$i18n.t('app.telegram.history.noActivity')} errorMessage={error} retryLabel={$i18n.t('app.telegram.history.retry')} onRetry={onRetry} />
     {:else}<TelegramListSurface label={$i18n.t('app.telegram.history.history')}>{#each entries as entry (entry.id)}<TelegramEntityRow>
-        <span slot="icon"><TelegramIcon name={getTelegramEntityIcon({ kind: historyKind(entry.type), title: historyTitle(entry), group: entry.groupName })} size={20} label={$i18n.t('app.telegram.history.activity')} /></span>
-        <h3 class="history-title" slot="title">{stripLeadingEmoji(historyTitle(entry))}</h3>
-        <div slot="metadata"><time class="history-time" datetime={entry.createdAt ?? undefined}>{entry.createdAt ? formatLastUsedTime(entry.createdAt, $i18n.locale) : $i18n.t('app.telegram.history.recently')}</time>{#if entry.groupName}<span class="history-group">{entry.groupName}</span>{/if}</div>
-        <strong class="history-amount" slot="trailing" class:spend={entry.amount < 0 || entry.type === 'purchase' || entry.type === 'spend'}><TelegramCoin size={13} />{entry.type === 'purchase' || entry.type === 'spend' ? '-' : (entry.amount > 0 ? '+' : '')}{Math.abs(entry.amount)}</strong>
+        {#snippet icon()}
+                                        <span ><TelegramIcon name={getTelegramEntityIcon({ kind: historyKind(entry.type), title: historyTitle(entry), group: entry.groupName })} size={20} label={$i18n.t('app.telegram.history.activity')} /></span>
+                                    {/snippet}
+        {#snippet title()}
+                                        <h3 class="history-title" >{stripLeadingEmoji(historyTitle(entry))}</h3>
+                                    {/snippet}
+        {#snippet metadata()}
+                                        <div ><time class="history-time" datetime={entry.createdAt ?? undefined}>{entry.createdAt ? formatLastUsedTime(entry.createdAt, $i18n.locale) : $i18n.t('app.telegram.history.recently')}</time>{#if entry.groupName}<span class="history-group">{entry.groupName}</span>{/if}</div>
+                                    {/snippet}
+        {#snippet trailing()}
+                                        <strong class="history-amount"  class:spend={entry.amount < 0 || entry.type === 'purchase' || entry.type === 'spend'}><TelegramCoin size={13} />{entry.type === 'purchase' || entry.type === 'spend' ? '-' : (entry.amount > 0 ? '+' : '')}{Math.abs(entry.amount)}</strong>
+                                    {/snippet}
     </TelegramEntityRow>{/each}</TelegramListSurface>{/if}
-    {#if hasMore}<button class="load-more" type="button" on:click={onLoadMore} disabled={loading}><TelegramIcon name="arrowRight" size={18} label={$i18n.t('app.telegram.history.loadMore')} />{loading ? $i18n.t('app.telegram.history.loading') : $i18n.t('app.telegram.history.loadMore')}</button>{/if}
+    {#if hasMore}<button class="load-more" type="button" onclick={onLoadMore} disabled={loading}><TelegramIcon name="arrowRight" size={18} label={$i18n.t('app.telegram.history.loadMore')} />{loading ? $i18n.t('app.telegram.history.loading') : $i18n.t('app.telegram.history.loadMore')}</button>{/if}
 </section>
 
 <style>

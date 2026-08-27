@@ -1,17 +1,26 @@
 <script lang="ts">
     import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
 
-    export let activeTooltip: string | null;
-    export let content: Record<string, { title: string; body: string }>;
-    export let close: () => void;
-    export let closeLabel: string;
+    interface Props {
+        activeTooltip: string | null;
+        content: Record<string, { title: string; body: string }>;
+        close: () => void;
+        closeLabel: string;
+    }
+
+    let {
+        activeTooltip,
+        content,
+        close,
+        closeLabel
+    }: Props = $props();
 </script>
 
 {#if activeTooltip && content[activeTooltip]}
     <div class="tooltip-box" role="dialog" aria-label={content[activeTooltip].title}>
         <div class="tooltip-head">
             <b>{content[activeTooltip].title}</b>
-            <button class="tooltip-close" type="button" aria-label={closeLabel} on:click={close}>
+            <button class="tooltip-close" type="button" aria-label={closeLabel} onclick={close}>
                 <TelegramIcon name="close" size={15} />
             </button>
         </div>

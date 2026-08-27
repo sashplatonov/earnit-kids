@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { createEventDispatcher } from 'svelte';
     import { useI18n } from '$lib/i18n/context';
     import TelegramCoin from './TelegramCoin.svelte';
@@ -7,15 +9,21 @@
 
     const i18n = useI18n();
 
-    export let open = false;
-    export let busy = false;
-    export let error = '';
+    interface Props {
+        open?: boolean;
+        busy?: boolean;
+        error?: string;
+    }
+
+    let { open = false, busy = false, error = '' }: Props = $props();
     const dispatch = createEventDispatcher<{ adjust: { amount: number; note: string | null }; close: void }>();
     const MAX_ADJUST = 1_000_000;
-    let amount = '';
-    let note = '';
-    let localError = '';
-    $: if (!open) { amount = ''; note = ''; localError = ''; }
+    let amount = $state('');
+    let note = $state('');
+    let localError = $state('');
+    run(() => {
+        if (!open) { amount = ''; note = ''; localError = ''; }
+    });
     function close() {
         if (!busy) dispatch('close');
     }
@@ -36,14 +44,14 @@
         <h2 id="coin-adjust-title">{$i18n.t('app.telegram.coinAdjust.title')}</h2>
         <div class="amount-row">
             <TelegramCoin size={20} />
-            <input id="coin-amount" type="number" inputmode="numeric" bind:value={amount} placeholder={$i18n.t('app.telegram.coinAdjust.amountPlaceholder')} aria-label={$i18n.t('app.telegram.coinAdjust.amountAria')} aria-invalid={localError ? 'true' : undefined} aria-describedby={localError ? 'coin-adjust-error' : undefined} on:keydown={(event) => { if (event.key === 'Enter') submit(); }} />
+            <input id="coin-amount" type="number" inputmode="numeric" bind:value={amount} placeholder={$i18n.t('app.telegram.coinAdjust.amountPlaceholder')} aria-label={$i18n.t('app.telegram.coinAdjust.amountAria')} aria-invalid={localError ? 'true' : undefined} aria-describedby={localError ? 'coin-adjust-error' : undefined} onkeydown={(event) => { if (event.key === 'Enter') submit(); }} />
         </div>
         <label for="coin-note">{$i18n.t('app.telegram.coinAdjust.noteLabel')}</label>
         <input id="coin-note" type="text" maxlength="80" bind:value={note} placeholder={$i18n.t('app.telegram.coinAdjust.notePlaceholder')} />
         {#if localError || error}<p id="coin-adjust-error" class="error" role="alert">{localError || error}</p>{/if}
         <div class="actions">
-            <button type="button" on:click={close} disabled={busy}><TelegramIcon name="back" size={18} label={$i18n.t('app.telegram.coinAdjust.cancel')} />{$i18n.t('app.telegram.coinAdjust.cancel')}</button>
-            <button class="primary" type="button" on:click={submit} disabled={busy}><TelegramIcon name="coinAdjustment" size={18} label={busy ? $i18n.t('app.telegram.coinAdjust.saving') : $i18n.t('app.telegram.coinAdjust.save')} />{busy ? $i18n.t('app.telegram.coinAdjust.saving') : $i18n.t('app.telegram.coinAdjust.save')}</button>
+            <button type="button" onclick={close} disabled={busy}><TelegramIcon name="back" size={18} label={$i18n.t('app.telegram.coinAdjust.cancel')} />{$i18n.t('app.telegram.coinAdjust.cancel')}</button>
+            <button class="primary" type="button" onclick={submit} disabled={busy}><TelegramIcon name="coinAdjustment" size={18} label={busy ? $i18n.t('app.telegram.coinAdjust.saving') : $i18n.t('app.telegram.coinAdjust.save')} />{busy ? $i18n.t('app.telegram.coinAdjust.saving') : $i18n.t('app.telegram.coinAdjust.save')}</button>
         </div>
     </TelegramBottomSheet>
 {/if}

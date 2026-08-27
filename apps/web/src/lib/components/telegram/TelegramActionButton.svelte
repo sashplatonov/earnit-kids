@@ -2,14 +2,26 @@
     import TelegramIcon from './TelegramIcon.svelte';
     import type { TelegramIconName } from './telegramIconMap';
 
-    export let icon: TelegramIconName;
-    export let label: string;
-    export let type: 'button' | 'submit' = 'button';
-    export let disabled = false;
-    export let busy = false;
+    interface Props {
+        icon: TelegramIconName;
+        label: string;
+        type?: 'button' | 'submit';
+        disabled?: boolean;
+        busy?: boolean;
+        onclick?: () => void;
+    }
+
+    let {
+        icon,
+        label,
+        type = 'button',
+        disabled = false,
+        busy = false,
+        onclick
+    }: Props = $props();
 </script>
 
-<button {type} {disabled} aria-busy={busy} aria-label={label} on:click>
+<button {type} {disabled} aria-busy={busy} aria-label={label} {onclick}>
     <TelegramIcon name={icon} size={20} label={label} />
     <span>{label}</span>
 </button>

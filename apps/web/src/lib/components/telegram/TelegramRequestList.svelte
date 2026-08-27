@@ -12,22 +12,37 @@
     const i18n = useI18n();
     const requestActions = useRequestActions();
 
-    export let requests: Request[] = [];
-    export let canDecide = false;
-    export let childId: string | number | null = null;
-    export let loading = false;
-    export let error = '';
-    export let onRetry: () => void = () => {};
-    export let showHeading = true;
-    export let headingText = '';
-    export let emptyText = '';
-    export let onDecision: () => void = () => {};
-    let busy: string | number | null = null;
-    let decisionError = '';
+    interface Props {
+        requests?: Request[];
+        canDecide?: boolean;
+        childId?: string | number | null;
+        loading?: boolean;
+        error?: string;
+        onRetry?: () => void;
+        showHeading?: boolean;
+        headingText?: string;
+        emptyText?: string;
+        onDecision?: () => void;
+    }
 
-    $: resolvedHeading = headingText || $i18n.t('app.telegram.requests.requests');
-    $: resolvedEmpty = emptyText || $i18n.t('app.telegram.requests.noRequests');
-    $: asyncState = (loading ? 'loading' : error ? 'error' : !requests.length ? 'empty' : 'success') as AsyncState;
+    let {
+        requests = [],
+        canDecide = false,
+        childId = null,
+        loading = false,
+        error = '',
+        onRetry = () => {},
+        showHeading = true,
+        headingText = '',
+        emptyText = '',
+        onDecision = () => {}
+    }: Props = $props();
+    let busy: string | number | null = $state(null);
+    let decisionError = $state('');
+
+    let resolvedHeading = $derived(headingText || $i18n.t('app.telegram.requests.requests'));
+    let resolvedEmpty = $derived(emptyText || $i18n.t('app.telegram.requests.noRequests'));
+    let asyncState = $derived((loading ? 'loading' : error ? 'error' : !requests.length ? 'empty' : 'success') as AsyncState);
 
     async function decide(id: string | number, action: 'approve' | 'reject') {
         busy = id;
@@ -39,7 +54,7 @@
         if (result != null) onDecision();
         busy = null;
     }
-    $: presentations = requests.map((request) => presentRequest(request, {
+    let presentations = $derived(requests.map((request) => presentRequest(request, {
         kindLabel: (kind) => kind === 'reward' ? $i18n.t('app.telegram.requests.rewardRequest') : $i18n.t('app.telegram.requests.taskRequest'),
         statusLabel: (status) => status === 'approved'
             ? $i18n.t('app.telegram.childRequests.statusApproved')
@@ -49,7 +64,7 @@
                     ? $i18n.t('app.telegram.childRequests.statusCancelled')
                     : $i18n.t('app.telegram.childRequests.statusPending'),
         metadata: (request) => request.taskGroup || request.itemGroup || request.groupName || '',
-    }));
+    })));
 </script>
 
 <section aria-labelledby="telegram-requests-title">
@@ -58,7 +73,7 @@
     {:else}<TelegramListSurface label={resolvedHeading}>{#each presentations as presentation (presentation.request.id)}
         <TelegramRequestRow {presentation} locale={$i18n.locale}>
             {#if canDecide && presentation.status === 'pending'}
-                    <div class="attention-actions"><button class="approve" type="button" aria-label={$i18n.t('app.telegram.requests.approveRequest')} disabled={busy === presentation.request.id} on:click={() => decide(presentation.request.id, 'approve')}><TelegramIcon name="approve" size={16} label={$i18n.t('app.telegram.requests.approve')} /><span>{$i18n.t('app.telegram.requests.approve')}</span></button><button class="reject" type="button" aria-label={$i18n.t('app.telegram.requests.rejectRequest')} disabled={busy === presentation.request.id} on:click={() => decide(presentation.request.id, 'reject')}><TelegramIcon name="reject" size={16} label={$i18n.t('app.telegram.requests.reject')} /><span>{$i18n.t('app.telegram.requests.reject')}</span></button></div>
+                    <div class="attention-actions"><button class="approve" type="button" aria-label={$i18n.t('app.telegram.requests.approveRequest')} disabled={busy === presentation.request.id} onclick={() => decide(presentation.request.id, 'approve')}><TelegramIcon name="approve" size={16} label={$i18n.t('app.telegram.requests.approve')} /><span>{$i18n.t('app.telegram.requests.approve')}</span></button><button class="reject" type="button" aria-label={$i18n.t('app.telegram.requests.rejectRequest')} disabled={busy === presentation.request.id} onclick={() => decide(presentation.request.id, 'reject')}><TelegramIcon name="reject" size={16} label={$i18n.t('app.telegram.requests.reject')} /><span>{$i18n.t('app.telegram.requests.reject')}</span></button></div>
             {/if}
         </TelegramRequestRow>{/each}</TelegramListSurface>{/if}
     {#if decisionError}<p class="error" role="alert">{decisionError}</p>{/if}

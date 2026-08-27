@@ -21,24 +21,24 @@
     const i18n = useI18n();
     const rewardRequestActions = useRewardRequestActions();
 
-    let selectedGroup = '';
-    let sortMode: CatalogSortMode = 'group';
-    let selected: { id: number | string; title: string } | null = null;
-    let busy = false;
-    let status: 'idle' | 'pending' | 'success' | 'error' | 'stale' = 'idle';
-    let message = '';
-    $: activeShop = $shopItems.filter((item) => item.isActive !== false);
-    $: currentChild = $appStore.children.find((child) => String(child.id) === String($appStore.currentChildId)) ?? null;
-    $: hiddenGroups = currentChild?.hiddenShopGroupOrder ?? [];
-    $: visibleShop = activeShop.filter((item) => !hiddenGroups.includes(item.groupName?.trim() ?? ''));
-    $: affordable = visibleShop.filter((item) => $appStore.balance >= item.price).sort((first, second) => first.price - second.price);
-    $: nextGoal = visibleShop.filter((item) => $appStore.balance < item.price).sort((first, second) => first.price - second.price)[0] ?? null;
-    $: goalPercent = nextGoal && nextGoal.price > 0 ? Math.min(100, Math.round(($appStore.balance / nextGoal.price) * 100)) : 0;
-    $: goalMissing = nextGoal ? Math.max(0, nextGoal.price - $appStore.balance) : 0;
-    $: pendingIds = $appStore.requests.filter((request) => (request.requestType === 'shop_purchase' || request.itemId != null) && request.status === 'pending').map((request) => request.itemId).filter((id): id is string | number => id != null);
-    $: rawGroups = [...new Set(visibleShop.map((item) => item.groupName?.trim()).filter((group): group is string => Boolean(group)))];
-    $: orderedGroups = orderGroups(rawGroups, getEffectiveGroupOrder(currentChild, 'shop', false));
-    $: items = sortCatalogItems(selectedGroup ? visibleShop.filter((item) => item.groupName?.trim() === selectedGroup) : visibleShop, sortMode, orderedGroups, (item) => item.groupName?.trim() ?? '', (item) => item.price);
+    let selectedGroup = $state('');
+    let sortMode: CatalogSortMode = $state('group');
+    let selected: { id: number | string; title: string } | null = $state(null);
+    let busy = $state(false);
+    let status: 'idle' | 'pending' | 'success' | 'error' | 'stale' = $state('idle');
+    let message = $state('');
+    let activeShop = $derived($shopItems.filter((item) => item.isActive !== false));
+    let currentChild = $derived($appStore.children.find((child) => String(child.id) === String($appStore.currentChildId)) ?? null);
+    let hiddenGroups = $derived(currentChild?.hiddenShopGroupOrder ?? []);
+    let visibleShop = $derived(activeShop.filter((item) => !hiddenGroups.includes(item.groupName?.trim() ?? '')));
+    let affordable = $derived(visibleShop.filter((item) => $appStore.balance >= item.price).sort((first, second) => first.price - second.price));
+    let nextGoal = $derived(visibleShop.filter((item) => $appStore.balance < item.price).sort((first, second) => first.price - second.price)[0] ?? null);
+    let goalPercent = $derived(nextGoal && nextGoal.price > 0 ? Math.min(100, Math.round(($appStore.balance / nextGoal.price) * 100)) : 0);
+    let goalMissing = $derived(nextGoal ? Math.max(0, nextGoal.price - $appStore.balance) : 0);
+    let pendingIds = $derived($appStore.requests.filter((request) => (request.requestType === 'shop_purchase' || request.itemId != null) && request.status === 'pending').map((request) => request.itemId).filter((id): id is string | number => id != null));
+    let rawGroups = $derived([...new Set(visibleShop.map((item) => item.groupName?.trim()).filter((group): group is string => Boolean(group)))]);
+    let orderedGroups = $derived(orderGroups(rawGroups, getEffectiveGroupOrder(currentChild, 'shop', false)));
+    let items = $derived(sortCatalogItems(selectedGroup ? visibleShop.filter((item) => item.groupName?.trim() === selectedGroup) : visibleShop, sortMode, orderedGroups, (item) => item.groupName?.trim() ?? '', (item) => item.price));
     const isPending = (id: number | string) => pendingIds.some((pendingId) => String(pendingId) === String(id));
     const isAffordable = (item: ShopItem) => $appStore.balance >= item.price;
     const isLimitReached = (item: ShopItem) => item.periodProgress?.available === false;
@@ -60,7 +60,17 @@
     </div>
     {#if nextGoal}<div class="goal-progress" role="progressbar" aria-valuemin="0" aria-valuemax={nextGoal.price} aria-valuenow={$appStore.balance} aria-label={nextGoal.name}><span style={`width: ${goalPercent}%`}></span></div>{/if}
     <TelegramGroupSubnav groups={rawGroups} selected={selectedGroup} kind="shop" allLabel={$i18n.t('app.telegram.groupSubnav.all')} moreLabel={$i18n.t('app.telegram.groupSubnav.more')} allGroupsTitle={$i18n.t('app.telegram.groupSubnav.allGroups')} onSelect={(group) => selectedGroup = group} />
-    {#if visibleShop.length}<TelegramCatalogToolbar count={items.length} countLabel={$i18n.t('app.telegram.sort.rewardsShown')} mode={sortMode} onChange={(mode) => sortMode = mode} />{/if}{#if selectedGroup && !items.length}<p class="empty">{$i18n.t('app.telegram.groupSubnav.emptyGroup')}</p>{:else if !items.length}<p class="empty">{$i18n.t('app.telegram.childRewards.noRewards')}</p>{:else}<TelegramListSurface label={$i18n.t('app.telegram.childRewards.rewardsTitle')}>{#each items as item (item.id)}<TelegramEntityRow interactive><span slot="icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'reward', title: item.name, group: item.groupName, semantic: item.icon ?? null })} size={20} label={$i18n.t('app.telegram.childRewards.rewardsTitle')} /></span><button slot="title" class="row-main" type="button" aria-label={stripLeadingEmoji(item.name)} on:click={() => { selected = { id: item.id, title: item.name }; status = 'idle'; }}><span class="title">{stripLeadingEmoji(item.name)}</span><span class="row-metadata"><span class="meta"><TelegramCoin size={13} />{item.price} · {item.groupName || $i18n.t('app.telegram.tasks.ungrouped')}</span>{#if item.lastPurchasedAt}<span class="meta meta--last">{$i18n.t('app.telegram.rewards.lastUsed', { when: formatLastUsedTime(item.lastPurchasedAt, $i18n.locale) })}</span>{:else}<span class="meta meta--last">{$i18n.t('app.telegram.rewards.neverUsed')}</span>{/if}</span></button><button slot="interactive" class="row-action grant" type="button" aria-label={$i18n.t('app.telegram.childRewards.askForReward')} disabled={isPending(item.id) || !isAffordable(item) || isLimitReached(item)} on:click={() => { selected = { id: item.id, title: item.name }; status = 'idle'; }}><TelegramIcon name={isPending(item.id) ? 'refresh' : 'requestReward'} size={16} label={isPending(item.id) ? $i18n.t('app.telegram.childTasks.pending') : $i18n.t('app.telegram.childRewards.askForReward')} /></button></TelegramEntityRow>{/each}</TelegramListSurface>{/if}
+    {#if visibleShop.length}<TelegramCatalogToolbar count={items.length} countLabel={$i18n.t('app.telegram.sort.rewardsShown')} mode={sortMode} onChange={(mode) => sortMode = mode} />{/if}{#if selectedGroup && !items.length}<p class="empty">{$i18n.t('app.telegram.groupSubnav.emptyGroup')}</p>{:else if !items.length}<p class="empty">{$i18n.t('app.telegram.childRewards.noRewards')}</p>{:else}<TelegramListSurface label={$i18n.t('app.telegram.childRewards.rewardsTitle')}>{#each items as item (item.id)}<TelegramEntityRow isInteractive>
+    {#snippet icon()}
+        <span><TelegramIcon name={getTelegramEntityIcon({ kind: 'reward', title: item.name, group: item.groupName, semantic: item.icon ?? null })} size={20} label={$i18n.t('app.telegram.childRewards.rewardsTitle')} /></span>
+    {/snippet}
+    {#snippet title()}
+        <button class="row-main" type="button" aria-label={stripLeadingEmoji(item.name)} onclick={() => { selected = { id: item.id, title: item.name }; status = 'idle'; }}><span class="title">{stripLeadingEmoji(item.name)}</span><span class="row-metadata"><span class="meta"><TelegramCoin size={13} />{item.price} · {item.groupName || $i18n.t('app.telegram.tasks.ungrouped')}</span>{#if item.lastPurchasedAt}<span class="meta meta--last">{$i18n.t('app.telegram.rewards.lastUsed', { when: formatLastUsedTime(item.lastPurchasedAt, $i18n.locale) })}</span>{:else}<span class="meta meta--last">{$i18n.t('app.telegram.rewards.neverUsed')}</span>{/if}</span></button>
+    {/snippet}
+    {#snippet interactive()}
+        <button class="row-action grant" type="button" aria-label={$i18n.t('app.telegram.childRewards.askForReward')} disabled={isPending(item.id) || !isAffordable(item) || isLimitReached(item)} onclick={() => { selected = { id: item.id, title: item.name }; status = 'idle'; }}><TelegramIcon name={isPending(item.id) ? 'refresh' : 'requestReward'} size={16} label={isPending(item.id) ? $i18n.t('app.telegram.childTasks.pending') : $i18n.t('app.telegram.childRewards.askForReward')} /></button>
+    {/snippet}
+</TelegramEntityRow>{/each}</TelegramListSurface>{/if}
     {#if nextGoal}<div class="goal" aria-label={$i18n.t('app.telegram.childRewards.nextGoal')}><span class="entity-icon"><TelegramIcon name={getTelegramEntityIcon({ kind: 'reward', title: nextGoal.name, group: nextGoal.groupName })} size={20} label={$i18n.t('app.telegram.rewards.reward')} /></span><div class="goal-text"><span class="goal-title">{stripLeadingEmoji(nextGoal.name)}</span><span class="goal-meta"><TelegramCoin size={13} />{nextGoal.price} · {$i18n.t('app.telegram.childRewards.moreToGo', { count: goalMissing })}</span></div></div>{/if}
     <TelegramActionStatus state={status} message={message} />
 </section>

@@ -2,10 +2,19 @@
     import TelegramSortControl from './TelegramSortControl.svelte';
     import type { CatalogSortMode } from '$lib/telegram/services/catalogSort';
 
-    export let count = 0;
-    export let countLabel = '';
-    export let mode: CatalogSortMode = 'group';
-    export let onChange: (mode: CatalogSortMode) => void = () => {};
+    interface Props {
+        count?: number;
+        countLabel?: string;
+        mode?: CatalogSortMode;
+        onChange?: (mode: CatalogSortMode) => void;
+    }
+
+    let {
+        count = 0,
+        countLabel = '',
+        mode = 'group',
+        onChange = () => {}
+    }: Props = $props();
 </script>
 
 <div class="catalog-toolbar">

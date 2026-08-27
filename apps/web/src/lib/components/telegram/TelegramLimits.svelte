@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
 import { useI18n } from '$lib/i18n/context';
     import { appStore } from '$lib/stores/app';
     import type { Child } from '$lib/stores/app';
@@ -7,30 +9,42 @@ import { useI18n } from '$lib/i18n/context';
     import TelegramIcon from './TelegramIcon.svelte';
     import { MAX_CHILD_LIMIT as MAX_LIMIT, stepLimit, effectiveLimit } from './telegramLimits';
 
-    export let open = false;
-    export let child: Child | null = null;
-    export let onClose: () => void = () => {};
-    export let onSaved: () => void = () => {};
-    export let demoMode = false;
+    interface Props {
+        open?: boolean;
+        child?: Child | null;
+        onClose?: () => void;
+        onSaved?: () => void;
+        demoMode?: boolean;
+    }
+
+    let {
+        open = false,
+        child = null,
+        onClose = () => {},
+        onSaved = () => {},
+        demoMode = false
+    }: Props = $props();
 
     const i18n = useI18n();
 
-    let earningEnabled = false;
-    let earningMax = 0;
-    let rewardEnabled = false;
-    let rewardMax = 0;
-    let busy = false;
-    let error = '';
-    let saved = false;
+    let earningEnabled = $state(false);
+    let earningMax = $state(0);
+    let rewardEnabled = $state(false);
+    let rewardMax = $state(0);
+    let busy = $state(false);
+    let error = $state('');
+    let saved = $state(false);
 
-    $: if (open && child) {
-        earningEnabled = (child.dailyCoinLimit ?? 0) > 0;
-        earningMax = child.dailyCoinLimit ?? 0;
-        rewardEnabled = (child.dailyRewardLimit ?? 0) > 0;
-        rewardMax = child.dailyRewardLimit ?? 0;
-        error = '';
-        saved = false;
-    }
+    run(() => {
+        if (open && child) {
+            earningEnabled = (child.dailyCoinLimit ?? 0) > 0;
+            earningMax = child.dailyCoinLimit ?? 0;
+            rewardEnabled = (child.dailyRewardLimit ?? 0) > 0;
+            rewardMax = child.dailyRewardLimit ?? 0;
+            error = '';
+            saved = false;
+        }
+    });
 
     function stepEarning(delta: number) {
         earningMax = stepLimit(earningMax, delta);
@@ -69,7 +83,7 @@ import { useI18n } from '$lib/i18n/context';
 </script>
 
 {#if open && child}
-    <div class="sheet-backdrop" role="presentation" on:click={onClose}></div>
+    <div class="sheet-backdrop" role="presentation" onclick={onClose}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="limits-title" tabindex="-1">
         <h2 id="limits-title">{$i18n.t('app.telegram.limits.title')}</h2>
         {#if demoMode}<p class="demo-notice" role="note">{$i18n.t('app.liveDemo.demoActionNotice')}</p>{/if}
@@ -83,29 +97,29 @@ import { useI18n } from '$lib/i18n/context';
         </div>
 
         <div class="block">
-            <div class="row"><span class="grow"><span class="setting-title">{$i18n.t('app.telegram.limits.restrictEarning')}</span><span class="setting-meta">{$i18n.t('app.telegram.limits.restrictEarningMeta')}</span></span><button class="switch" class:on={earningEnabled} type="button" role="switch" aria-checked={earningEnabled} aria-label={$i18n.t('app.telegram.limits.restrictEarning')} on:click={() => earningEnabled = !earningEnabled}></button></div>
+            <div class="row"><span class="grow"><span class="setting-title">{$i18n.t('app.telegram.limits.restrictEarning')}</span><span class="setting-meta">{$i18n.t('app.telegram.limits.restrictEarningMeta')}</span></span><button class="switch" class:on={earningEnabled} type="button" role="switch" aria-checked={earningEnabled} aria-label={$i18n.t('app.telegram.limits.restrictEarning')} onclick={() => earningEnabled = !earningEnabled}></button></div>
             {#if earningEnabled}
                 <p class="field-label">{$i18n.t('app.telegram.limits.maximum')}</p>
                 <div class="stepper">
-                    <button type="button" aria-label="-5" on:click={() => stepEarning(-5)}>-5</button>
-                    <button type="button" aria-label="-1" on:click={() => stepEarning(-1)}>-1</button>
+                    <button type="button" aria-label="-5" onclick={() => stepEarning(-5)}>-5</button>
+                    <button type="button" aria-label="-1" onclick={() => stepEarning(-1)}>-1</button>
                     <input class="stepper-value" type="number" inputmode="numeric" min="0" max={MAX_LIMIT} aria-label={$i18n.t('app.telegram.limits.earningMax', { max: '' })} bind:value={earningMax} />
-                    <button type="button" aria-label="+1" on:click={() => stepEarning(1)}>+1</button>
-                    <button type="button" aria-label="+5" on:click={() => stepEarning(5)}>+5</button>
+                    <button type="button" aria-label="+1" onclick={() => stepEarning(1)}>+1</button>
+                    <button type="button" aria-label="+5" onclick={() => stepEarning(5)}>+5</button>
                 </div>
             {/if}
         </div>
 
         <div class="block">
-            <div class="row"><span class="grow"><span class="setting-title">{$i18n.t('app.telegram.limits.restrictRewards')}</span><span class="setting-meta">{$i18n.t('app.telegram.limits.restrictRewardsMeta')}</span></span><button class="switch" class:on={rewardEnabled} type="button" role="switch" aria-checked={rewardEnabled} aria-label={$i18n.t('app.telegram.limits.restrictRewards')} on:click={() => rewardEnabled = !rewardEnabled}></button></div>
+            <div class="row"><span class="grow"><span class="setting-title">{$i18n.t('app.telegram.limits.restrictRewards')}</span><span class="setting-meta">{$i18n.t('app.telegram.limits.restrictRewardsMeta')}</span></span><button class="switch" class:on={rewardEnabled} type="button" role="switch" aria-checked={rewardEnabled} aria-label={$i18n.t('app.telegram.limits.restrictRewards')} onclick={() => rewardEnabled = !rewardEnabled}></button></div>
             {#if rewardEnabled}
                 <p class="field-label">{$i18n.t('app.telegram.limits.maximum')}</p>
                 <div class="stepper">
-                    <button type="button" aria-label="-5" on:click={() => stepReward(-5)}>-5</button>
-                    <button type="button" aria-label="-1" on:click={() => stepReward(-1)}>-1</button>
+                    <button type="button" aria-label="-5" onclick={() => stepReward(-5)}>-5</button>
+                    <button type="button" aria-label="-1" onclick={() => stepReward(-1)}>-1</button>
                     <input class="stepper-value" type="number" inputmode="numeric" min="0" max={MAX_LIMIT} aria-label={$i18n.t('app.telegram.limits.rewardsMax', { max: '' })} bind:value={rewardMax} />
-                    <button type="button" aria-label="+1" on:click={() => stepReward(1)}>+1</button>
-                    <button type="button" aria-label="+5" on:click={() => stepReward(5)}>+5</button>
+                    <button type="button" aria-label="+1" onclick={() => stepReward(1)}>+1</button>
+                    <button type="button" aria-label="+5" onclick={() => stepReward(5)}>+5</button>
                 </div>
             {/if}
         </div>
@@ -113,8 +127,8 @@ import { useI18n } from '$lib/i18n/context';
         {#if error}<p class="error" role="alert">{error}</p>{/if}
         {#if saved}<p class="saved" role="status">{$i18n.t('app.telegram.limits.saved')}</p>{/if}
 
-        <button class="primary" type="button" disabled={busy} on:click={save}><TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.limits.save')} />{$i18n.t('app.telegram.limits.save')}</button>
-        <button class="close" type="button" on:click={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.emailSettings.cancel')} />{$i18n.t('app.telegram.emailSettings.cancel')}</button>
+        <button class="primary" type="button" disabled={busy} onclick={save}><TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.limits.save')} />{$i18n.t('app.telegram.limits.save')}</button>
+        <button class="close" type="button" onclick={onClose}><TelegramIcon name="close" size={16} label={$i18n.t('app.telegram.emailSettings.cancel')} />{$i18n.t('app.telegram.emailSettings.cancel')}</button>
     </div>
 {/if}
 

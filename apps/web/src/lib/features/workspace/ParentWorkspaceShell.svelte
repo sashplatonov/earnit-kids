@@ -3,11 +3,21 @@
     import ParentAccessPanel from './family/ParentAccessPanel.svelte';
     import type { MembershipPermission } from '$lib/types/auth';
 
-    export let publicOrigin = '';
-    export let onViewAsChild: () => void = () => {};
-    export let showAccessPanel = false;
-    export let showSessionActions = false;
-    export let permission: MembershipPermission | null = null;
+    interface Props {
+        publicOrigin?: string;
+        onViewAsChild?: () => void;
+        showAccessPanel?: boolean;
+        showSessionActions?: boolean;
+        permission?: MembershipPermission | null;
+    }
+
+    let {
+        publicOrigin = '',
+        onViewAsChild = () => {},
+        showAccessPanel = false,
+        showSessionActions = false,
+        permission = null
+    }: Props = $props();
 </script>
 
 <div class="workspace-parent">

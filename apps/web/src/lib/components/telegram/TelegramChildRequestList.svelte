@@ -10,12 +10,23 @@
 
     const i18n = useI18n();
 
-    export let loading = false;
-    export let error = '';
-    export let cancelError = '';
-    export let onRetry: () => void = () => {};
-    export let cancellingIds: Array<string | number> = [];
-    export let onCancel: (request: Request) => void = () => {};
+    interface Props {
+        loading?: boolean;
+        error?: string;
+        cancelError?: string;
+        onRetry?: () => void;
+        cancellingIds?: Array<string | number>;
+        onCancel?: (request: Request) => void;
+    }
+
+    let {
+        loading = false,
+        error = '',
+        cancelError = '',
+        onRetry = () => {},
+        cancellingIds = [],
+        onCancel = () => {}
+    }: Props = $props();
 
     const translator = {
         kindLabel: (kind: 'task' | 'reward') => kind === 'reward'
@@ -38,13 +49,13 @@
         return cancellingIds.some((id) => String(id) === String(request.id));
     }
 
-    $: sortedRequests = sortRequestPresentations($appStore.requests.map((request) => presentRequest(request, translator)));
+    let sortedRequests = $derived(sortRequestPresentations($appStore.requests.map((request) => presentRequest(request, translator))));
 
     const PAGE_SIZE = 10;
-    let visibleCount = PAGE_SIZE;
-    $: visibleRequests = sortedRequests.slice(0, visibleCount);
-    $: hasMore = visibleCount < sortedRequests.length;
-    $: asyncState = (loading && !sortedRequests.length ? 'loading' : error ? 'error' : !sortedRequests.length ? 'empty' : 'success') as AsyncState;
+    let visibleCount = $state(PAGE_SIZE);
+    let visibleRequests = $derived(sortedRequests.slice(0, visibleCount));
+    let hasMore = $derived(visibleCount < sortedRequests.length);
+    let asyncState = $derived((loading && !sortedRequests.length ? 'loading' : error ? 'error' : !sortedRequests.length ? 'empty' : 'success') as AsyncState);
     function showMore() {
         visibleCount += PAGE_SIZE;
     }
@@ -55,9 +66,9 @@
         <TelegramAsyncState state={asyncState} loadingLabel={$i18n.t('app.telegram.childRequests.loading')} emptyLabel={$i18n.t('app.telegram.childRequests.empty')} errorMessage={error} retryLabel={$i18n.t('app.telegram.childRequests.retry')} onRetry={onRetry} />
     {:else}
         <TelegramListSurface label={$i18n.t('app.telegram.childRequests.title')}>{#each visibleRequests as presentation (presentation.request.id)}<TelegramRequestRow {presentation} locale={$i18n.locale}>
-            {#if presentation.status === 'pending'}<button class="cancel" type="button" aria-label={$i18n.t('app.telegram.childRequests.cancelAria')} disabled={isCancelling(presentation.request)} on:click={() => onCancel(presentation.request)}><TelegramIcon name="delete" size={14} label={$i18n.t('app.telegram.childRequests.cancel')} /><span>{$i18n.t('app.telegram.childRequests.cancel')}</span></button>{/if}
+            {#if presentation.status === 'pending'}<button class="cancel" type="button" aria-label={$i18n.t('app.telegram.childRequests.cancelAria')} disabled={isCancelling(presentation.request)} onclick={() => onCancel(presentation.request)}><TelegramIcon name="delete" size={14} label={$i18n.t('app.telegram.childRequests.cancel')} /><span>{$i18n.t('app.telegram.childRequests.cancel')}</span></button>{/if}
         </TelegramRequestRow>{/each}</TelegramListSurface>
-        {#if hasMore}<button class="load-more" type="button" on:click={showMore}><TelegramIcon name="arrowRight" size={18} label={$i18n.t('app.telegram.childRequests.showMore')} />{$i18n.t('app.telegram.childRequests.showMore')}</button>{/if}
+        {#if hasMore}<button class="load-more" type="button" onclick={showMore}><TelegramIcon name="arrowRight" size={18} label={$i18n.t('app.telegram.childRequests.showMore')} />{$i18n.t('app.telegram.childRequests.showMore')}</button>{/if}
     {/if}
     {#if cancelError}<p class="error" role="alert">{cancelError}</p>{/if}
 </section>

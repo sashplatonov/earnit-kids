@@ -1,3 +1,4 @@
+
 <script lang="ts">
     import { onMount } from 'svelte';
     import { useI18n } from '$lib/i18n/context';

@@ -4,10 +4,19 @@
 
     const i18n = useI18n();
 
-    export let nickname: string | null = null;
-    export let balance = 0;
-    export let headingId: string | undefined = undefined;
-    export let loading = false;
+    interface Props {
+        nickname?: string | null;
+        balance?: number;
+        headingId?: string | undefined;
+        loading?: boolean;
+    }
+
+    let {
+        nickname = null,
+        balance = 0,
+        headingId = undefined,
+        loading = false
+    }: Props = $props();
 </script>
 
 <header class="balance-header">

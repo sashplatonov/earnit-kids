@@ -4,8 +4,12 @@
 
     const i18n = useI18n();
 
-    export let href: string | null = null;
-    export let onClick: (() => void) | null = null;
+    interface Props {
+        href?: string | null;
+        onClick?: (() => void) | null;
+    }
+
+    let { href = null, onClick = null }: Props = $props();
 </script>
 
 {#if href}
@@ -14,7 +18,7 @@
         <span>{$i18n.t('app.telegram.parentReturn')}</span>
     </a>
 {:else if onClick}
-    <button class="parent-return" type="button" on:click={onClick} aria-label={$i18n.t('app.telegram.parentReturn')}>
+    <button class="parent-return" type="button" onclick={onClick} aria-label={$i18n.t('app.telegram.parentReturn')}>
         <TelegramIcon name="back" size={16} label={$i18n.t('app.telegram.parentReturn')} />
         <span>{$i18n.t('app.telegram.parentReturn')}</span>
     </button>

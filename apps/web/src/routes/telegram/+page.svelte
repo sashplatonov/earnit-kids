@@ -1,3 +1,4 @@
+
 <script lang="ts">
     import { onMount } from 'svelte';
     import { updateI18n, useI18n } from '$lib/i18n/context';
@@ -124,7 +125,7 @@
                 <LocaleSwitcher familyManaged />
             {:else}
                 <p>{message || $i18n.t('app.telegram.entry.resolveError')}</p>
-                <TelegramActionButton icon="refresh" label={$i18n.t('app.telegram.entry.tryAgain')} on:click={() => void authenticate()} />
+                <TelegramActionButton icon="refresh" label={$i18n.t('app.telegram.entry.tryAgain')} onclick={() => void authenticate()} />
             {/if}
         </div>
     </main>

@@ -1,6 +1,10 @@
 <script lang="ts">
-    export let state: 'idle' | 'pending' | 'success' | 'error' | 'stale' = 'idle';
-    export let message = '';
+    interface Props {
+        state?: 'idle' | 'pending' | 'success' | 'error' | 'stale';
+        message?: string;
+    }
+
+    let { state = 'idle', message = '' }: Props = $props();
 </script>
 
 {#if state !== 'idle'}

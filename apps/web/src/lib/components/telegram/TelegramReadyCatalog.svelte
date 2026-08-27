@@ -25,7 +25,11 @@
     import TelegramListSurface from './ui/TelegramListSurface.svelte';
     import TelegramEntityRow from './ui/TelegramEntityRow.svelte';
 
-    export let kind: 'task' | 'reward' = 'task';
+    interface Props {
+        kind?: 'task' | 'reward';
+    }
+
+    let { kind = 'task' }: Props = $props();
 
     const i18n = useI18n();
     const dispatch = createEventDispatcher<{
@@ -34,25 +38,25 @@
         openDetails: { template: CatalogTaskTemplate | CatalogRewardTemplate };
     }>();
 
-    $: templates = kind === 'task'
+    let templates = $derived(kind === 'task'
         ? ($appStore.catalog.tasks as CatalogTaskTemplate[])
-        : ($catalogRewards as CatalogRewardTemplate[]);
-    $: familyItems = kind === 'task' ? $appStore.tasks : $shopItems;
-    $: groups = catalogGroups(templates as Array<{ groupName?: string }>);
+        : ($catalogRewards as CatalogRewardTemplate[]));
+    let familyItems = $derived(kind === 'task' ? $appStore.tasks : $shopItems);
+    let groups = $derived(catalogGroups(templates as Array<{ groupName?: string }>));
 
-    let query = '';
-    let filters: CatalogFilters = { ...EMPTY_FILTERS };
-    let selectedGroup = '';
-    let filterOpen = false;
-    let bulkMode = false;
-    let selectedIds: string[] = [];
+    let query = $state('');
+    let filters: CatalogFilters = $state({ ...EMPTY_FILTERS });
+    let selectedGroup = $state('');
+    let filterOpen = $state(false);
+    let bulkMode = $state(false);
+    let selectedIds: string[] = $state([]);
 
-    $: filtered = filterCatalog(templates, filters, query)
-        .filter((item) => !selectedGroup || item.groupName === selectedGroup);
-    $: activeFilterCount = nonAgeFilterCount(filters) + (filters.age != null ? 1 : 0);
-    $: filtersLabel = activeFilterCount > 0
+    let filtered = $derived(filterCatalog(templates, filters, query)
+        .filter((item) => !selectedGroup || item.groupName === selectedGroup));
+    let activeFilterCount = $derived(nonAgeFilterCount(filters) + (filters.age != null ? 1 : 0));
+    let filtersLabel = $derived(activeFilterCount > 0
         ? $i18n.t('app.telegram.readyCatalog.filtersCount', { count: activeFilterCount })
-        : $i18n.t('app.telegram.readyCatalog.filters');
+        : $i18n.t('app.telegram.readyCatalog.filters'));
 
     function isAdded(template: { id: string; title: string }): boolean {
         return isAlreadyAdded(template, familyItems);
@@ -95,20 +99,20 @@
 
 <div class="catalog">
     <div class="action-row">
-        <button class="bulk-toggle" type="button" aria-pressed={bulkMode} on:click={() => { bulkMode = !bulkMode; selectedIds = []; }}>
+        <button class="bulk-toggle" type="button" aria-pressed={bulkMode} onclick={() => { bulkMode = !bulkMode; selectedIds = []; }}>
             {#if bulkMode}
                 <TelegramIcon name="check" size={18} label={$i18n.t('app.telegram.readyCatalog.done')} />
             {:else}
                 <TelegramIcon name="selectSeveral" size={18} label={$i18n.t('app.telegram.readyCatalog.selectSeveral')} />
             {/if}
         </button>
-        <button class="filter-btn" class:active={activeFilterCount > 0} type="button" on:click={() => filterOpen = true}>
+        <button class="filter-btn" class:active={activeFilterCount > 0} type="button" onclick={() => filterOpen = true}>
             <TelegramIcon name="filter" size={18} label={$i18n.t('app.telegram.readyCatalog.filters')} />
             <span>{filtersLabel}</span>
         </button>
         <div class="search">
             <TelegramIcon name="search" size={18} label={$i18n.t('app.telegram.readyCatalog.search')} />
-            <input type="search" bind:value={query} on:input={() => track('catalog_search_used')} placeholder={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.searchTasks') : $i18n.t('app.telegram.readyCatalog.searchRewards')} aria-label={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.searchTasks') : $i18n.t('app.telegram.readyCatalog.searchRewards')} />
+            <input type="search" bind:value={query} oninput={() => track('catalog_search_used')} placeholder={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.searchTasks') : $i18n.t('app.telegram.readyCatalog.searchRewards')} aria-label={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.searchTasks') : $i18n.t('app.telegram.readyCatalog.searchRewards')} />
         </div>
     </div>
 
@@ -126,36 +130,44 @@
         <div class="empty">
             <p class="empty-title">{$i18n.t('app.telegram.readyCatalog.noResults')}</p>
             <p class="empty-hint">{$i18n.t('app.telegram.readyCatalog.noResultsHint')}</p>
-            <button class="reset" type="button" on:click={() => { query = ''; filters = { ...EMPTY_FILTERS }; selectedGroup = ''; }}>{$i18n.t('app.telegram.readyCatalog.reset')}</button>
+            <button class="reset" type="button" onclick={() => { query = ''; filters = { ...EMPTY_FILTERS }; selectedGroup = ''; }}>{$i18n.t('app.telegram.readyCatalog.reset')}</button>
         </div>
     {:else}
         <TelegramListSurface label={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.catalogTasks') : $i18n.t('app.telegram.readyCatalog.catalogRewards')}>
             {#each filtered as template (template.id)}
-                <TelegramEntityRow interactive hasSelection={bulkMode}>
-                    <svelte:fragment slot="selection">
-                        {#if bulkMode}
-                            <label class="check-wrap">
-                            <input class="check" type="checkbox" checked={selectedIds.includes(template.id)} aria-label={stripEmoji(template.title)} on:change={() => toggleSelect(template.id)} />
-                            </label>
-                        {/if}
-                    </svelte:fragment>
-                    <span slot="icon"><TelegramIcon name={getTelegramEntityIcon({ kind, title: template.title, group: template.groupName, semantic: template.semanticGraphicKey ?? null })} size={20} label={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.catalogTasks') : $i18n.t('app.telegram.readyCatalog.catalogRewards')} /></span>
-                    <button slot="title" class="row-main" type="button" aria-label={stripEmoji(template.title)} on:click={() => openDetails(template)}>
-                        <span class="title">{template.title}</span>
-                        <span class="row-metadata">
-                            <span class="meta"><TelegramCoin size={13} /><span>{amountLabel(template).amount}</span> · <span>{stripEmoji(template.groupName || '')}</span></span>
-                            <span class="meta">{freqLabel(template)}</span>
-                        </span>
-                    </button>
-                    <svelte:fragment slot="interactive">
-                        {#if !bulkMode}
-                            {#if isAdded(template)}
-                                <button class="row-action added" type="button" disabled><TelegramIcon name="check" size={16} label={$i18n.t('app.telegram.readyCatalog.added')} /></button>
-                            {:else}
-                                <button class="row-action add" type="button" aria-label={$i18n.t('app.telegram.readyCatalog.add')} on:click={() => addOne(template)}><TelegramIcon name="add" size={16} label={$i18n.t('app.telegram.readyCatalog.add')} /></button>
+                <TelegramEntityRow isInteractive hasSelection={bulkMode}>
+                    {#snippet selection()}
+
+                            {#if bulkMode}
+                                <label class="check-wrap">
+                                <input class="check" type="checkbox" checked={selectedIds.includes(template.id)} aria-label={stripEmoji(template.title)} onchange={() => toggleSelect(template.id)} />
+                                </label>
                             {/if}
-                        {/if}
-                    </svelte:fragment>
+
+                                    {/snippet}
+                    {#snippet icon()}
+                                        <span ><TelegramIcon name={getTelegramEntityIcon({ kind, title: template.title, group: template.groupName, semantic: template.semanticGraphicKey ?? null })} size={20} label={kind === 'task' ? $i18n.t('app.telegram.readyCatalog.catalogTasks') : $i18n.t('app.telegram.readyCatalog.catalogRewards')} /></span>
+                                    {/snippet}
+                    {#snippet title()}
+                                        <button  class="row-main" type="button" aria-label={stripEmoji(template.title)} onclick={() => openDetails(template)}>
+                            <span class="title">{template.title}</span>
+                            <span class="row-metadata">
+                                <span class="meta"><TelegramCoin size={13} /><span>{amountLabel(template).amount}</span> · <span>{stripEmoji(template.groupName || '')}</span></span>
+                                <span class="meta">{freqLabel(template)}</span>
+                            </span>
+                        </button>
+                                    {/snippet}
+    {#snippet interactive()}
+
+                            {#if !bulkMode}
+                                {#if isAdded(template)}
+                                    <button class="row-action added" type="button" disabled><TelegramIcon name="check" size={16} label={$i18n.t('app.telegram.readyCatalog.added')} /></button>
+                                {:else}
+                                    <button class="row-action add" type="button" aria-label={$i18n.t('app.telegram.readyCatalog.add')} onclick={() => addOne(template)}><TelegramIcon name="add" size={16} label={$i18n.t('app.telegram.readyCatalog.add')} /></button>
+                                {/if}
+                            {/if}
+
+                                    {/snippet}
                 </TelegramEntityRow>
             {/each}
         </TelegramListSurface>
@@ -164,7 +176,7 @@
     {#if bulkMode && selectedIds.length > 0}
         <div class="bulkbar">
             <span class="grow">{$i18n.t('app.telegram.readyCatalog.selected', { count: selectedIds.length })}</span>
-            <button class="bulk-add" type="button" on:click={addSelected}>
+            <button class="bulk-add" type="button" onclick={addSelected}>
                 {kind === 'task'
                     ? $i18n.t('app.telegram.readyCatalog.addSelectedTasks', { count: selectedIds.length })
                     : $i18n.t('app.telegram.readyCatalog.addSelectedRewards', { count: selectedIds.length })}

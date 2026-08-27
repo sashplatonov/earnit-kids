@@ -8,11 +8,21 @@
         icon: string;
     };
 
-    export let tabs: readonly DashboardTab[];
-    export let activeTab: string;
-    export let onSelect: (tabId: string) => void;
-    export let onKeydown: (event: KeyboardEvent, tabId: string) => void;
-    export let ariaLabel: string;
+    interface Props {
+        tabs: readonly DashboardTab[];
+        activeTab: string;
+        onSelect: (tabId: string) => void;
+        onKeydown: (event: KeyboardEvent, tabId: string) => void;
+        ariaLabel: string;
+    }
+
+    let {
+        tabs,
+        activeTab,
+        onSelect,
+        onKeydown,
+        ariaLabel
+    }: Props = $props();
 </script>
 
 <div class="tabs-wrap">
@@ -27,8 +37,8 @@
                 aria-selected={activeTab === tab.id}
                 aria-controls={`panel-${tab.id}`}
                 tabindex={activeTab === tab.id ? 0 : -1}
-                on:click={() => onSelect(tab.id)}
-                on:keydown={(event) => onKeydown(event, tab.id)}
+                onclick={() => onSelect(tab.id)}
+                onkeydown={(event) => onKeydown(event, tab.id)}
             >
                 <span class="tab-ico" aria-hidden="true">
                     {#if tab.id === 'coins'}

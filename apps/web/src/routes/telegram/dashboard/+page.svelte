@@ -11,6 +11,7 @@
     import DashboardPeriodControl from '$lib/features/telegram/dashboard/DashboardPeriodControl.svelte';
     import DashboardTabNavigation from '$lib/features/telegram/dashboard/DashboardTabNavigation.svelte';
     import DashboardTooltip from '$lib/features/telegram/dashboard/DashboardTooltip.svelte';
+    import type { PageData } from './$types';
 
     const i18n = useI18n();
 
@@ -37,31 +38,24 @@
         points?: TrendPoint[];
     };
 
-    // EXPLAIN: Server authorization is authoritative on direct dashboard
-    // navigations; the store is populated later by the Mini App bootstrap.
-    $: isAdmin = data.isAdmin === true || $appStore.isAdmin;
 
-    export let data;
-    let overview = data.overview;
-    let coinEconomy: AnalyticsSectionData | null = data.coinEconomy;
-    let taskEconomy: AnalyticsSectionData | null = data.taskEconomy;
-    let parentBehavior: AnalyticsSectionData | null = data.parentBehavior;
-    let childBehavior: AnalyticsSectionData | null = data.childBehavior;
-    let activationFunnel: AnalyticsSectionData | null = data.activationFunnel;
-    let retention: AnalyticsSectionData | null = data.retention;
-    let rewards: AnalyticsSectionData | null = data.rewards;
-    let trends: AnalyticsSectionData | null = data.trends;
-    let dashboardStatus = data.dashboardStatus ?? (overview == null ? 'unavailable' : 'available');
-    let trendsStatus: 'available' | 'unavailable' = data.trendsStatus ?? (trends == null ? 'unavailable' : 'available');
+    let { data }: { data: PageData } = $props();
+    let overview = $state(data.overview);
+    let coinEconomy: AnalyticsSectionData | null = $state(data.coinEconomy);
+    let taskEconomy: AnalyticsSectionData | null = $state(data.taskEconomy);
+    let parentBehavior: AnalyticsSectionData | null = $state(data.parentBehavior);
+    let childBehavior: AnalyticsSectionData | null = $state(data.childBehavior);
+    let activationFunnel: AnalyticsSectionData | null = $state(data.activationFunnel);
+    let retention: AnalyticsSectionData | null = $state(data.retention);
+    let rewards: AnalyticsSectionData | null = $state(data.rewards);
+    let trends = $state<AnalyticsSectionData | null>(data.trends ?? null);
+    let dashboardStatus = $state(data.dashboardStatus ?? (overview == null ? 'unavailable' : 'available'));
+    let trendsStatus: 'available' | 'unavailable' = $state(data.trendsStatus ?? (trends == null ? 'unavailable' : 'available'));
     let unavailableSections = data.unavailableSections ?? [];
 
     let loadedSections: string[] = [];
-    let loadingSections: string[] = [];
+    let loadingSections: string[] = $state([]);
 
-    // EXPLAIN: The selected period comes from the URL (?period=...) and is
-    // EXPLAIN: resolved server-side, so changing it reloads real data.
-    $: selectedPeriod = data.period ?? '30d';
-    $: selectedPeriodLabel = t(`periods.${selectedPeriod}`);
 
     // EXPLAIN: Tab definitions with semantic SVG icons (from the shared
     // EXPLAIN: TelegramIcon set) instead of emoji, so the tab bar reads clearly.
@@ -75,7 +69,7 @@
 
     type TabId = typeof tabs[number]['id'];
 
-    let activeTab: TabId = 'overview';
+    let activeTab: TabId = $state('overview');
 
     const activitySubtabs = [
         { id: 'activation', label: t('activityTabs.activation') },
@@ -85,8 +79,8 @@
 
     type ActivitySubtabId = typeof activitySubtabs[number]['id'];
 
-    let activeActivitySubtab: ActivitySubtabId = 'activation';
-    let periodLoading = false;
+    let activeActivitySubtab: ActivitySubtabId = $state('activation');
+    let periodLoading = $state(false);
 
     const analyticsEndpoints: Record<string, string> = {
         coinEconomy: '/api/admin/analytics/coin-economy',
@@ -246,9 +240,6 @@
         void navigateToPeriod(selectedPeriod);
     }
 
-    // EXPLAIN: Trend bar helpers for ADM-14
-    $: maxActiveFamilies = Math.max(1, ...(trends?.points ?? []).map((p: { activeFamilies: number }) => p.activeFamilies));
-    $: maxCoins = Math.max(1, ...(trends?.points ?? []).map((p: { coinsEarned: number; coinsSpent: number }) => Math.max(p.coinsEarned, p.coinsSpent)));
 
     function barHeight(value: number, max: number): number {
         if (!max) return 0;
@@ -256,7 +247,7 @@
     }
 
     // EXPLAIN: ADM-21 tap-accessible tooltip state
-    let activeTooltip: string | null = null;
+    let activeTooltip: string | null = $state(null);
     let tooltipTrigger: HTMLButtonElement | null = null;
 
     async function toggleTooltip(key: string, event: MouseEvent) {
@@ -373,6 +364,16 @@
             body: t('tooltips.active30d.body'),
         },
     };
+    // EXPLAIN: Server authorization is authoritative on direct dashboard
+    // navigations; the store is populated later by the Mini App bootstrap.
+    let isAdmin = $derived(data.isAdmin === true || $appStore.isAdmin);
+    // EXPLAIN: The selected period comes from the URL (?period=...) and is
+    // EXPLAIN: resolved server-side, so changing it reloads real data.
+    let selectedPeriod = $derived(data.period ?? '30d');
+    let selectedPeriodLabel = $derived(t(`periods.${selectedPeriod}`));
+    // EXPLAIN: Trend bar helpers for ADM-14
+    let maxActiveFamilies = $derived(Math.max(1, ...(trends?.points ?? []).map((p: { activeFamilies: number }) => p.activeFamilies)));
+    let maxCoins = $derived(Math.max(1, ...(trends?.points ?? []).map((p: { coinsEarned: number; coinsSpent: number }) => Math.max(p.coinsEarned, p.coinsSpent))));
 </script>
 
 <svelte:head>
@@ -397,7 +398,9 @@
             updatedAt={t('updatedAt', { time: $i18n.formatDate(new Date(), { hour: '2-digit', minute: '2-digit' }) })}
             onChange={changePeriod}
         >
-            <span slot="label" let:period>{t(`periods.${period}`)}</span>
+            {#snippet label({ period })}
+                        <span  >{t(`periods.${period}`)}</span>
+                    {/snippet}
         </DashboardPeriodControl>
 
         {#if periodLoading || $navigating !== null}
@@ -412,14 +415,14 @@
                 <span class="empty-ico" aria-hidden="true"><TelegramIcon name="alert" size={18} /></span>
                 <b>{t('empty.unavailableTitle')}</b>
                 <small>{t('empty.unavailableDesc')}</small>
-                <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                <button class="retry-btn" type="button" onclick={retry}>{t('empty.retry')}</button>
             </div>
         {:else if sectionUnavailable('overview')}
             <div class="empty-state" role="status">
                 <span class="empty-ico" aria-hidden="true"><TelegramIcon name="alert" size={18} /></span>
                 <b>{t('empty.sectionUnavailableTitle')}</b>
                 <small>{t('empty.sectionUnavailableDesc')}</small>
-                <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                <button class="retry-btn" type="button" onclick={retry}>{t('empty.retry')}</button>
             </div>
         {:else if (overview?.overview?.totalFamilies ?? 0) === 0}
             <div class="empty-state" role="status">
@@ -453,9 +456,9 @@
         <!-- Tab panels -->
         <div class="tab-panels">
             <!-- Overview Tab -->
-            <div 
-                id="panel-overview" 
-                class="tab-panel" 
+            <div
+                id="panel-overview"
+                class="tab-panel"
                 class:active={activeTab === 'overview'}
                 role="tabpanel"
                 aria-labelledby="tab-overview"
@@ -464,7 +467,7 @@
                     <div class="empty-state" role="status">
                         <b>{t('empty.sectionUnavailableTitle')}</b>
                         <small>{t('empty.sectionUnavailableDesc')}</small>
-                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                        <button class="retry-btn" type="button" onclick={retry}>{t('empty.retry')}</button>
                     </div>
                 {:else}
                 {#if buildCoinInsight()}
@@ -484,7 +487,7 @@
                     <div class="kpi">
                         <div class="kpi-head">
                             <div class="kpi-label">{t('kpis.activeFamilies')}</div>
-                            <button class="info" aria-label={t('tooltips.activeFamilies.label')} on:click={(event) => toggleTooltip('activeFamilies', event)}><TelegramIcon name="help" size={15} /></button>
+                            <button class="info" aria-label={t('tooltips.activeFamilies.label')} onclick={(event) => toggleTooltip('activeFamilies', event)}><TelegramIcon name="help" size={15} /></button>
                         </div>
                         <div class="kpi-value">{formatValue(overview?.overview?.activeFamilies)}</div>
                         <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriodLabel })}</div>
@@ -497,7 +500,7 @@
                     <div class="kpi">
                         <div class="kpi-head">
                             <div class="kpi-label">{t('kpis.activeChildren')}</div>
-                            <button class="info" aria-label={t('tooltips.activeChildren.label')} on:click={(event) => toggleTooltip('activeChildren', event)}><TelegramIcon name="help" size={15} /></button>
+                            <button class="info" aria-label={t('tooltips.activeChildren.label')} onclick={(event) => toggleTooltip('activeChildren', event)}><TelegramIcon name="help" size={15} /></button>
                         </div>
                         <div class="kpi-value">{formatValue(overview?.overview?.activeChildren)}</div>
                         <div class="kpi-foot">{t('kpis.inPeriod', { period: selectedPeriodLabel })}</div>
@@ -541,9 +544,9 @@
             </div>
 
             <!-- Coins Tab -->
-            <div 
-                id="panel-coins" 
-                class="tab-panel" 
+            <div
+                id="panel-coins"
+                class="tab-panel"
                 class:active={activeTab === 'coins'}
                 role="tabpanel"
                 aria-labelledby="tab-coins"
@@ -552,7 +555,7 @@
                     <div class="empty-state" role="status">
                         <b>{t('empty.sectionUnavailableTitle')}</b>
                         <small>{t('empty.sectionUnavailableDesc')}</small>
-                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                        <button class="retry-btn" type="button" onclick={retry}>{t('empty.retry')}</button>
                     </div>
                 {:else}
                 <h2 class="section-title">{t('sections.coinEconomy')}</h2>
@@ -573,7 +576,7 @@
                     <div class="coin-health-heading">
                         <div>
                             <strong>{t('coins.spendEarn.label')}</strong>
-                            <button class="mini-info" aria-label={t('tooltips.spendEarn.label')} on:click={(event) => toggleTooltip('spendEarn', event)}><TelegramIcon name="help" size={14} /></button>
+                            <button class="mini-info" aria-label={t('tooltips.spendEarn.label')} onclick={(event) => toggleTooltip('spendEarn', event)}><TelegramIcon name="help" size={14} /></button>
                             <small>{t('kpis.inPeriod', { period: selectedPeriodLabel })}</small>
                         </div>
                         <b>{formatValue(coinEconomy?.coins?.spendRate, true)}</b>
@@ -591,7 +594,7 @@
                         <div>
                             <div class="metric-title">
                                 <strong>{t('metrics.medianBalance.title')}</strong>
-                                <button class="mini-info" aria-label={t('tooltips.medianBalance.label')} on:click={(event) => toggleTooltip('medianBalance', event)}><TelegramIcon name="help" size={14} /></button>
+                                <button class="mini-info" aria-label={t('tooltips.medianBalance.label')} onclick={(event) => toggleTooltip('medianBalance', event)}><TelegramIcon name="help" size={14} /></button>
                             </div>
                             <small>{t('metrics.medianBalance.desc')}</small>
                         </div>
@@ -601,7 +604,7 @@
                         <div>
                             <div class="metric-title">
                                 <strong>{t('metrics.timeToFirstReward.title')}</strong>
-                                <button class="mini-info" aria-label={t('tooltips.timeToFirstReward.label')} on:click={(event) => toggleTooltip('timeToFirstReward', event)}><TelegramIcon name="help" size={14} /></button>
+                                <button class="mini-info" aria-label={t('tooltips.timeToFirstReward.label')} onclick={(event) => toggleTooltip('timeToFirstReward', event)}><TelegramIcon name="help" size={14} /></button>
                             </div>
                             <small>{t('metrics.timeToFirstReward.desc')}</small>
                         </div>
@@ -611,7 +614,7 @@
                         <div>
                             <div class="metric-title">
                                 <strong>{t('metrics.earningNotSpending.title')}</strong>
-                                <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} on:click={(event) => toggleTooltip('earningNotSpending', event)}><TelegramIcon name="help" size={14} /></button>
+                                <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} onclick={(event) => toggleTooltip('earningNotSpending', event)}><TelegramIcon name="help" size={14} /></button>
                             </div>
                             <small>{t('metrics.earningNotSpending.desc')}</small>
                         </div>
@@ -634,7 +637,7 @@
                     <div class="empty-state" role="status">
                         <b>{t('empty.sectionUnavailableTitle')}</b>
                         <small>{t('empty.sectionUnavailableDesc')}</small>
-                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                        <button class="retry-btn" type="button" onclick={retry}>{t('empty.retry')}</button>
                     </div>
                 {:else}
                 <h2 class="section-title">{t('tabs.rewards')}</h2>
@@ -697,9 +700,9 @@
             </div>
 
             <!-- Tasks Tab -->
-            <div 
-                id="panel-tasks" 
-                class="tab-panel" 
+            <div
+                id="panel-tasks"
+                class="tab-panel"
                 class:active={activeTab === 'tasks'}
                 role="tabpanel"
                 aria-labelledby="tab-tasks"
@@ -708,7 +711,7 @@
                     <div class="empty-state" role="status">
                         <b>{t('empty.sectionUnavailableTitle')}</b>
                         <small>{t('empty.sectionUnavailableDesc')}</small>
-                        <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                        <button class="retry-btn" type="button" onclick={retry}>{t('empty.retry')}</button>
                     </div>
                 {:else}
                 <h2 class="section-title">{t('tabs.tasks')}</h2>
@@ -721,7 +724,7 @@
                     <div class="kpi">
                         <div class="kpi-head">
                             <div class="kpi-label">{t('tasks.approvalRate.label')}</div>
-                            <button class="info" aria-label={t('tooltips.approvalRate.label')} on:click={(event) => toggleTooltip('approvalRate', event)}><TelegramIcon name="help" size={15} /></button>
+                            <button class="info" aria-label={t('tooltips.approvalRate.label')} onclick={(event) => toggleTooltip('approvalRate', event)}><TelegramIcon name="help" size={15} /></button>
                         </div>
                         <div class="kpi-value">{formatValue(taskEconomy?.taskMetrics?.approvalRate, true)}</div>
                         <div class="kpi-foot">{t('tasks.approvedByParents')}</div>
@@ -777,9 +780,9 @@
             </div>
 
             <!-- Activity Tab -->
-            <div 
-                id="panel-activity" 
-                class="tab-panel" 
+            <div
+                id="panel-activity"
+                class="tab-panel"
                 class:active={activeTab === 'activity'}
                 role="tabpanel"
                 aria-labelledby="tab-activity"
@@ -795,8 +798,8 @@
                             aria-selected={activeActivitySubtab === subtab.id}
                             aria-controls={`panel-activity-${subtab.id}`}
                             tabindex={activeActivitySubtab === subtab.id ? 0 : -1}
-                            on:click={() => switchActivitySubtab(subtab.id)}
-                            on:keydown={(event) => handleActivitySubtabKeydown(event, subtab.id)}
+                            onclick={() => switchActivitySubtab(subtab.id)}
+                            onkeydown={(event) => handleActivitySubtabKeydown(event, subtab.id)}
                         >{subtab.label}</button>
                     {/each}
                 </div>
@@ -813,7 +816,7 @@
                             <div class="empty-state" role="status">
                                 <b>{t('empty.sectionUnavailableTitle')}</b>
                                 <small>{t('empty.sectionUnavailableDesc')}</small>
-                                <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                                <button class="retry-btn" type="button" onclick={retry}>{t('empty.retry')}</button>
                             </div>
                         {:else if activationFunnel?.stages && activationFunnel.stages.length > 0}
                             <div class="funnel">
@@ -857,7 +860,7 @@
                             <div class="empty-state" role="status">
                                 <b>{t('empty.sectionUnavailableTitle')}</b>
                                 <small>{t('empty.sectionUnavailableDesc')}</small>
-                                <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                                <button class="retry-btn" type="button" onclick={retry}>{t('empty.retry')}</button>
                             </div>
                         {:else}
                         <div class="metric-list">
@@ -879,7 +882,7 @@
                                 <div>
                                     <div class="metric-title">
                                         <strong>{t('retention.active7d.title')}</strong>
-                                        <button class="mini-info" aria-label={t('tooltips.active7d.label')} on:click={(event) => toggleTooltip('active7d', event)}><TelegramIcon name="help" size={14} /></button>
+                                        <button class="mini-info" aria-label={t('tooltips.active7d.label')} onclick={(event) => toggleTooltip('active7d', event)}><TelegramIcon name="help" size={14} /></button>
                                     </div>
                                     <small>{t('retention.active7d.desc')}</small>
                                 </div>
@@ -889,7 +892,7 @@
                                 <div>
                                     <div class="metric-title">
                                         <strong>{t('retention.active30d.title')}</strong>
-                                        <button class="mini-info" aria-label={t('tooltips.active30d.label')} on:click={(event) => toggleTooltip('active30d', event)}><TelegramIcon name="help" size={14} /></button>
+                                        <button class="mini-info" aria-label={t('tooltips.active30d.label')} onclick={(event) => toggleTooltip('active30d', event)}><TelegramIcon name="help" size={14} /></button>
                                     </div>
                                     <small>{t('retention.active30d.desc')}</small>
                                 </div>
@@ -903,7 +906,7 @@
                             <div class="empty-state" role="status">
                                 <b>{t('empty.sectionUnavailableTitle')}</b>
                                 <small>{t('empty.sectionUnavailableDesc')}</small>
-                                <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                                <button class="retry-btn" type="button" onclick={retry}>{t('empty.retry')}</button>
                             </div>
                         {:else if trends?.points && trends.points.length > 0}
                             <div class="trend">
@@ -953,7 +956,7 @@
                             <div class="empty-state" role="status">
                                 <b>{t('empty.sectionUnavailableTitle')}</b>
                                 <small>{t('empty.sectionUnavailableDesc')}</small>
-                                <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                                <button class="retry-btn" type="button" onclick={retry}>{t('empty.retry')}</button>
                             </div>
                         {:else}
                             <div class="metric-list">
@@ -979,7 +982,7 @@
                                     <div>
                                         <div class="metric-title">
                                             <strong>{t('parent.decisionTime.title')}</strong>
-                                            <button class="mini-info" aria-label={t('tooltips.decisionTime.label')} on:click={(event) => toggleTooltip('decisionTime', event)}><TelegramIcon name="help" size={14} /></button>
+                                            <button class="mini-info" aria-label={t('tooltips.decisionTime.label')} onclick={(event) => toggleTooltip('decisionTime', event)}><TelegramIcon name="help" size={14} /></button>
                                         </div>
                                         <small>{t('parent.decisionTime.desc')}</small>
                                     </div>
@@ -989,7 +992,7 @@
                                     <div>
                                         <div class="metric-title">
                                             <strong>{t('parent.pendingBacklog.title')}</strong>
-                                            <button class="mini-info" aria-label={t('tooltips.pendingBacklog.label')} on:click={(event) => toggleTooltip('pendingBacklog', event)}><TelegramIcon name="help" size={14} /></button>
+                                            <button class="mini-info" aria-label={t('tooltips.pendingBacklog.label')} onclick={(event) => toggleTooltip('pendingBacklog', event)}><TelegramIcon name="help" size={14} /></button>
                                         </div>
                                         <small>{t('parent.pendingBacklog.desc')}</small>
                                     </div>
@@ -1010,7 +1013,7 @@
                             <div class="empty-state" role="status">
                                 <b>{t('empty.sectionUnavailableTitle')}</b>
                                 <small>{t('empty.sectionUnavailableDesc')}</small>
-                                <button class="retry-btn" type="button" on:click={retry}>{t('empty.retry')}</button>
+                                <button class="retry-btn" type="button" onclick={retry}>{t('empty.retry')}</button>
                             </div>
                         {:else}
                             <div class="metric-list">
@@ -1032,7 +1035,7 @@
                                     <div>
                                         <div class="metric-title">
                                             <strong>{t('child.earningNotSpending.title')}</strong>
-                                            <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} on:click={(event) => toggleTooltip('earningNotSpending', event)}><TelegramIcon name="help" size={14} /></button>
+                                            <button class="mini-info" aria-label={t('tooltips.earningNotSpending.label')} onclick={(event) => toggleTooltip('earningNotSpending', event)}><TelegramIcon name="help" size={14} /></button>
                                         </div>
                                         <small>{t('child.earningNotSpending.desc')}</small>
                                     </div>
@@ -1061,7 +1064,7 @@
 </main>
 {/if}
 
-<svelte:window on:keydown={handleTooltipKeydown} />
+<svelte:window onkeydown={handleTooltipKeydown} />
 
 <style>
     :global(.dashboard-container) {

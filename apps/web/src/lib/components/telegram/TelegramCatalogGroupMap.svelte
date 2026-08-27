@@ -2,32 +2,42 @@
     import { useI18n } from '$lib/i18n/context';
     import TelegramIcon from './TelegramIcon.svelte';
 
-    export let open = false;
-    export let groupName: string | null = null;
-    export let familyGroups: string[] = [];
-    export let onChoose: (groupName: string | null) => void = () => {};
-    export let onClose: () => void = () => {};
+    interface Props {
+        open?: boolean;
+        groupName?: string | null;
+        familyGroups?: string[];
+        onChoose?: (groupName: string | null) => void;
+        onClose?: () => void;
+    }
+
+    let {
+        open = false,
+        groupName = null,
+        familyGroups = [],
+        onChoose = () => {},
+        onClose = () => {}
+    }: Props = $props();
 
     const i18n = useI18n();
 </script>
 
 {#if open}
-    <div class="sheet-backdrop" role="presentation" on:click={onClose}></div>
+    <div class="sheet-backdrop" role="presentation" onclick={onClose}></div>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="group-map-title" tabindex="-1">
         <h2 id="group-map-title">{$i18n.t('app.telegram.readyCatalog.whereToAdd')}</h2>
         <div class="list">
             {#each familyGroups as group (group)}
-                <button class="item" type="button" on:click={() => onChoose(group)}>{group}</button>
+                <button class="item" type="button" onclick={() => onChoose(group)}>{group}</button>
             {/each}
-            <button class="item" type="button" on:click={() => onChoose(null)}>{$i18n.t('app.telegram.readyCatalog.withoutGroup')}</button>
+            <button class="item" type="button" onclick={() => onChoose(null)}>{$i18n.t('app.telegram.readyCatalog.withoutGroup')}</button>
             {#if groupName && !familyGroups.includes(groupName)}
-                <button class="item item--create" type="button" on:click={() => onChoose(groupName)}>
+                <button class="item item--create" type="button" onclick={() => onChoose(groupName)}>
                     <TelegramIcon name="add" size={16} label={$i18n.t('app.telegram.readyCatalog.createGroup', { name: groupName })} />
                     {$i18n.t('app.telegram.readyCatalog.createGroup', { name: groupName })}
                 </button>
             {/if}
         </div>
-        <button class="close" type="button" on:click={onClose}>{$i18n.t('app.telegram.readyCatalog.cancel')}</button>
+        <button class="close" type="button" onclick={onClose}>{$i18n.t('app.telegram.readyCatalog.cancel')}</button>
     </div>
 {/if}
 

@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { useI18n } from '$lib/i18n/context';
     import type { MessageKey } from '$lib/i18n';
     import {
@@ -9,16 +11,26 @@
     } from './semanticGraphics';
     import TelegramIcon from './TelegramIcon.svelte';
 
-    export let open = false;
-    export let title = '';
-    export let initial: string | null = null;
-    export let onSelect: (key: string) => void = () => {};
-    export let onClose: () => void = () => {};
+    interface Props {
+        open?: boolean;
+        title?: string;
+        initial?: string | null;
+        onSelect?: (key: string) => void;
+        onClose?: () => void;
+    }
+
+    let {
+        open = false,
+        title = '',
+        initial = null,
+        onSelect = () => {},
+        onClose = () => {}
+    }: Props = $props();
 
     const i18n = useI18n();
     const RECENT_KEY = 'earnit:recent-graphics';
 
-    let query = '';
+    let query = $state('');
 
     function loadRecent(): string[] {
         try {
@@ -39,16 +51,7 @@
         }
     }
 
-    $: normalizedQuery = query.trim().toLowerCase();
-    let recentGraphics: SemanticGraphic[] = [];
-    $: if (open) {
-        recentGraphics = loadRecent()
-            .map((key) => SEMANTIC_GRAPHICS.find((graphic) => graphic.key === key))
-            .filter((graphic): graphic is SemanticGraphic => graphic !== undefined);
-    }
-    $: filteredRecent = normalizedQuery
-        ? recentGraphics.filter((graphic) => graphicLabel(graphic.key).toLowerCase().includes(normalizedQuery))
-        : recentGraphics;
+    let recentGraphics: SemanticGraphic[] = $state([]);
 
     function visible(graphics: readonly SemanticGraphic[]): readonly SemanticGraphic[] {
         return normalizedQuery
@@ -64,10 +67,21 @@
 
     function graphicLabel(key: string): string { return $i18n.t(`app.telegram.graphics.labels.${key}` as MessageKey); }
     function categoryLabel(key: string): string { return $i18n.t(`app.telegram.graphics.categories.${key}` as MessageKey); }
+    let normalizedQuery = $derived(query.trim().toLowerCase());
+    run(() => {
+        if (open) {
+            recentGraphics = loadRecent()
+                .map((key) => SEMANTIC_GRAPHICS.find((graphic) => graphic.key === key))
+                .filter((graphic): graphic is SemanticGraphic => graphic !== undefined);
+        }
+    });
+    let filteredRecent = $derived(normalizedQuery
+        ? recentGraphics.filter((graphic) => graphicLabel(graphic.key).toLowerCase().includes(normalizedQuery))
+        : recentGraphics);
 </script>
 
 {#if open}
-    <div class="picker-backdrop" role="presentation" on:click={onClose}></div>
+    <div class="picker-backdrop" role="presentation" onclick={onClose}></div>
     <div class="picker" role="dialog" aria-modal="true" aria-labelledby="graphics-title" tabindex="-1">
         <h2 id="graphics-title">{title}</h2>
         <input class="search" type="search" bind:value={query} placeholder={$i18n.t('app.telegram.graphics.search')} aria-label={$i18n.t('app.telegram.graphics.search')} />
@@ -76,7 +90,7 @@
             <h3 class="picker-subtitle">{$i18n.t('app.telegram.graphics.recent')}</h3>
             <div class="group">
                 {#each filteredRecent as graphic (graphic.key)}
-                    <button class:selected={graphic.key === initial} type="button" on:click={() => choose(graphic.key)}>
+                    <button class:selected={graphic.key === initial} type="button" onclick={() => choose(graphic.key)}>
                         <span class="gico"><TelegramIcon name={graphic.key} size={20} label={graphicLabel(graphic.key)} /></span>
                         <span class="grow"><span class="glabel">{graphicLabel(graphic.key)}</span></span>
                         {#if graphic.key === initial}<span class="badge">{$i18n.t('app.telegram.graphics.selected')}</span>{/if}
@@ -90,7 +104,7 @@
                 <h3 class="picker-subtitle">{categoryLabel(category.key)}</h3>
                 <div class="group">
                     {#each visible(getGraphicsForCategory(category.key)) as graphic (graphic.key)}
-                        <button class:selected={graphic.key === initial} type="button" on:click={() => choose(graphic.key)}>
+                        <button class:selected={graphic.key === initial} type="button" onclick={() => choose(graphic.key)}>
                             <span class="gico"><TelegramIcon name={graphic.key} size={20} label={graphicLabel(graphic.key)} /></span>
                             <span class="grow"><span class="glabel">{graphicLabel(graphic.key)}</span></span>
                             {#if graphic.key === initial}<span class="badge">{$i18n.t('app.telegram.graphics.selected')}</span>{/if}
@@ -100,7 +114,7 @@
             {/if}
         {/each}
 
-        <button class="close" type="button" on:click={onClose}>{$i18n.t('app.telegram.header.close')}</button>
+        <button class="close" type="button" onclick={onClose}>{$i18n.t('app.telegram.header.close')}</button>
     </div>
 {/if}
 

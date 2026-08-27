@@ -2,13 +2,25 @@
     import TelegramIcon from '../TelegramIcon.svelte';
     import WorkspaceSessionActions from '$lib/features/workspace/WorkspaceSessionActions.svelte';
     import type { TelegramTab } from './telegramTabBar';
-    export let tabs: readonly TelegramTab[] = [];
-    export let selected = '';
-    export let idPrefix = '';
-    export let ariaLabel = '';
-    export let onSelect: (id: string) => void = () => {};
-    export let fixedOnMobile = true;
-    export let showSessionActions = false;
+    interface Props {
+        tabs?: readonly TelegramTab[];
+        selected?: string;
+        idPrefix?: string;
+        ariaLabel?: string;
+        onSelect?: (id: string) => void;
+        fixedOnMobile?: boolean;
+        showSessionActions?: boolean;
+    }
+
+    let {
+        tabs = [],
+        selected = '',
+        idPrefix = '',
+        ariaLabel = '',
+        onSelect = () => {},
+        fixedOnMobile = true,
+        showSessionActions = false
+    }: Props = $props();
 
     function handleKeydown(event: KeyboardEvent) {
         const index = tabs.findIndex((tab) => tab.id === selected);
@@ -27,9 +39,9 @@
 </script>
 
 <nav class="tabs-navigation" class:has-session-actions={showSessionActions} aria-label={showSessionActions ? ariaLabel : undefined}>
-    <div class:tabs--inline={!fixedOnMobile} class:tabs--fixed={fixedOnMobile} class="tabs" style={`--telegram-tab-count:${tabs.length};`} aria-label={ariaLabel} role="tablist" tabindex="-1" on:keydown={handleKeydown}>
+    <div class:tabs--inline={!fixedOnMobile} class:tabs--fixed={fixedOnMobile} class="tabs" style={`--telegram-tab-count:${tabs.length};`} aria-label={ariaLabel} role="tablist" tabindex="-1" onkeydown={handleKeydown}>
         {#each tabs as tab (tab.id)}
-            <button aria-controls={`${idPrefix}-panel-${tab.id}`} aria-selected={selected === tab.id} class:active={selected === tab.id} id={`${idPrefix}-tab-${tab.id}`} role="tab" tabindex={selected === tab.id ? 0 : -1} type="button" on:click={() => onSelect(tab.id)}>
+            <button aria-controls={`${idPrefix}-panel-${tab.id}`} aria-selected={selected === tab.id} class:active={selected === tab.id} id={`${idPrefix}-tab-${tab.id}`} role="tab" tabindex={selected === tab.id ? 0 : -1} type="button" onclick={() => onSelect(tab.id)}>
                 <TelegramIcon name={tab.icon} size={20} label={tab.label} />
                 <span>{tab.label}{tab.count ? ` (${tab.count})` : ''}</span>
             </button>
