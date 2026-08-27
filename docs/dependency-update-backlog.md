@@ -244,7 +244,7 @@ git commit -m "chore(backend): bump Jackson databind to 2.22.2"
 
 ## TASK P1-3: Update backend third-party libraries
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** P0-1
 
