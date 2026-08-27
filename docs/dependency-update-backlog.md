@@ -513,7 +513,7 @@ git commit -m "chore(backend): bump PMD and SpotBugs to latest"
 
 ## TASK P0-2: Update Checkstyle to 14.0.0 (major version jump)
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P0
 **Depends on:** P0-1
 
