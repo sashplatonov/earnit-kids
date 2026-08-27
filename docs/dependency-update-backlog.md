@@ -60,7 +60,7 @@ Update all project dependencies (web, Telegram integration, Java, Quarkus, Docke
 
 ## TASK P0-1: Update Quarkus platform BOM to 3.39.1
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P0
 **Depends on:** -
 
