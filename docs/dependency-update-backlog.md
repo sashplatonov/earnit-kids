@@ -861,8 +861,9 @@ TypeScript 7.0 is a major version bump. Check the TypeScript 7.0 release notes f
 
 TypeScript 7.0.2 installs, but `npm run lint` cannot start because the scoped
 `typescript-eslint@8.68.0` dependency exits with `typescript-eslint does not
-support TS 7.0`. Updating `typescript-eslint` is outside this task's scope;
-the task remains blocked until the web toolchain adds TypeScript 7 support.
+support TS 7.0`. The task remains blocked until a TypeScript 7-compatible
+`typescript-eslint` release or an approved web-toolchain compatibility solution
+is available.
 
 ### Acceptance criteria
 
