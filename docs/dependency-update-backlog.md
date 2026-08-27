@@ -597,7 +597,7 @@ git commit -m "chore(backend): upgrade Checkstyle to 14.0.0"
 
 ## TASK P1-7: Update JaCoCo and maven-compiler-plugin
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** P0-1
 
