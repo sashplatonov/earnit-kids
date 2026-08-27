@@ -814,7 +814,7 @@ git commit -m "chore(web): bump http-proxy-3 to 2.0.0"
 
 ## TASK P2-2: Update TypeScript to 7.0.2 (major version)
 
-**Status:** TODO
+**Status:** BLOCKED
 **Priority:** P2
 **Depends on:** P1-8
 
@@ -856,6 +856,13 @@ TypeScript 7.0 is a major version bump. Check the TypeScript 7.0 release notes f
 
 - http-proxy-3 (P2-1).
 - Other npm packages.
+
+### Blocker
+
+TypeScript 7.0.2 installs, but `npm run lint` cannot start because the scoped
+`typescript-eslint@8.68.0` dependency exits with `typescript-eslint does not
+support TS 7.0`. Updating `typescript-eslint` is outside this task's scope;
+the task remains blocked until the web toolchain adds TypeScript 7 support.
 
 ### Acceptance criteria
 
