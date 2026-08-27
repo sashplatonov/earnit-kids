@@ -233,6 +233,15 @@ test('Telegram parent access creates a named invite and reloads the canonical Te
     expect(Math.abs(actionMetrics[0].top - actionMetrics[1].top)).toBeLessThan(1);
     await wizardDialog.locator('#wizard-panel-telegram').getByRole('button', { name: /Create link|Создать ссылку/ }).dispatchEvent('click');
     await expect(wizardDialog.getByText(/Link ready|Ссылка готова/)).toBeVisible();
+    await expect(wizardDialog.locator('.qr')).toHaveCount(0);
+    const resultActions = wizardDialog.locator('.action-grid').last().locator('button');
+    await expect(resultActions).toHaveCount(2);
+    const resultActionMetrics = await resultActions.evaluateAll((buttons) => buttons.map((button) => {
+        const rect = button.getBoundingClientRect();
+        return { height: rect.height, top: rect.top };
+    }));
+    expect(resultActionMetrics[0].height).toBe(resultActionMetrics[1].height);
+    expect(Math.abs(resultActionMetrics[0].top - resultActionMetrics[1].top)).toBeLessThan(1);
     await expect(page.getByText('Maria Example').first()).toBeVisible();
     await expect(wizardDialog.getByRole('button', { name: /Copy link|Копировать ссылку/ })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();

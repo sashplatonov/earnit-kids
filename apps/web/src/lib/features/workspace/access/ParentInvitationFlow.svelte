@@ -439,10 +439,7 @@
                         <div class="link-value">{wizardLink}</div>
                         <button type="button" class="icon-btn" aria-label={$i18n.t('app.telegram.parents.copyLink')} on:click={copyWizardLink}><TelegramIcon name="copy" size={19} /></button>
                     </div>
-                    <div class="qr-row">
-                        <div class="qr" aria-hidden="true"></div>
-                        <p class="small">{$i18n.t('app.telegram.parents.linkExpiryNote')}</p>
-                    </div>
+                    <p class="small link-note">{$i18n.t('app.telegram.parents.linkExpiryNote')}</p>
                     {#if wizardCopied}<p class="success" role="status" aria-live="polite">{$i18n.t('app.telegram.parents.copied')}</p>{/if}
                 </div>
             {/if}
@@ -643,9 +640,7 @@
     .link-box{display:grid;grid-template-columns:minmax(0,1fr) 42px;gap:.5rem}
     .link-value{height:2.625rem;border:1px solid #dfe4ef;border-radius:.65rem;background:#fff;display:flex;align-items:center;padding:0 .6rem;font-size:.74rem;color:#46516c;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .link-box .icon-btn{width:42px;height:42px;padding:0;border-radius:.65rem;border:1px solid #dfe4ef;background:#fff;color:#42506e;display:grid;place-items:center;cursor:pointer}
-    .qr-row{display:flex;gap:.75rem;align-items:center;margin-top:.75rem}
-    .qr{width:94px;height:94px;flex:0 0 auto;border:1px solid #dfe4ef;border-radius:.75rem;background:linear-gradient(90deg,#172036 10px,transparent 10px) 0 0/24px 24px,linear-gradient(#172036 10px,transparent 10px) 0 0/24px 24px,#fff}
-    .qr-row .small{margin:0;flex:1;min-width:0}
+    .link-note{margin:.75rem 0 0}
 
     .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
     .access-flow.compact .access-header{justify-content:space-between}
