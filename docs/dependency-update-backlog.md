@@ -1335,7 +1335,7 @@ git commit -m "refactor(web): migrate Svelte 4 slot to {@render} snippets"
 
 ## TASK P1-15: Migrate `createEventDispatcher` to callback props
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** P1-11
 
