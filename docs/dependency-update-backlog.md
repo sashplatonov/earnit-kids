@@ -1481,7 +1481,7 @@ git commit -m "test(backend): verify full build after dependency updates"
 
 ## TASK P1-10: Web full verification gate
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** P1-8, P2-1, P2-2, P2-4, P1-11, P1-12, P1-13, P1-14, P1-15
 
