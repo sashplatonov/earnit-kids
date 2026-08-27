@@ -1,5 +1,7 @@
 package com.sashplatonov.earnit.kids.family.api.request;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 
 public final class ParentInviteAcceptRequest {
@@ -12,7 +14,11 @@ public final class ParentInviteAcceptRequest {
     }
 
     // EXPLAIN: Preserve source compatibility for callers compiled against the email-based contract.
-    public ParentInviteAcceptRequest(String token, String ignoredEmail, String initData) {
+    @JsonCreator
+    public ParentInviteAcceptRequest(
+            @JsonProperty("token") String token,
+            @JsonProperty("legacyEmail") String ignoredEmail,
+            @JsonProperty("initData") String initData) {
         this(token, initData, ignoredEmail, true);
     }
 

@@ -1,5 +1,6 @@
 package com.sashplatonov.earnit.kids.telegram.api.resource;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sashplatonov.earnit.kids.config.auth.CookieBuilder;
 import com.sashplatonov.earnit.kids.family.api.request.ParentInviteAcceptRequest;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
@@ -21,6 +22,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class TelegramParentInviteAcceptResourceTest {
+
+    @Test
+    void requestCanBeDeserializedFromTelegramInvitePayload() throws Exception {
+        ParentInviteAcceptRequest request = new ObjectMapper().readValue(
+            "{\"token\":\"invite-token\",\"initData\":\"signed-init-data\"}",
+            ParentInviteAcceptRequest.class);
+
+        assertThat(request.token()).isEqualTo("invite-token");
+        assertThat(request.initData()).isEqualTo("signed-init-data");
+        assertThat(request.legacyEmail()).isNull();
+    }
 
     @Test
     void accept_returnsNotFoundWhenTelegramIsDisabled() {
