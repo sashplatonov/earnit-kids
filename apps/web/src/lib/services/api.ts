@@ -4,6 +4,7 @@
  */
 
 import { normalizeAuthResponse, normalizeChild } from './serverContract';
+import { flushPendingSave } from './save';
 import { translateClient } from '$lib/i18n/context';
 import type { AuthResponseSnapshot, MembershipPermission, ParentMembership } from '$lib/types/auth';
 import type { Child } from '$lib/stores/app';
@@ -229,7 +230,6 @@ async function postAuthJson(url: string, body: unknown): Promise<AuthActionResul
 }
 
 async function flushPendingCrudSave(): Promise<void> {
-    const { flushPendingSave } = await import('$lib/services/save');
     await flushPendingSave();
 }
 

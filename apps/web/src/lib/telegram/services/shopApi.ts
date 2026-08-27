@@ -1,4 +1,5 @@
 import { postJsonAfterPendingSave, postJsonResultAfterPendingSave, postJsonResultWithValidation, saveChildGroupOrder as _saveChildGroupOrder, earnCoins as _earnCoins } from '$lib/services/api';
+import { flushPendingSave } from '$lib/services/save';
 
 function buildChildQuery(childId: unknown): string {
     return childId != null ? `?childId=${encodeURIComponent(String(childId))}` : '';
@@ -23,8 +24,5 @@ export const importShopItems = (body: {
     childId: unknown;
     rows: Array<Record<string, unknown>>;
 }) => {
-    return import('$lib/services/save').then(async (m) => {
-        await m.flushPendingSave();
-        return postJsonResultWithValidation('/api/shop/import', body);
-    });
+    return flushPendingSave().then(() => postJsonResultWithValidation('/api/shop/import', body));
 };

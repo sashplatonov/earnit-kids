@@ -2,7 +2,6 @@
     import { modalStore } from '$lib/stores/modal';
     import { useI18n } from '$lib/i18n/context';
     import type { ConfirmTone } from '$lib/services/confirm';
-    import TelegramIcon from '../telegram/TelegramIcon.svelte';
 
     type ConfirmModalData = {
         title?: string;
@@ -18,7 +17,7 @@
     let modalData = $derived((($modalStore.data ?? {}) as ConfirmModalData));
     let tone = $derived(modalData.tone ?? 'neutral');
 
-    let pending = false;
+    let pending = $state(false);
     const i18n = useI18n();
 
     function close() {
@@ -55,7 +54,7 @@
 </script>
 
 {#if isOpen}
-<div class="sheet-backdrop" role="presentation" on:click={() => void cancel()} on:keydown={handleKeydown}></div>
+<div class="sheet-backdrop" role="presentation" onclick={() => void cancel()} onkeydown={handleKeydown}></div>
 <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="confirm-title" tabindex="-1">
     <h2 id="confirm-title">{modalData.title ?? $i18n.t('app.telegram.confirm.title')}</h2>
     {#if modalData.description}
@@ -63,15 +62,15 @@
     {/if}
 
     <div class="confirm-actions">
-        <button class="confirm-cancel" type="button" on:click={() => void cancel()} disabled={pending}>
+        <button class="confirm-cancel" type="button" onclick={() => void cancel()} disabled={pending}>
             {modalData.cancelLabel ?? $i18n.t('app.telegram.confirm.cancel')}
         </button>
-        <button class="confirm-confirm" class:confirm-confirm--danger={tone === 'danger'} type="button" on:click={() => void confirm()} disabled={pending}>
+        <button class="confirm-confirm" class:confirm-confirm--danger={tone === 'danger'} type="button" onclick={() => void confirm()} disabled={pending}>
             {modalData.confirmLabel ?? $i18n.t('app.telegram.confirm.confirm')}
         </button>
     </div>
 
-    <button class="close" type="button" on:click={() => void cancel()}>{$i18n.t('app.telegram.header.close')}</button>
+    <button class="close" type="button" onclick={() => void cancel()}>{$i18n.t('app.telegram.header.close')}</button>
 </div>
 {/if}
 

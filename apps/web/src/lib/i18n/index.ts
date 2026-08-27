@@ -8,12 +8,12 @@ import {
     type MessageDomain,
 } from './config';
 import { formatCoins, formatDate, formatDateTime, formatMoneyLike, formatNumber, formatPercentage, formatPlural, formatRelativeTime, formatShortDate } from './formatters';
+import { adminMessages as enAdminMessages } from './messages/en/admin';
+import { appMessages as enAppMessages } from './messages/en/app';
+import { authMessages as enAuthMessages } from './messages/en/auth';
 import { commonMessages as enCommonMessages } from './messages/en/common';
+import { tasksMessages as enTasksMessages } from './messages/en/tasks';
 import { errorMessages as enErrorMessages } from './messages/en/errors';
-import type { appMessages as enAppMessages } from './messages/en/app';
-import type { adminMessages as enAdminMessages } from './messages/en/admin';
-import type { authMessages as enAuthMessages } from './messages/en/auth';
-import type { tasksMessages as enTasksMessages } from './messages/en/tasks';
 
 export { DEFAULT_LOCALE, LOCALES } from './config';
 export type { Locale, MessageDomain } from './config';
@@ -168,19 +168,36 @@ function translate(payload: I18nPayload, key: MessageKey, variables?: Translatio
 
 const ENGLISH_DOMAIN_CATALOG = {
     common: enCommonMessages,
+    auth: enAuthMessages,
+    app: enAppMessages,
+    tasks: enTasksMessages,
+    admin: enAdminMessages,
     errors: enErrorMessages,
-} as const satisfies Partial<Record<MessageDomain, MessageTree>>;
+} as const satisfies Record<MessageDomain, MessageTree>;
 
 type CatalogModule = { default?: unknown } & Record<string, unknown>;
 type CatalogCache = Map<string, Promise<MessageTree>>;
 const catalogCache: CatalogCache = new Map();
 
+const RUSSIAN_DOMAIN_LOADERS: Record<MessageDomain, () => Promise<CatalogModule>> = {
+    common: () => import('./messages/ru/common'),
+    auth: () => import('./messages/ru/auth'),
+    app: () => import('./messages/ru/app'),
+    tasks: () => import('./messages/ru/tasks'),
+    admin: () => import('./messages/ru/admin'),
+    errors: () => import('./messages/ru/errors'),
+};
+
 async function importDomain(locale: Locale, domain: MessageDomain): Promise<MessageTree> {
+    if (locale !== 'ru') {
+        return ENGLISH_DOMAIN_CATALOG[domain];
+    }
+
     const cacheKey = `${locale}:${domain}`;
     const cached = catalogCache.get(cacheKey);
     if (cached) return cached;
 
-    const loading = import(`./messages/${locale}/${domain}.ts`).then((module: CatalogModule) => {
+    const loading = RUSSIAN_DOMAIN_LOADERS[domain]().then((module: CatalogModule) => {
         const value = Object.values(module).find((candidate) => isRecord(candidate));
         if (!value) throw new Error(`Invalid ${locale}.${domain} translation catalog`);
         return value as MessageTree;
@@ -190,10 +207,7 @@ async function importDomain(locale: Locale, domain: MessageDomain): Promise<Mess
 }
 
 async function loadEnglishDomain(domain: MessageDomain): Promise<MessageTree> {
-    if (domain in ENGLISH_DOMAIN_CATALOG) {
-        return ENGLISH_DOMAIN_CATALOG[domain as keyof typeof ENGLISH_DOMAIN_CATALOG] as MessageTree;
-    }
-    return importDomain('en', domain);
+    return ENGLISH_DOMAIN_CATALOG[domain];
 }
 
 export async function buildI18nPayload(locale: Locale, domains: MessageDomain[]): Promise<I18nPayload> {
