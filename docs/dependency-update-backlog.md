@@ -748,7 +748,7 @@ git commit -m "chore(web): bump npm patch and minor dependencies"
 
 ## TASK P2-1: Update http-proxy-3 to 2.0.0 (major version)
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P2
 **Depends on:** P1-8
 
