@@ -93,6 +93,36 @@ test('unlinked Telegram identity gets a safe parent-link and child-invitation ha
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
 });
 
+test('Telegram Mini App retries a transient unlinked response after account linking', async ({ page }) => {
+    await page.addInitScript(() => {
+        (window as Window & { Telegram?: unknown }).Telegram = {
+            WebApp: { initData: 'signed-init-data', ready: () => {}, expand: () => {} },
+        };
+    });
+    let exchangeAttempts = 0;
+    await page.route('**/api/telegram/auth/exchange', async (route) => {
+        exchangeAttempts += 1;
+        if (exchangeAttempts === 1) {
+            await route.fulfill({
+                status: 401,
+                contentType: 'application/json',
+                body: JSON.stringify({ errorCode: 'TELEGRAM_IDENTITY_UNLINKED' }),
+            });
+            return;
+        }
+        await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({ role: 'admin', familyId: 'family-1' }),
+        });
+    });
+
+    await page.goto('/telegram');
+
+    await expect.poll(() => exchangeAttempts).toBe(2);
+    await expect(page.getByRole('button', { name: /Switch child|Выбрать ребёнка/ })).toBeVisible();
+});
+
 test('a Telegram parent invitation is accepted with signed init data only', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
     await page.addInitScript(() => {
@@ -189,7 +219,18 @@ test('Telegram parent access creates a named invite and reloads the canonical Te
     const wizardDialog = page.getByRole('dialog', { name: /Add parent|Добавить родителя/ });
     await wizardDialog.getByLabel(/Parent name|Имя родителя/).fill('Maria Example');
     await wizardDialog.getByRole('button', { name: /Next|Далее/ }).click();
+    const methodTabs = wizardDialog.getByRole('tab');
+    await expect(methodTabs).toHaveCount(2);
+    expect(await methodTabs.first().evaluate((element) => getComputedStyle(element.parentElement!).position)).toBe('static');
     await wizardDialog.getByRole('tab', { name: /Telegram/ }).click();
+    const backButton = wizardDialog.getByRole('button', { name: /Back|Назад/ });
+    const createLinkButton = wizardDialog.getByRole('button', { name: /Create link|Создать ссылку/ });
+    const actionMetrics = await Promise.all([backButton, createLinkButton].map(async (button) => button.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        return { height: rect.height, top: rect.top, bottom: rect.bottom };
+    })));
+    expect(actionMetrics[0].height).toBe(actionMetrics[1].height);
+    expect(Math.abs(actionMetrics[0].top - actionMetrics[1].top)).toBeLessThan(1);
     await wizardDialog.locator('#wizard-panel-telegram').getByRole('button', { name: /Create link|Создать ссылку/ }).dispatchEvent('click');
     await expect(wizardDialog.getByText(/Link ready|Ссылка готова/)).toBeVisible();
     await expect(page.getByText('Maria Example').first()).toBeVisible();

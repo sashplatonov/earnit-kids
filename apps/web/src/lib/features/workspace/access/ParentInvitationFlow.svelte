@@ -621,8 +621,9 @@
     .warn{background:#fff8e6;color:#7e6512;border:1px solid #f0e1a6}
     .info{background:#eef3ff;color:#5164b8;border:1px solid #d8e0ff}
     .small{font-size:.7rem;color:#66718a;line-height:1.35;margin:.6rem 0 0}
-    .action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
-    .btn,.ghost,.cancel{min-height:2.75rem;border-radius:.7rem;padding:.5rem .7rem;border:1px solid #dfe4ef;font:inherit;font-weight:700;cursor:pointer}
+    .action-grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:.5rem;align-items:stretch}
+    .action-grid > button{min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:.35rem;text-align:center;line-height:1.2;overflow-wrap:anywhere}
+    .btn,.ghost,.cancel{box-sizing:border-box;min-height:2.75rem;border-radius:.7rem;padding:.5rem .7rem;border:1px solid #dfe4ef;font:inherit;font-weight:700;cursor:pointer}
     .btn{background:#3867d6;border-color:#3867d6;color:#fff}
     .btn:disabled{opacity:.55;cursor:wait}
     .ghost{background:#fff;color:#33415f}
@@ -656,6 +657,9 @@
     .access-flow.compact :global(.note){padding:.45rem .55rem}
     @media(max-width:640px){.access-flow.compact .access-header{align-items:center;flex-direction:row}.access-flow.compact :global(.row-actions){grid-column:3;justify-content:end;margin-top:0}.access-flow.compact :global(.icon-btn){width:44px;height:44px}}
     @media(max-width:640px){ .access-header{align-items:stretch;flex-direction:column;gap:.5rem}.access-header .add-parent{width:100%}.access-flow :global(.parent-row) { grid-template-columns:2.5rem minmax(0,1fr) 5.75rem; gap:.6rem; } .access-flow :global(.row-actions) { grid-column:3; justify-content:end; margin-top:0; } :global(.id.email),:global(.id.tg) { max-width:100%; } }
-    @media(max-width:390px){ .role-grid{grid-template-columns:1fr}.tabs{grid-template-columns:1fr}.action-grid{grid-template-columns:1fr}.sheet{width:100%}.preview-actions{grid-template-columns:1fr} }
+    /* EXPLAIN: The app shell also has a global fixed `.tabs` bottom bar. The
+       wizard's account-method tabs must stay in document flow above its form. */
+    .sheet .tabs{position:static;inset:auto;z-index:auto;margin:0;padding:.3rem;border-top:0;box-shadow:none;box-sizing:border-box}
+    @media(max-width:390px){ .role-grid{grid-template-columns:1fr}.sheet{width:100%}.preview-actions{grid-template-columns:1fr} }
     @media (min-width: 700px) {.sheet{inset:50% auto auto 50%;width:min(38rem,calc(100% - 3rem));max-height:min(82dvh,46rem);padding:1.4rem;border-radius:1.25rem;box-shadow:0 1.5rem 4rem rgb(27 39 73 / 22%);transform:translate(-50%,-50%)}}
 </style>

@@ -4,6 +4,8 @@ import {
     initializeTelegramWebApp,
 } from '$lib/services/telegram';
 
+const TRANSIENT_UNLINKED_RETRY_DELAY_MS = 250;
+
 export type TelegramBootstrapState = 'ready' | 'retry' | 'unavailable' | 'unlinked' | 'non-telegram';
 
 export type TelegramBootstrapResult = {
@@ -17,6 +19,26 @@ export type TelegramBootstrapResult = {
 
 function isHexToken(value: string): boolean {
     return /^[0-9a-fA-F]+$/.test(value);
+}
+
+async function exchangeWithTransientUnlinkedRetry(initData: string, childInviteToken: string): Promise<Response> {
+    const exchange = () => exchangeTelegramInitData(initData, childInviteToken || null);
+    const response = await exchange();
+    if (response.status !== 401) return response;
+
+    let payload: { errorCode?: unknown };
+    try {
+        payload = await response.clone().json() as { errorCode?: unknown };
+    } catch {
+        return response;
+    }
+
+    // EXPLAIN: A just-completed Telegram link can briefly be invisible to the
+    // first auth read when the deployment uses a lagging DB reader. Retry only
+    // the explicit unlinked result; invalid or expired initData must fail fast.
+    if (payload.errorCode !== 'TELEGRAM_IDENTITY_UNLINKED') return response;
+    await new Promise((resolve) => setTimeout(resolve, TRANSIENT_UNLINKED_RETRY_DELAY_MS));
+    return exchange();
 }
 
 export async function bootstrapTelegramWorkspace(): Promise<TelegramBootstrapResult> {
@@ -33,7 +55,7 @@ export async function bootstrapTelegramWorkspace(): Promise<TelegramBootstrapRes
         pairingFailed = !(await completeTelegramAccountLink(pairingToken, telegram.initData)).ok;
     }
 
-    const response = await exchangeTelegramInitData(telegram.initData, childInviteToken || null);
+    const response = await exchangeWithTransientUnlinkedRetry(telegram.initData, childInviteToken);
     if (!response.ok) {
         return {
             state: response.status === 404 ? 'unavailable'
