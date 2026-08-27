@@ -664,7 +664,7 @@ git commit -m "chore(backend): bump JaCoCo to 0.8.15 and maven-compiler-plugin t
 
 ## TASK P1-8: Update web npm patch and minor packages
 
-**Status:** TODO
+**Status:** DONE
 **Priority:** P1
 **Depends on:** -
 
@@ -679,7 +679,7 @@ Packages to update (current → target):
 - `@types/node`: 26.1.1 → 26.3.0 (minor)
 - `@vitest/coverage-v8`: 4.1.10 → 4.1.11 (patch)
 - `eslint`: 10.2.0 → 10.9.1 (minor)
-- `@eslint/js`: 10.0.1 → 10.9.1 (minor — implied by eslint update)
+- `@eslint/js`: 10.0.1 → 10.0.1 (already current; the `v10.9.1` GitHub release is for `eslint`, not `@eslint/js`, which has no npm `10.9.1` release)
 - `eslint-plugin-svelte`: 3.20.0 → 3.23.0 (minor)
 - `globals`: 17.7.0 → 17.11.0 (minor)
 - `marked`: 18.0.6 → 18.0.11 (patch)
@@ -704,11 +704,11 @@ All safe-update npm packages are at their latest patch/minor versions. The web a
 
 ### Architectural decision
 
-These are all patch or minor version bumps within their respective major lines. Svelte 5.56.x patches, SvelteKit 2.70.x minor, Vite 8.2.x minor, and ESLint 10.9.x minor are all backward compatible. `@sveltejs/adapter-node` (5.5.7) and `@sveltejs/adapter-static` (3.0.10) are already at their latest within their ranges. TypeScript stays at 6.0.3 (major to 7.0 is P2-2). `http-proxy-3` stays at 1.23.3 (major to 2.0 is P2-1).
+These are all patch or minor version bumps within their respective major lines. Svelte 5.56.x patches, SvelteKit 2.70.x minor, Vite 8.2.x minor, and ESLint 10.9.x minor are all backward compatible. `@eslint/js` remains at 10.0.1 because the `v10.9.1` GitHub release belongs to `eslint`, while npm has no matching `@eslint/js` release; the packages are versioned independently. `@sveltejs/adapter-node` (5.5.7) and `@sveltejs/adapter-static` (3.0.10) are already at their latest within their ranges. TypeScript stays at 6.0.3 (major to 7.0 is P2-2). `http-proxy-3` stays at 1.23.3 (major to 2.0 is P2-1).
 
 ### Required changes
 
-1. Update all listed package versions in `apps/web/package.json` to their target versions.
+1. Update all listed package versions in `apps/web/package.json` to their target versions; leave `@eslint/js` at 10.0.1 because no newer compatible registry version exists.
 2. Run `npm install` in `apps/web/` to regenerate `package-lock.json`.
 3. Run `npm run lint` — if ESLint 10.9 or eslint-plugin-svelte 3.23 introduces new lint errors, fix the code (do not use `eslint-disable`).
 4. Run `npm run test` — if Vitest 4.1.11 or svelte-check 4.7.6 introduces new type errors or test failures, fix them.
