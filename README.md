@@ -22,7 +22,6 @@ rewards. The browser and Telegram use the same server-side family data.
   - [🚀 Run it locally](#-run-it-locally)
   - [🏗️ Project architecture](#️-project-architecture)
   - [👀 Parent workspace](#-parent-workspace)
-  - [📣 GitHub social preview](#-github-social-preview)
   - [🧭 What lives where](#-what-lives-where)
   - [🔐 What the system protects](#-what-the-system-protects)
   - [🌍 Languages](#-languages)
@@ -85,14 +84,6 @@ either screen to open the demo in the browser.
     <img src="docs/assets/live-coin-shop-rewards.png" alt="Parent rewards shop with coin prices, groups, sorting, and grant actions" width="300">
   </a>
 </p>
-
-[↑ Back to top](#top)
-
-## 📣 GitHub social preview
-
-Upload [github-social-preview.png](docs/assets/github-social-preview.png) as
-the repository social preview. It is a 1280 × 640 PNG from the English rewards
-shop, ready for GitHub.
 
 [↑ Back to top](#top)
 
