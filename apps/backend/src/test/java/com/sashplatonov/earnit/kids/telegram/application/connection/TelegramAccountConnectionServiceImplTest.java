@@ -96,6 +96,31 @@ class TelegramAccountConnectionServiceImplTest {
     }
 
     @Test
+    void connectionByParentId_findsTelegramOnlyParentWithoutEmail() {
+        when(families.findById("family-1")).thenReturn(Optional.of(family()));
+        ParentAccountEntity telegramOnlyParent = ParentAccountEntity.builder()
+            .id(4).email(null).passwordHash("").build();
+        when(parents.findByIdOptional(4)).thenReturn(Optional.of(telegramOnlyParent));
+        when(memberships.findByParentAndFamily(4, 1)).thenReturn(Optional.of(membership()));
+        when(featureGate.isMiniAppEnabled("family-1")).thenReturn(true);
+        when(identities.findActiveParentByParentAccountId(4)).thenReturn(Optional.of(
+            TelegramIdentityEntity.builder().familyId(1).parentAccountId(4).telegramUserId(77L)
+                .telegramUsername("maria_example").telegramDisplayName("Maria Example")
+                .role("parent").active(true).linkedAt(NOW).build()));
+
+        OperationResult<com.sashplatonov.earnit.kids.telegram.api.response.TelegramAccountConnectionResponse>
+            result = service.connectionByParentId("family-1", 4);
+
+        assertThat(result).isInstanceOf(OperationResult.Success.class);
+        var response = ((OperationResult.Success<com.sashplatonov.earnit.kids.telegram.api.response.TelegramAccountConnectionResponse>) result)
+            .value();
+        assertThat(response.email()).isNull();
+        assertThat(response.telegramConnected()).isTrue();
+        assertThat(response.telegramUsername()).isEqualTo("maria_example");
+        assertThat(response.telegramDisplayName()).isEqualTo("Maria Example");
+    }
+
+    @Test
     void completeLinksVerifiedTelegramIdentityOnlyOnce() {
         stubNow();
         TelegramParentLinkChallengeEntity challenge = TelegramParentLinkChallengeEntity.builder()

@@ -278,7 +278,9 @@
                 {/if}
             </div>
         {/if}
-        <button class="setting" type="button" onclick={() => accessOpen = true}><span class="setting-icon"><TelegramIcon name="shield" size={20} label={$i18n.t('app.telegram.parents.title')} /></span><span class="grow">{$i18n.t('app.telegram.parents.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
+        {#if permission === 'family_admin' || $appStore.permission === 'family_admin'}
+            <button class="setting" type="button" onclick={() => accessOpen = true}><span class="setting-icon"><TelegramIcon name="shield" size={20} label={$i18n.t('app.telegram.parents.title')} /></span><span class="grow">{$i18n.t('app.telegram.parents.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
+        {/if}
         <button class="setting" type="button" onclick={() => myAccountOpen = true}><span class="setting-icon"><TelegramIcon name="users" size={20} label={$i18n.t('app.telegram.myAccount.title')} /></span><span class="grow">{$i18n.t('app.telegram.myAccount.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         <button class="setting" type="button" onclick={() => notificationsOpen = true}><span class="setting-icon"><TelegramIcon name="bell" size={20} label={$i18n.t('app.telegram.family.notifications')} /></span><span class="grow">{$i18n.t('app.telegram.family.notifications')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>
         <button class="setting" type="button" onclick={() => importOpen = true}><span class="setting-icon"><TelegramIcon name="upload" size={20} label={$i18n.t('app.telegram.import.title')} /></span><span class="grow">{$i18n.t('app.telegram.import.title')}</span><TelegramIcon name="arrowRight" size={18} label={$i18n.t('common.actions.open')} /></button>

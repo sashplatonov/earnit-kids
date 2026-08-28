@@ -5,6 +5,7 @@ import com.sashplatonov.earnit.kids.dto.response.AccountConnectionResponse;
 import com.sashplatonov.earnit.kids.telegram.api.response.TelegramAccountConnectionResponse;
 import com.sashplatonov.earnit.kids.family.infrastructure.persistence.family.FamilyRepository;
 import com.sashplatonov.earnit.kids.identity.infrastructure.persistence.ParentAccountRepository;
+import com.sashplatonov.earnit.kids.identity.domain.model.ParentAccountEntity;
 import com.sashplatonov.earnit.kids.telegram.application.connection.TelegramAccountConnectionService;
 import com.sashplatonov.earnit.kids.util.OperationResult;
 import com.sashplatonov.earnit.kids.util.SecureTokenGenerator;
@@ -76,6 +77,27 @@ class AccountServiceImplTest {
         assertThat(result).isInstanceOf(OperationResult.Success.class);
         var value = ((OperationResult.Success<AccountConnectionResponse>) result).value();
         assertThat(value.emailLinked()).isFalse();
+    }
+
+    @Test
+    void connectionByParentId_reportsTelegramOnlyParentsOwnProfile() {
+        ParentAccountEntity telegramOnlyParent = ParentAccountEntity.builder()
+            .id(4).email(null).passwordHash("").build();
+        when(parents.findByIdOptional(4)).thenReturn(Optional.of(telegramOnlyParent));
+        when(telegramConnections.connectionByParentId("family-1", 4))
+            .thenReturn(OperationResult.success(new TelegramAccountConnectionResponse(
+                null, true, true, "url", "maria_example", "Maria Example")));
+
+        OperationResult<AccountConnectionResponse> result =
+            service.connectionByParentId("family-1", 4, null);
+
+        assertThat(result).isInstanceOf(OperationResult.Success.class);
+        var value = ((OperationResult.Success<AccountConnectionResponse>) result).value();
+        assertThat(value.email()).isNull();
+        assertThat(value.emailLinked()).isFalse();
+        assertThat(value.telegramLinked()).isTrue();
+        assertThat(value.telegramUsername()).isEqualTo("maria_example");
+        assertThat(value.telegramDisplayName()).isEqualTo("Maria Example");
     }
 
     @Test

@@ -40,7 +40,7 @@ public class TelegramAccountConnectionResource extends ResourceAuthSupport {
             return authFailure;
         }
         var auth = authContext(context);
-        return response(connections.connection(auth.familyId(), auth.email()));
+        return response(connections.connectionByParentId(auth.familyId(), auth.parentAccountId()));
     }
 
     @POST

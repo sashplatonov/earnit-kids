@@ -126,6 +126,79 @@ test('family admins change the family language from Family settings', async ({ p
     }
 });
 
+test('Telegram-only editor does not see parent management and sees own linked account', async ({ page }) => {
+    await page.addInitScript(() => {
+        (window as Window & { Telegram?: unknown }).Telegram = {
+            WebApp: { initData: 'signed-init-data', ready: () => {}, expand: () => {} },
+        };
+    });
+    await page.route('**/api/telegram/auth/exchange', (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ role: 'parent', permission: 'editor', familyId: 'family-1', locale: 'en' }),
+    }));
+    await page.route('**/api/base-data', (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ tasks: [], products: [] }),
+    }));
+    await page.route('**/api/data**', (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+            isAdmin: true,
+            permission: 'editor',
+            balance: 0,
+            childId: 10,
+            children: [{ id: 10, nickname: 'Alex', balance: 0 }],
+            tasks: [], shop: [], requests: [],
+        }),
+    }));
+    await page.route('**/api/data/details**', (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ requests: [], history: [], friends: [] }),
+    }));
+    await page.route('**/api/account', (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+            email: null,
+            emailLinked: false,
+            telegramLinked: true,
+            telegramUsername: 'maria_example',
+            telegramDisplayName: 'Maria Example',
+        }),
+    }));
+    await page.route('**/api/telegram/account-connection', (route) => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+            email: null,
+            emailLinked: false,
+            telegramConnected: true,
+            miniAppUrl: null,
+            telegramUsername: 'maria_example',
+            telegramDisplayName: 'Maria Example',
+        }),
+    }));
+
+    let parentsRequestCount = 0;
+    page.on('request', (request) => {
+        if (new URL(request.url()).pathname === '/api/parents') parentsRequestCount += 1;
+    });
+
+    await page.goto('/telegram');
+    await page.getByRole('tab', { name: /Family|Семья/ }).click();
+    await expect(page.getByRole('button', { name: /^Parents$/ })).toHaveCount(0);
+
+    await page.getByRole('button', { name: /My account/ }).click();
+    const accountDialog = page.getByRole('dialog');
+    await expect(accountDialog).toContainText('@maria_example');
+    await expect(accountDialog).toContainText('Linked');
+    expect(parentsRequestCount).toBe(0);
+});
+
 async function expectCompactList(list: import('@playwright/test').Locator, count: number) {
     await expect(list).toBeVisible();
     await expect(list.locator(':scope > .entity-row')).toHaveCount(count);

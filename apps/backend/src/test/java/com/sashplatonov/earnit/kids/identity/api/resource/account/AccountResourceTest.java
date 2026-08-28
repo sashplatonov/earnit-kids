@@ -27,17 +27,17 @@ class AccountResourceTest {
     }
 
     @Test
-    void connection_delegatesAuthenticatedFamilyAndEmail() {
+    void connection_delegatesAuthenticatedParentIdentity() {
         AccountService service = mock(AccountService.class);
         ContainerRequestContext context = adminContext();
-        when(service.connection("family-1", "parent@test")).thenReturn(
+        when(service.connectionByParentId("family-1", 4, null)).thenReturn(
             OperationResult.success(new AccountConnectionResponse("parent@test", true, false)));
         AccountResource resource = new AccountResource(service);
 
         try (Response response = resource.connection(context)) {
             assertThat(response.getStatus()).isEqualTo(200);
         }
-        verify(service).connection("family-1", "parent@test");
+        verify(service).connectionByParentId("family-1", 4, null);
     }
 
     @Test
@@ -47,7 +47,7 @@ class AccountResourceTest {
             .thenReturn(OperationResult.success(null));
         when(service.unlinkEmail("family-1", "parent@test")).thenReturn(OperationResult.success(null));
         AccountResource resource = new AccountResource(service);
-        ContainerRequestContext context = adminContext();
+        ContainerRequestContext context = emailAdminContext();
 
         try (Response change = resource.changeEmail(context, new UpdateAccountEmailRequest("new@test"));
              Response unlink = resource.unlinkEmail(context)) {
@@ -59,6 +59,13 @@ class AccountResourceTest {
     }
 
     private static ContainerRequestContext adminContext() {
+        ContainerRequestContext context = mock(ContainerRequestContext.class);
+        when(context.getProperty(AuthFilter.AUTH_CONTEXT_PROPERTY)).thenReturn(
+            new AuthContext("family-1", null, "admin", null, "csrf", false, "editor", 4));
+        return context;
+    }
+
+    private static ContainerRequestContext emailAdminContext() {
         ContainerRequestContext context = mock(ContainerRequestContext.class);
         when(context.getProperty(AuthFilter.AUTH_CONTEXT_PROPERTY)).thenReturn(
             new AuthContext("family-1", null, "admin", "parent@test", "csrf", false, "editor"));

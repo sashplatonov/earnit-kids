@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -72,10 +73,25 @@ class TelegramAccountConnectionResourceTest {
         verifyNoInteractions(connections);
     }
 
+    @Test
+    void connectionUsesTheAuthenticatedParentIdWhenEmailIsAbsent() {
+        TelegramAccountConnectionService connections = mock(TelegramAccountConnectionService.class);
+        TelegramFeatureGate gate = mock(TelegramFeatureGate.class);
+        when(connections.connectionByParentId("family-1", 4)).thenReturn(OperationResult.success(
+            new com.sashplatonov.earnit.kids.telegram.api.response.TelegramAccountConnectionResponse(
+                null, true, true, null, "maria_example", "Maria Example")));
+        TelegramAccountConnectionResource resource = new TelegramAccountConnectionResource(connections, gate);
+
+        try (Response response = resource.connection(parentContext())) {
+            assertThat(response.getStatus()).isEqualTo(200);
+        }
+        verify(connections).connectionByParentId("family-1", 4);
+    }
+
     private ContainerRequestContext parentContext() {
         ContainerRequestContext context = mock(ContainerRequestContext.class);
         when(context.getProperty(AuthFilter.AUTH_CONTEXT_PROPERTY)).thenReturn(new AuthContext(
-            "family-1", null, "admin", "parent@example.test", "csrf", false, "editor"));
+            "family-1", null, "admin", "parent@example.test", "csrf", false, "editor", 4));
         return context;
     }
 }

@@ -35,7 +35,8 @@ public class AccountResource extends ResourceAuthSupport {
             return authFailure;
         }
         var auth = authContext(context);
-        return response(accounts.connection(auth.familyId(), auth.email()));
+        return response(
+            accounts.connectionByParentId(auth.familyId(), auth.parentAccountId(), auth.email()));
     }
 
     @POST

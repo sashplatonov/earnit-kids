@@ -92,6 +92,20 @@ public class TelegramAccountConnectionServiceImpl implements TelegramAccountConn
             });
   }
 
+  @Override
+  public OperationResult<TelegramAccountConnectionResponse> connectionByParentId(
+      String familyId, Integer parentAccountId) {
+    return context(familyId, parentAccountId)
+        .map(
+            context ->
+                OperationResult.success(
+                    connectionResponse(context, featureGate.isMiniAppEnabled(familyId))))
+        .orElseGet(
+            () ->
+                failure(
+                    "TELEGRAM_CONNECTION_FORBIDDEN", "Account connection is unavailable."));
+  }
+
   private TelegramAccountConnectionResponse connectionResponse(
       ConnectionContext context, boolean miniAppEnabled) {
     var identity =
@@ -221,6 +235,23 @@ public class TelegramAccountConnectionServiceImpl implements TelegramAccountConn
     }
     var family = families.findById(familyId).orElse(null);
     var parent = parents.findByEmail(email).orElse(null);
+    if (family == null
+        || parent == null
+        || family.isBlocked()
+        || parent.isBlocked()
+        || memberships.findByParentAndFamily(parent.getId(), family.getId()).isEmpty()) {
+      return java.util.Optional.empty();
+    }
+    return java.util.Optional.of(
+        new ConnectionContext(family.getId(), parent.getId(), parent.getEmail()));
+  }
+
+  private java.util.Optional<ConnectionContext> context(String familyId, Integer parentAccountId) {
+    if (familyId == null || familyId.isBlank() || parentAccountId == null) {
+      return java.util.Optional.empty();
+    }
+    var family = families.findById(familyId).orElse(null);
+    var parent = parents.findByIdOptional(parentAccountId).orElse(null);
     if (family == null
         || parent == null
         || family.isBlocked()

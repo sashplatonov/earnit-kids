@@ -54,6 +54,39 @@ public class AccountServiceImpl implements AccountService {
   }
 
   @Override
+  public OperationResult<AccountConnectionResponse> connectionByParentId(
+      String familyId, Integer parentAccountId, String legacyEmail) {
+    if (parentAccountId == null) {
+      return connection(familyId, legacyEmail);
+    }
+    var parent = parents.findByIdOptional(parentAccountId).orElse(null);
+    if (parent == null) {
+      return ServiceResults.failure("ACCOUNT_NOT_FOUND", "auth.accountNotFound");
+    }
+    OperationResult<TelegramAccountConnectionResponse> telegram =
+        telegramConnections.connectionByParentId(familyId, parentAccountId);
+    boolean telegramLinked =
+        telegram instanceof OperationResult.Success<TelegramAccountConnectionResponse> success
+            && success.value().telegramConnected();
+    String telegramUsername =
+        telegram instanceof OperationResult.Success<TelegramAccountConnectionResponse> success
+            ? success.value().telegramUsername()
+            : null;
+    String telegramDisplayName =
+        telegram instanceof OperationResult.Success<TelegramAccountConnectionResponse> success
+            ? success.value().telegramDisplayName()
+            : null;
+    String email = parent.getEmail();
+    return OperationResult.success(
+        new AccountConnectionResponse(
+            email,
+            email != null && !email.isBlank(),
+            telegramLinked,
+            telegramUsername,
+            telegramDisplayName));
+  }
+
+  @Override
   @Transactional
   public OperationResult<Void> changeEmail(String familyId, String currentEmail, String newEmail) {
     if (newEmail == null || newEmail.isBlank() || newEmail.length() > 254) {
