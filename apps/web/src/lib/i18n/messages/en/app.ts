@@ -615,7 +615,7 @@ export const appMessages = {
             cancel: 'Cancel',
             telegramWarn: 'Before sending the link, make sure you are sending it to the right person. The link is single-use and should have a limited validity.',
             linkExpiryNote: 'The link is valid for 24 hours and can be used once.',
-            openInTelegram: 'Open in Telegram',
+            openInTelegram: 'Open Telegram',
             close: 'Close',
             transferSelectSub: 'Choose an active parent with a confirmed account.',
             transferWarn: 'Rights will not switch immediately. The current admin stays admin until another parent confirms.',

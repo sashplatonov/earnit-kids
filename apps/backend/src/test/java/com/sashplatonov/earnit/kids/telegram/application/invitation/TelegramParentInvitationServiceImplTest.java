@@ -70,7 +70,7 @@ class TelegramParentInvitationServiceImplTest {
         assertThat(result).isInstanceOf(OperationResult.Success.class);
         var launch = ((OperationResult.Success<TelegramLinkLaunchResponse>) result).value();
         assertThat(launch.launchUrl()).isEqualTo(
-            "https://t.me/earnit_bot?startapp=pi_0123456789abcdef0123456789abcdef");
+            "tg://resolve?domain=earnit_bot&startapp=pi_0123456789abcdef0123456789abcdef");
         verify(invitations).persist(any(TelegramParentInvitationEntity.class));
     }
 

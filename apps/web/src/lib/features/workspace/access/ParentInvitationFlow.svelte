@@ -70,7 +70,6 @@
     let wizardLink = $state('');
     let wizardBusy = $state(false);
     let wizardError = $state('');
-    let wizardCopied = $state(false);
 
     // Change-role sheet state
     let roleEditOpen = $state(false);
@@ -192,7 +191,6 @@
         wizardLink = '';
         wizardBusy = false;
         wizardError = '';
-        wizardCopied = false;
     }
 
     function closeWizard(): void {
@@ -224,7 +222,7 @@
     }
 
     async function copyWizardLink(): Promise<void> {
-        try { await navigator.clipboard.writeText(wizardLink); wizardCopied = true; } catch { wizardCopied = false; }
+        try { await navigator.clipboard.writeText(wizardLink); } catch { return; }
     }
 
     function openWizardLink(): void { window.open(wizardLink, '_blank', 'noopener'); }
@@ -444,10 +442,9 @@
                         <button type="button" class="icon-btn" aria-label={$i18n.t('app.telegram.parents.copyLink')} onclick={copyWizardLink}><TelegramIcon name="copy" size={19} /></button>
                     </div>
                     <p class="small link-note">{$i18n.t('app.telegram.parents.linkExpiryNote')}</p>
-                    {#if wizardCopied}<p class="success" role="status" aria-live="polite">{$i18n.t('app.telegram.parents.copied')}</p>{/if}
                 </div>
             {/if}
-            <div class="action-grid">
+            <div class="action-grid invite-result-actions">
                 <button type="button" class="cancel" onclick={closeWizard}><TelegramIcon name="close" size={16} />{$i18n.t('app.telegram.parents.close')}</button>
                 <button type="button" class="btn" onclick={openWizardLink}><TelegramIcon name="send" size={16} />{$i18n.t('app.telegram.parents.openInTelegram')}</button>
             </div>
@@ -624,6 +621,7 @@
     .small{font-size:.7rem;color:#66718a;line-height:1.35;margin:.6rem 0 0}
     .action-grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:.5rem;align-items:stretch}
     .action-grid > button{min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:.35rem;text-align:center;line-height:1.2;overflow-wrap:anywhere}
+    .invite-result-actions > button{min-height:2.75rem;padding:.4rem .5rem;font-size:.75rem;line-height:1;white-space:nowrap;overflow:hidden}
     .btn,.ghost,.cancel{box-sizing:border-box;min-height:2.75rem;border-radius:.7rem;padding:.5rem .7rem;border:1px solid #dfe4ef;font:inherit;font-weight:700;cursor:pointer}
     .btn{background:#3867d6;border-color:#3867d6;color:#fff}
     .btn:disabled{opacity:.55;cursor:wait}

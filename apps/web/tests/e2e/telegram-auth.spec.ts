@@ -204,7 +204,7 @@ test('Telegram parent access creates a named invite and reloads the canonical Te
         await route.fulfill({
             status: 200,
             contentType: 'application/json',
-            body: JSON.stringify({ launchUrl: 'https://t.me/earnit_test_bot?startapp=pi_test' }),
+            body: JSON.stringify({ launchUrl: 'tg://resolve?domain=earnit_test_bot&startapp=pi_test' }),
         });
     });
 
@@ -238,10 +238,11 @@ test('Telegram parent access creates a named invite and reloads the canonical Te
     await expect(resultActions).toHaveCount(2);
     const resultActionMetrics = await resultActions.evaluateAll((buttons) => buttons.map((button) => {
         const rect = button.getBoundingClientRect();
-        return { height: rect.height, top: rect.top };
+        return { height: rect.height, top: rect.top, whiteSpace: getComputedStyle(button).whiteSpace };
     }));
     expect(resultActionMetrics[0].height).toBe(resultActionMetrics[1].height);
     expect(Math.abs(resultActionMetrics[0].top - resultActionMetrics[1].top)).toBeLessThan(1);
+    expect(resultActionMetrics.every(({ height, whiteSpace }) => height === 44 && whiteSpace === 'nowrap')).toBeTruthy();
     await expect(page.getByText('Maria Example').first()).toBeVisible();
     await expect(wizardDialog.getByRole('button', { name: /Copy link|Копировать ссылку/ })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();

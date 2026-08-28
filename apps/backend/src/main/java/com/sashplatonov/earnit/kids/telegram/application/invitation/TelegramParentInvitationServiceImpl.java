@@ -88,9 +88,9 @@ public class TelegramParentInvitationServiceImpl implements TelegramParentInvita
             .createdAt(now)
             .build());
     String launchUrl =
-        "https://t.me/"
+        "tg://resolve?domain="
             + botUsername
-            + "?startapp="
+            + "&startapp="
             + TelegramInviteToken.PARENT_INVITE_PREFIX
             + token;
     return OperationResult.success(new TelegramLinkLaunchResponse(launchUrl));
