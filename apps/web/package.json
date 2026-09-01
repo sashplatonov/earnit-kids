@@ -18,7 +18,7 @@
     "test:e2e:critical": "playwright test tests/e2e/workspace-entry.spec.ts tests/e2e/workspace-access.spec.ts tests/e2e/workspace-invitations.spec.ts tests/e2e/telegram-auth.spec.ts tests/e2e/pwa-browser-push.spec.ts --grep \"entry is usable|unauthenticated localized|authenticated child sees|Telegram auth surface|workspace registers\""
   },
   "dependencies": {
-    "@lucide/svelte": "^1.34.0",
+    "@lucide/svelte": "^1.35.0",
     "http-proxy-3": "^2.0.0"
   },
   "devDependencies": {
