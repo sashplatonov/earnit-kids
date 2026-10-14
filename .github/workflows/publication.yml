@@ -34,7 +34,7 @@ jobs:
 
       - name: Upload private release scan report
         if: always()
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: trivy-release-report
           path: trivy-release-report.json
@@ -66,7 +66,7 @@ jobs:
 
       - name: Upload private scan report
         if: always()
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: gitleaks-history-report
           path: gitleaks-history.sarif
