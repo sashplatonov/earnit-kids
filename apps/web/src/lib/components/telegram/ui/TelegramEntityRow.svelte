@@ -5,6 +5,7 @@
         isInteractive?: boolean;
         archived?: boolean;
         compact?: boolean;
+        interactiveOverflowVisible?: boolean;
         hasSelection?: boolean;
         hasTrailingActions?: boolean;
         selection?: import('svelte').Snippet;
@@ -20,6 +21,7 @@
         isInteractive = false,
         archived = false,
         compact = false,
+        interactiveOverflowVisible = false,
         hasSelection = false,
         hasTrailingActions = false,
         selection,
@@ -43,7 +45,7 @@
         <div class="entity-meta">{@render metadata?.()}</div>
         <div class="entity-actions">{@render actions?.()}</div>
     </div>
-    {#if isInteractive}<div class="entity-interactive">{@render interactive?.()}</div>{/if}
+    {#if isInteractive}<div class="entity-interactive" class:overflow-visible={interactiveOverflowVisible}>{@render interactive?.()}</div>{/if}
 </div>
 
 <style>
@@ -64,6 +66,7 @@
     .entity-actions:empty, .entity-meta:empty, .entity-trailing:empty { display:none; }
     .has-trailing-actions .entity-meta { padding-right:7rem; }
     .entity-interactive { display:flex; min-width:0; max-width:100%; flex:0 0 auto; align-items:center; gap:.15rem; overflow:hidden; }
+    .entity-interactive.overflow-visible { overflow:visible; }
     .archived { opacity:.6; }
     :global(.entity-row .row-main) { display:flex; flex-direction:column; align-items:flex-start; width:100%; min-width:0; box-sizing:border-box; padding:0; border:0; background:transparent; color:inherit; text-align:left; cursor:pointer; }
     :global(.entity-row .entity-title .title) { display:-webkit-box; overflow:hidden; min-width:0; overflow-wrap:anywhere; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; color:#18243d; font-size:.8rem; font-weight:600; line-height:1.2; }

@@ -149,9 +149,9 @@
         {#if selectedGroup && !filteredTasks.length}
             <p class="muted empty-group">{$i18n.t('app.telegram.groupSubnav.emptyGroup')}</p>
         {:else}
-        <TelegramListSurface label={$i18n.t('app.telegram.tasks.title')}>
+        <TelegramListSurface overflowVisible label={$i18n.t('app.telegram.tasks.title')}>
             {#each filteredTasks as task (task.id)}
-                <TelegramEntityRow isInteractive={canEdit} archived={task.isActive === false} compact>
+                <TelegramEntityRow isInteractive={canEdit} interactiveOverflowVisible archived={task.isActive === false} compact>
                     {#snippet icon()}
                                                         <span ><TelegramIcon name={getTelegramEntityIcon({ kind: 'task', title: task.name, group: task.groupName, semantic: task.icon ?? null })} size={20} label={$i18n.t('app.telegram.tasks.task')} /></span>
                                                     {/snippet}
