@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { localizePath } from '$lib/i18n';
+import { localizePath } from '#lib/i18n';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
     if (!locals.session.authenticated) {

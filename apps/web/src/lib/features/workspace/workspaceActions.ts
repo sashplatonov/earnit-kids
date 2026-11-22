@@ -1,7 +1,7 @@
 import { getContext, setContext } from 'svelte';
-import { applyDataSnapshot, initializeFromServer, refreshData, switchChild } from '$lib/services/bootstrap';
-import { loadTelegramHistory, type TelegramPage } from '$lib/services/telegramActivity';
-import type { HistoryEntry } from '$lib/stores/app';
+import { applyDataSnapshot, initializeFromServer, refreshData, switchChild } from '#lib/services/bootstrap';
+import { loadTelegramHistory, type TelegramPage } from '#lib/services/telegramActivity';
+import type { HistoryEntry } from '#lib/stores/app';
 
 export type WorkspaceChildId = string | number;
 export type WorkspaceSnapshot = Record<string, unknown>;

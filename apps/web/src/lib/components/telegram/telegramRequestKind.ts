@@ -1,4 +1,4 @@
-import type { Request } from '$lib/stores/app';
+import type { Request } from '#lib/stores/app';
 
 export type RequestKind = 'task' | 'reward';
 

@@ -1,10 +1,10 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { appStore } from '$lib/stores/app';
-    import { useI18n } from '$lib/i18n/context';
-    import { useFamilyActions } from '$lib/telegram/services/familyActions';
-    import { useHistoryActions } from '$lib/telegram/services/historyActions';
-    import type { HistoryEntry } from '$lib/stores/app';
+    import { appStore } from '#lib/stores/app';
+    import { useI18n } from '#lib/i18n/context';
+    import { useFamilyActions } from '#lib/telegram/services/familyActions';
+    import { useHistoryActions } from '#lib/telegram/services/historyActions';
+    import type { HistoryEntry } from '#lib/stores/app';
     import TelegramCoinAdjust from './TelegramCoinAdjust.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramHistoryList from './TelegramHistoryList.svelte';

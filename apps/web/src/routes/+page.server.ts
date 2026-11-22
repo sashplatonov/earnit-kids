@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import { DEFAULT_LOCALE, localizePath, normalizeLocale } from '$lib/i18n';
+import { DEFAULT_LOCALE, localizePath, normalizeLocale } from '#lib/i18n';
 import type { PageServerLoad } from './$types';
 
 // EXPLAIN: The edge serves the static marketing home at the canonical root,

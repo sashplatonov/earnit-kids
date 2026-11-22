@@ -1,9 +1,9 @@
 <script lang="ts">
     import { run } from 'svelte/legacy';
 
-    import { useI18n } from '$lib/i18n/context';
+    import { useI18n } from '#lib/i18n/context';
     import TelegramIcon from './TelegramIcon.svelte';
-    import type { CatalogFilters, AgeFilter, DifficultyFilter, FrequencyFilter } from '$lib/telegram/services/catalogFilter';
+    import type { CatalogFilters, AgeFilter, DifficultyFilter, FrequencyFilter } from '#lib/telegram/services/catalogFilter';
     import TelegramBottomSheet from './ui/TelegramBottomSheet.svelte';
 
     interface Props {

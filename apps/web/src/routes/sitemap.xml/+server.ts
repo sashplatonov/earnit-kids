@@ -1,4 +1,4 @@
-import { loadAppConfig } from '$lib/server/config';
+import { loadAppConfig } from '#lib/server/config';
 import { DEFAULT_PUBLIC_LOCALE, PUBLIC_LOCALES, PUBLIC_PAGES, publicLanguageHref } from '../../../scripts/public-site/urls.js';
 import type { RequestHandler } from './$types';
 

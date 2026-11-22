@@ -1,4 +1,4 @@
-import type { AppConfig } from '$lib/types/config';
+import type { AppConfig } from '#lib/types/config';
 
 const DEFAULT_BACKEND_ORIGIN = 'http://localhost:8080';
 const DEFAULT_PUBLIC_ORIGIN = 'http://localhost:4174';

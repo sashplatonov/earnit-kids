@@ -1,8 +1,8 @@
 <script lang="ts">
     import { run } from 'svelte/legacy';
 
-    import { useI18n } from '$lib/i18n/context';
-    import type { MessageKey } from '$lib/i18n';
+    import { useI18n } from '#lib/i18n/context';
+    import type { MessageKey } from '#lib/i18n';
     import {
         SEMANTIC_GRAPHIC_CATEGORIES,
         SEMANTIC_GRAPHICS,

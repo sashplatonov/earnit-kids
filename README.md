@@ -50,6 +50,11 @@ Useful local URLs:
 ⚠️ The default stack has no Google, Telegram, push, or New Relic credentials.
 That is intentional: those integrations need real deployment configuration.
 
+The local Compose database uses PostgreSQL 19. Moving an existing PostgreSQL
+18 data volume to 19 requires a database migration; see
+[`docs/operations/postgresql-major-upgrade.md`](docs/operations/postgresql-major-upgrade.md)
+before reusing an existing volume.
+
 [↑ Back to top](#top)
 
 ## 🏗️ Project architecture

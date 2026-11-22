@@ -1,12 +1,12 @@
-import type { HistoryEntry } from '$lib/stores/app';
-import type { TelegramPage } from '$lib/services/telegramActivity';
-import type { WorkspaceActions } from '$lib/features/workspace/workspaceActions';
-import type { TaskActions } from '$lib/telegram/services/taskActions';
-import type { RewardActions } from '$lib/telegram/services/rewardActions';
-import type { RequestActions } from '$lib/telegram/services/requestActions';
-import type { FamilyActions } from '$lib/telegram/services/familyActions';
-import type { HistoryActions } from '$lib/telegram/services/historyActions';
-import type { RewardRequestActions } from '$lib/telegram/services/rewardRequestActions';
+import type { HistoryEntry } from '#lib/stores/app';
+import type { TelegramPage } from '#lib/services/telegramActivity';
+import type { WorkspaceActions } from '#lib/features/workspace/workspaceActions';
+import type { TaskActions } from '#lib/telegram/services/taskActions';
+import type { RewardActions } from '#lib/telegram/services/rewardActions';
+import type { RequestActions } from '#lib/telegram/services/requestActions';
+import type { FamilyActions } from '#lib/telegram/services/familyActions';
+import type { HistoryActions } from '#lib/telegram/services/historyActions';
+import type { RewardRequestActions } from '#lib/telegram/services/rewardRequestActions';
 import type { LiveCoinShopDemoActions, LiveCoinShopDemoSession } from './liveCoinShopDemoSession';
 
 export type LiveCoinShopDemoWorkspace = {

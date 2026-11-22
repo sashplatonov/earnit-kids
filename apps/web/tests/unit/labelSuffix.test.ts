@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatLabelSuffix } from '$lib/utils/labelSuffix';
+import { formatLabelSuffix } from '#lib/utils/labelSuffix';
 
 describe('formatLabelSuffix', () => {
     it('adds colon when label has no colon', () => {

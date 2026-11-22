@@ -1,6 +1,6 @@
 <script lang="ts">
     import TelegramSortControl from './TelegramSortControl.svelte';
-    import type { CatalogSortMode } from '$lib/telegram/services/catalogSort';
+    import type { CatalogSortMode } from '#lib/telegram/services/catalogSort';
 
     interface Props {
         count?: number;

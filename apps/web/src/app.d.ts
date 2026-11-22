@@ -1,6 +1,6 @@
-import type { AppConfig } from '$lib/types/config';
-import type { I18nPayload, Locale } from '$lib/i18n';
-import type { SessionSnapshot } from '$lib/types/session';
+import type { AppConfig } from '#lib/types/config';
+import type { I18nPayload, Locale } from '#lib/i18n';
+import type { SessionSnapshot } from '#lib/types/session';
 
 declare global {
     // Injected at build time by vite.config.ts define

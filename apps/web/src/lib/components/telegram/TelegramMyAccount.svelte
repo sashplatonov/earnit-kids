@@ -1,8 +1,8 @@
 <script lang="ts">
     import { run } from 'svelte/legacy';
 
-    import { useI18n } from '$lib/i18n/context';
-    import { getAccountConnection, getTelegramAccountConnection, type AccountConnection } from '$lib/services/api';
+    import { useI18n } from '#lib/i18n/context';
+    import { getAccountConnection, getTelegramAccountConnection, type AccountConnection } from '#lib/services/api';
     import TelegramIcon from './TelegramIcon.svelte';
 
     interface Props {

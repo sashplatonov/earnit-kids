@@ -1,7 +1,7 @@
 /** Server contract normalization — replaces legacy server-contract.js */
 
-import type { AuthResponseSnapshot, FamilyChoice, MembershipPermission } from '$lib/types/auth';
-import type { MessageKey } from '$lib/i18n';
+import type { AuthResponseSnapshot, FamilyChoice, MembershipPermission } from '#lib/types/auth';
+import type { MessageKey } from '#lib/i18n';
 
 export type NormalizedServerError = {
     type: string;

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { PWA_UPDATE_AVAILABLE_EVENT } from './registerServiceWorker';
-    import { useI18n } from '$lib/i18n/context';
+    import { useI18n } from '#lib/i18n/context';
 
     const i18n = useI18n();
 

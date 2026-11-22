@@ -1,7 +1,7 @@
 <script lang="ts">
-    import type { Request } from '$lib/stores/app';
-    import { useI18n } from '$lib/i18n/context';
-    import { useRequestActions } from '$lib/telegram/services/requestActions';
+    import type { Request } from '#lib/stores/app';
+    import { useI18n } from '#lib/i18n/context';
+    import { useRequestActions } from '#lib/telegram/services/requestActions';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramListSurface from './ui/TelegramListSurface.svelte';
     import TelegramAsyncState from './ui/TelegramAsyncState.svelte';

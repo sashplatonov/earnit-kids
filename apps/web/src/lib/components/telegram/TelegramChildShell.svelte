@@ -1,10 +1,10 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { appStore, type Request } from '$lib/stores/app';
-    import { useI18n } from '$lib/i18n/context';
-    import { useWorkspaceActions } from '$lib/features/workspace/workspaceActions';
-    import { useRequestActions } from '$lib/telegram/services/requestActions';
-    import { confirmAction } from '$lib/services/confirm';
+    import { appStore, type Request } from '#lib/stores/app';
+    import { useI18n } from '#lib/i18n/context';
+    import { useWorkspaceActions } from '#lib/features/workspace/workspaceActions';
+    import { useRequestActions } from '#lib/telegram/services/requestActions';
+    import { confirmAction } from '#lib/services/confirm';
     import TelegramBalanceHeader from './TelegramBalanceHeader.svelte';
     import TelegramChildTasks from './TelegramChildTasks.svelte';
     import TelegramChildRewards from './TelegramChildRewards.svelte';
@@ -12,7 +12,7 @@
     import TelegramHistoryList from './TelegramHistoryList.svelte';
     import TelegramChildRequestList from './TelegramChildRequestList.svelte';
     import TelegramConfirmModal from './TelegramConfirmModal.svelte';
-    import type { HistoryEntry } from '$lib/stores/app';
+    import type { HistoryEntry } from '#lib/stores/app';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramParentReturn from './TelegramParentReturn.svelte';
     import TelegramTabBar from './ui/TelegramTabBar.svelte';

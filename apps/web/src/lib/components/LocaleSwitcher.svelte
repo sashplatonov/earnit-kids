@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { page } from '$app/stores';
-    import { LOCALES, DEFAULT_LOCALE, LOCALE_COOKIE_NAME, stripLocaleFromPath, type Locale } from '$lib/i18n';
-    import { useI18n } from '$lib/i18n/context';
-    import { updateFamilyLocale } from '$lib/services/api';
+    import { page } from '$app/state';
+    import { LOCALES, DEFAULT_LOCALE, LOCALE_COOKIE_NAME, stripLocaleFromPath, type Locale } from '#lib/i18n';
+    import { useI18n } from '#lib/i18n/context';
+    import { updateFamilyLocale } from '#lib/services/api';
 
     interface Props {
         compact?: boolean;
@@ -37,12 +37,12 @@
         if (mode !== 'route' || onLocaleChange || (familyManaged && !readOnly)) {
             return null;
         }
-        const localizedPath = $i18n.swapLocale($page.url.pathname, locale);
+        const localizedPath = $i18n.swapLocale(page.url.pathname, locale);
         const nextPath = locale === DEFAULT_LOCALE ? stripLocaleFromPath(localizedPath) : localizedPath;
-        const search = $page.url.search
-            ? `${$page.url.search}&lang=${encodeURIComponent(locale)}`
+        const search = page.url.search
+            ? `${page.url.search}&lang=${encodeURIComponent(locale)}`
             : `?lang=${encodeURIComponent(locale)}`;
-        return `${nextPath}${search}${$page.url.hash}`;
+        return `${nextPath}${search}${page.url.hash}`;
     }
 
     async function handleChange(nextLocale: Locale) {
@@ -67,11 +67,11 @@
             return;
         }
 
-        const localizedPath = $i18n.swapLocale($page.url.pathname, nextLocale);
+        const localizedPath = $i18n.swapLocale(page.url.pathname, nextLocale);
         const nextPath = mode === 'route' && nextLocale === 'en' ? stripLocaleFromPath(localizedPath) : localizedPath;
 
         document.cookie = `${LOCALE_COOKIE_NAME}=${encodeURIComponent(nextLocale)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
-        location.assign(`${nextPath}${$page.url.search}${$page.url.hash}`);
+        location.assign(`${nextPath}${page.url.search}${page.url.hash}`);
     }
 </script>
 

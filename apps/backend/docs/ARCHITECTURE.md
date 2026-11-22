@@ -59,8 +59,8 @@ every read or mutation.
 
 ## 🗄️ Data and transactions
 
-PostgreSQL is the production database. Flyway migrations live in
-`src/main/resources/db/migration`; H2 test migrations live in
+PostgreSQL 19 is the production and Compose database baseline. Flyway
+migrations live in `src/main/resources/db/migration`; H2 test migrations live in
 `src/test/resources/db/migration`. Add a new sequential migration for a schema
 change—never edit a migration that has already run elsewhere.
 

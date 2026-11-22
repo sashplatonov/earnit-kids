@@ -1,13 +1,13 @@
 <script lang="ts">
     import { stopPropagation } from 'svelte/legacy';
 
-    import { appStore } from '$lib/stores/app';
-    import { useI18n } from '$lib/i18n/context';
-    import type { ShopItem } from '$lib/telegram/stores/types';
-    import { shopItems } from '$lib/telegram/stores/shopItems';
-    import { useRewardActions } from '$lib/telegram/services/rewardActions';
-    import { confirmAction } from '$lib/services/confirm';
-    import { orderGroups } from '$lib/telegram/services/groupOrder';
+    import { appStore } from '#lib/stores/app';
+    import { useI18n } from '#lib/i18n/context';
+    import type { ShopItem } from '#lib/telegram/stores/types';
+    import { shopItems } from '#lib/telegram/stores/shopItems';
+    import { useRewardActions } from '#lib/telegram/services/rewardActions';
+    import { confirmAction } from '#lib/services/confirm';
+    import { orderGroups } from '#lib/telegram/services/groupOrder';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramRewardForm from './TelegramRewardForm.svelte';
@@ -20,7 +20,7 @@
     import TelegramEntityRow from './ui/TelegramEntityRow.svelte';
     import TelegramBottomSheet from './ui/TelegramBottomSheet.svelte';
     import TelegramCatalogToolbar from './TelegramCatalogToolbar.svelte';
-    import { sortCatalogItems, type CatalogSortMode } from '$lib/telegram/services/catalogSort';
+    import { sortCatalogItems, type CatalogSortMode } from '#lib/telegram/services/catalogSort';
 
     const i18n = useI18n();
     const rewardActions = useRewardActions();

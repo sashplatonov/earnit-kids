@@ -1,10 +1,10 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { appStore, type Child } from '$lib/stores/app';
-    import { useI18n } from '$lib/i18n/context';
-    import { useFamilyActions } from '$lib/telegram/services/familyActions';
-    import LocaleSwitcher from '$lib/components/LocaleSwitcher.svelte';
-    import type { ChildTelegramConnection } from '$lib/services/api';
+    import { appStore, type Child } from '#lib/stores/app';
+    import { useI18n } from '#lib/i18n/context';
+    import { useFamilyActions } from '#lib/telegram/services/familyActions';
+    import LocaleSwitcher from '#lib/components/LocaleSwitcher.svelte';
+    import type { ChildTelegramConnection } from '#lib/services/api';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramParentAccess from './TelegramParentAccess.svelte';
@@ -13,7 +13,7 @@
     import TelegramEmailSettings from './TelegramEmailSettings.svelte';
     import TelegramLimits from './TelegramLimits.svelte';
     import TelegramImport from './TelegramImport.svelte';
-    import type { MembershipPermission } from '$lib/types/auth';
+    import type { MembershipPermission } from '#lib/types/auth';
 
     const i18n = useI18n();
     const familyActions = useFamilyActions();

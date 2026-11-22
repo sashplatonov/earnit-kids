@@ -1,6 +1,6 @@
 <script lang="ts">
-    import TelegramCoin from '$lib/components/telegram/TelegramCoin.svelte';
-    import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
+    import TelegramCoin from '#lib/components/telegram/TelegramCoin.svelte';
+    import TelegramIcon from '#lib/components/telegram/TelegramIcon.svelte';
 
     type DashboardTab = {
         id: string;
@@ -44,7 +44,7 @@
                     {#if tab.id === 'coins'}
                         <TelegramCoin size={17} />
                     {:else}
-                        <TelegramIcon name={tab.icon as import('$lib/components/telegram/telegramIconMap').TelegramIconName} size={17} strokeWidth={2} />
+                        <TelegramIcon name={tab.icon as import('#lib/components/telegram/telegramIconMap').TelegramIconName} size={17} strokeWidth={2} />
                     {/if}
                 </span>
                 <span class="tab-label">{tab.label}</span>

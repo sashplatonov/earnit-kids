@@ -1,15 +1,15 @@
 <script lang="ts">
     import { stopPropagation } from 'svelte/legacy';
 
-    import { useI18n } from '$lib/i18n/context';
-    import type { MessageKey } from '$lib/i18n';
-    import { appStore, type Task } from '$lib/stores/app';
-    import type { ShopItem } from '$lib/telegram/stores/types';
-    import { shopItems } from '$lib/telegram/stores/shopItems';
-    import { confirmAction } from '$lib/services/confirm';
-    import { moveGroup } from '$lib/telegram/services/groupOrder';
-    import { useTaskActions } from '$lib/telegram/services/taskActions';
-    import { useRewardActions } from '$lib/telegram/services/rewardActions';
+    import { useI18n } from '#lib/i18n/context';
+    import type { MessageKey } from '#lib/i18n';
+    import { appStore, type Task } from '#lib/stores/app';
+    import type { ShopItem } from '#lib/telegram/stores/types';
+    import { shopItems } from '#lib/telegram/stores/shopItems';
+    import { confirmAction } from '#lib/services/confirm';
+    import { moveGroup } from '#lib/telegram/services/groupOrder';
+    import { useTaskActions } from '#lib/telegram/services/taskActions';
+    import { useRewardActions } from '#lib/telegram/services/rewardActions';
     import { getTelegramEntityIcon } from './telegramEntityIcons';
     import { getSemanticGraphic } from './semanticGraphics';
     import TelegramIcon from './TelegramIcon.svelte';

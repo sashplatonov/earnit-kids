@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { appStore } from '$lib/stores/app';
-    import { useI18n } from '$lib/i18n/context';
-    import { useWorkspaceActions } from '$lib/features/workspace/workspaceActions';
+    import { appStore } from '#lib/stores/app';
+    import { useI18n } from '#lib/i18n/context';
+    import { useWorkspaceActions } from '#lib/features/workspace/workspaceActions';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
 

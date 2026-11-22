@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildTodayTaskSummary } from '$lib/services/todayTaskViewModel';
-import type { Task } from '$lib/stores/app';
+import { buildTodayTaskSummary } from '#lib/services/todayTaskViewModel';
+import type { Task } from '#lib/stores/app';
 
 function task(overrides: Partial<Task>): Task {
     return {

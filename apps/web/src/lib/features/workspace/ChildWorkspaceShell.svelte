@@ -1,5 +1,5 @@
 <script lang="ts">
-    import TelegramChildShell from '$lib/components/telegram/TelegramChildShell.svelte';
+    import TelegramChildShell from '#lib/components/telegram/TelegramChildShell.svelte';
 
     interface Props {
         publicOrigin?: string;

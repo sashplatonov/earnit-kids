@@ -1,5 +1,5 @@
 <script lang="ts">
-    import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
+    import TelegramIcon from '#lib/components/telegram/TelegramIcon.svelte';
 
     interface Props {
         activeTooltip: string | null;

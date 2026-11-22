@@ -1,14 +1,14 @@
 
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { updateI18n, useI18n } from '$lib/i18n/context';
-    import { getI18nPayloadForPath } from '$lib/i18n';
-    import { initializeTelegramWebApp } from '$lib/services/telegram';
-    import { bootstrapTelegramWorkspace } from '$lib/features/telegram/TelegramWorkspaceBootstrap';
-    import { acceptParentTelegramInvite } from '$lib/services/api';
-    import TelegramRoleResolver from '$lib/components/telegram/TelegramRoleResolver.svelte';
-    import TelegramActionButton from '$lib/components/telegram/TelegramActionButton.svelte';
-    import LocaleSwitcher from '$lib/components/LocaleSwitcher.svelte';
+    import { updateI18n, useI18n } from '#lib/i18n/context';
+    import { getI18nPayloadForPath } from '#lib/i18n';
+    import { initializeTelegramWebApp } from '#lib/services/telegram';
+    import { bootstrapTelegramWorkspace } from '#lib/features/telegram/TelegramWorkspaceBootstrap';
+    import { acceptParentTelegramInvite } from '#lib/services/api';
+    import TelegramRoleResolver from '#lib/components/telegram/TelegramRoleResolver.svelte';
+    import TelegramActionButton from '#lib/components/telegram/TelegramActionButton.svelte';
+    import LocaleSwitcher from '#lib/components/LocaleSwitcher.svelte';
 
     const i18n = useI18n();
 

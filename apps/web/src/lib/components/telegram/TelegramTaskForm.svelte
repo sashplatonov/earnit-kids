@@ -1,11 +1,11 @@
 <script lang="ts">
     import { run } from 'svelte/legacy';
 
-    import { useI18n } from '$lib/i18n/context';
-    import type { MessageKey } from '$lib/i18n';
-    import { appStore, type Task } from '$lib/stores/app';
-    import { useTaskActions } from '$lib/telegram/services/taskActions';
-    import { buildTaskPayload } from '$lib/services/taskPayload';
+    import { useI18n } from '#lib/i18n/context';
+    import type { MessageKey } from '#lib/i18n';
+    import { appStore, type Task } from '#lib/stores/app';
+    import { useTaskActions } from '#lib/telegram/services/taskActions';
+    import { buildTaskPayload } from '#lib/services/taskPayload';
     import { getSemanticGraphic } from './semanticGraphics';
     import { getTelegramEntityIcon } from './telegramEntityIcons';
     import TelegramIcon from './TelegramIcon.svelte';

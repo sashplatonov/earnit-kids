@@ -1,11 +1,11 @@
 <script lang="ts">
     import { run } from 'svelte/legacy';
 
-import { useI18n } from '$lib/i18n/context';
-    import { appStore } from '$lib/stores/app';
-    import type { Child } from '$lib/stores/app';
-    import { adminSaveLimits } from '$lib/services/api';
-    import { refreshData } from '$lib/services/bootstrap';
+import { useI18n } from '#lib/i18n/context';
+    import { appStore } from '#lib/stores/app';
+    import type { Child } from '#lib/stores/app';
+    import { adminSaveLimits } from '#lib/services/api';
+    import { refreshData } from '#lib/services/bootstrap';
     import TelegramIcon from './TelegramIcon.svelte';
     import { MAX_CHILD_LIMIT as MAX_LIMIT, stepLimit, effectiveLimit } from './telegramLimits';
 

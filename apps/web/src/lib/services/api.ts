@@ -5,9 +5,9 @@
 
 import { normalizeAuthResponse, normalizeChild } from './serverContract';
 import { flushPendingSave } from './save';
-import { translateClient } from '$lib/i18n/context';
-import type { AuthResponseSnapshot, MembershipPermission, ParentMembership } from '$lib/types/auth';
-import type { Child } from '$lib/stores/app';
+import { translateClient } from '#lib/i18n/context';
+import type { AuthResponseSnapshot, MembershipPermission, ParentMembership } from '#lib/types/auth';
+import type { Child } from '#lib/stores/app';
 
 
 function getCsrfToken(): string {
@@ -545,13 +545,13 @@ export const requestCoinsWithNote = (taskId: unknown, note?: string | null, chil
 
 
 /** Admin: immediately purchase an item for a child. */
-// Moved to $lib/telegram/services/shopApi.ts
+// Moved to #lib/telegram/services/shopApi.ts
 
 /** Child: create a purchase request that requires parent approval. */
-// Moved to $lib/telegram/services/shopApi.ts
+// Moved to #lib/telegram/services/shopApi.ts
 
 /** Child: create a purchase request with optional note. */
-// Moved to $lib/telegram/services/shopApi.ts
+// Moved to #lib/telegram/services/shopApi.ts
 
 export type BulkAction = 'delete' | 'block' | 'unblock' | 'change_group';
 
@@ -570,7 +570,7 @@ export const importTasks = (body: {
     rows: Array<Record<string, unknown>>;
 }) => flushPendingCrudSave().then(() => postJsonResultWithValidation('/api/tasks/import', body));
 
-// Moved to $lib/telegram/services/shopApi.ts
+// Moved to #lib/telegram/services/shopApi.ts
 export const importShopItems = (body: {
     childId: unknown;
     rows: Array<Record<string, unknown>>;

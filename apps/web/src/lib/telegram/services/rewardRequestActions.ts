@@ -1,6 +1,6 @@
 import { getContext, setContext } from 'svelte';
-import { requestItem, requestItemWithNote } from '$lib/telegram/services/shopApi';
-import type { ApiActionResult } from '$lib/services/api';
+import { requestItem, requestItemWithNote } from '#lib/telegram/services/shopApi';
+import type { ApiActionResult } from '#lib/services/api';
 
 export type RewardRequestActionInput = {
     itemId: number | string;

@@ -1,14 +1,14 @@
 <script lang="ts">
-    import { useI18n } from '$lib/i18n/context';
-    import { appStore, type CatalogTaskTemplate, type Child } from '$lib/stores/app';
-    import type { CatalogRewardTemplate } from '$lib/telegram/stores/types';
-    import { shopItems } from '$lib/telegram/stores/shopItems';
-    import { catalogRewards } from '$lib/telegram/stores/rewards';
-    import { useTaskActions } from '$lib/telegram/services/taskActions';
-    import { useRewardActions } from '$lib/telegram/services/rewardActions';
-    import { mapGroupKeyToFamily, templateToReward, templateToTask } from '$lib/telegram/services/catalogFilter';
-    import { applyGroupOrderToChildren, getEffectiveGroupOrder, type GroupOrderSection } from '$lib/telegram/services/groupOrder';
-    import { recordReadyCatalogEvent } from '$lib/telegram/services/readyCatalogTelemetry';
+    import { useI18n } from '#lib/i18n/context';
+    import { appStore, type CatalogTaskTemplate, type Child } from '#lib/stores/app';
+    import type { CatalogRewardTemplate } from '#lib/telegram/stores/types';
+    import { shopItems } from '#lib/telegram/stores/shopItems';
+    import { catalogRewards } from '#lib/telegram/stores/rewards';
+    import { useTaskActions } from '#lib/telegram/services/taskActions';
+    import { useRewardActions } from '#lib/telegram/services/rewardActions';
+    import { mapGroupKeyToFamily, templateToReward, templateToTask } from '#lib/telegram/services/catalogFilter';
+    import { applyGroupOrderToChildren, getEffectiveGroupOrder, type GroupOrderSection } from '#lib/telegram/services/groupOrder';
+    import { recordReadyCatalogEvent } from '#lib/telegram/services/readyCatalogTelemetry';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramReadyCatalog from './TelegramReadyCatalog.svelte';
     import TelegramCatalogDetails from './TelegramCatalogDetails.svelte';
@@ -111,9 +111,9 @@
             ? templates.map((template) => templateToTask(template as CatalogTaskTemplate, groupName))
             : templates.map((template) => templateToReward(template as CatalogRewardTemplate, groupName));
 
-        const patch: Partial<import('$lib/stores/app').AppState> = { children: $appStore.children };
+        const patch: Partial<import('#lib/stores/app').AppState> = { children: $appStore.children };
         if (kind === 'task') {
-            patch.tasks = [...$appStore.tasks, ...(nextItems as import('$lib/stores/app').Task[])];
+            patch.tasks = [...$appStore.tasks, ...(nextItems as import('#lib/stores/app').Task[])];
         } else {
             // shopItems are now managed in specialized stores, but we maintain patch for any generic state updates if needed
             // However, since we've decoupled, we primarily update the specialized store

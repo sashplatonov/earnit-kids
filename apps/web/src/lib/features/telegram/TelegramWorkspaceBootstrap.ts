@@ -2,7 +2,7 @@ import {
     completeTelegramAccountLink,
     exchangeTelegramInitData,
     initializeTelegramWebApp,
-} from '$lib/services/telegram';
+} from '#lib/services/telegram';
 
 const TRANSIENT_UNLINKED_RETRY_DELAY_MS = 250;
 

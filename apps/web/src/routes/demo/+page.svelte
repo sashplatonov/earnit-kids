@@ -1,5 +1,5 @@
 <script lang="ts">
-    import LiveCoinShopDemo from '$lib/features/live-demo/LiveCoinShopDemo.svelte';
+    import LiveCoinShopDemo from '#lib/features/live-demo/LiveCoinShopDemo.svelte';
     import type { PageData } from './$types';
 
     interface Props {

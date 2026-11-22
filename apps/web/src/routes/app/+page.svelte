@@ -1,8 +1,8 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import WorkspaceRoleResolver from '$lib/features/workspace/WorkspaceRoleResolver.svelte';
-    import LocaleSwitcher from '$lib/components/LocaleSwitcher.svelte';
-    import { useI18n } from '$lib/i18n/context';
+    import WorkspaceRoleResolver from '#lib/features/workspace/WorkspaceRoleResolver.svelte';
+    import LocaleSwitcher from '#lib/components/LocaleSwitcher.svelte';
+    import { useI18n } from '#lib/i18n/context';
     import type { PageData } from './$types';
 
     interface Props {

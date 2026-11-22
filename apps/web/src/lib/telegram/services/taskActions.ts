@@ -1,9 +1,9 @@
 import { getContext, setContext } from 'svelte';
-import { earnCoins, requestCoins, requestCoinsWithNote, saveChildGroupOrder } from '$lib/services/api';
-import { applyDataSnapshot, refreshData } from '$lib/services/bootstrap';
-import { scheduleSave } from '$lib/services/save';
-import type { ApiActionResult } from '$lib/services/api';
-import { appStore, type Task } from '$lib/stores/app';
+import { earnCoins, requestCoins, requestCoinsWithNote, saveChildGroupOrder } from '#lib/services/api';
+import { applyDataSnapshot, refreshData } from '#lib/services/bootstrap';
+import { scheduleSave } from '#lib/services/save';
+import type { ApiActionResult } from '#lib/services/api';
+import { appStore, type Task } from '#lib/stores/app';
 
 export type TaskActionInput = { id?: string | number; taskId?: string | number; childId?: string | number; note?: string | null; [key: string]: unknown };
 export type TaskActions = {

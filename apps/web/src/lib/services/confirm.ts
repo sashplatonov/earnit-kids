@@ -1,4 +1,4 @@
-import { modalStore } from '$lib/stores/modal';
+import { modalStore } from '#lib/stores/modal';
 
 export type ConfirmTone = 'danger' | 'warning' | 'neutral';
 

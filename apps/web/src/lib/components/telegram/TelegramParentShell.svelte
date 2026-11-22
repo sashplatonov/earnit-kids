@@ -1,8 +1,8 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { appStore } from '$lib/stores/app';
-    import { useI18n } from '$lib/i18n/context';
-    import { useWorkspaceActions } from '$lib/features/workspace/workspaceActions';
+    import { appStore } from '#lib/stores/app';
+    import { useI18n } from '#lib/i18n/context';
+    import { useWorkspaceActions } from '#lib/features/workspace/workspaceActions';
     import TelegramParentHome from './TelegramParentHome.svelte';
     import TelegramParentTasks from './TelegramParentTasks.svelte';
     import TelegramParentRewards from './TelegramParentRewards.svelte';
@@ -15,7 +15,7 @@
     import type { TelegramAsyncState as AsyncState } from './ui/telegramUi';
     import type { TelegramTab } from './ui/telegramTabBar';
     import { parseTelegramWorkspaceContext, type ParentTab } from './telegramWorkspaceContext';
-    import type { MembershipPermission } from '$lib/types/auth';
+    import type { MembershipPermission } from '#lib/types/auth';
 
     const i18n = useI18n();
     const workspaceActions = useWorkspaceActions();

@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { isBrowserPushSupported, toBrowserPushSubscription, enableBrowserPush } from '$lib/features/workspace/notifications/browserPush';
+import { isBrowserPushSupported, toBrowserPushSubscription, enableBrowserPush } from '#lib/features/workspace/notifications/browserPush';
 
 const { loadBrowserPushPublicKey, registerBrowserPushSubscription } = vi.hoisted(() => ({
     loadBrowserPushPublicKey: vi.fn(),
     registerBrowserPushSubscription: vi.fn(),
 }));
-vi.mock('$lib/services/api', () => ({
+vi.mock('#lib/services/api', () => ({
     loadBrowserPushPublicKey,
     registerBrowserPushSubscription,
     unregisterBrowserPushSubscription: vi.fn(),

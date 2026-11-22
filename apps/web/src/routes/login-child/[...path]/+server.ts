@@ -1,5 +1,5 @@
 import type { RequestHandler } from './$types';
-import { proxyToBackend } from '$lib/server/proxy';
+import { proxyToBackend } from '#lib/server/proxy';
 
 const handleProxy: RequestHandler = (event) => proxyToBackend(event);
 

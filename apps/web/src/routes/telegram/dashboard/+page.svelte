@@ -1,16 +1,16 @@
 <script lang="ts">
     import { onMount, tick, untrack } from 'svelte';
-    import type { MessageKey } from '$lib/i18n';
-    import { useI18n } from '$lib/i18n/context';
-    import { appStore } from '$lib/stores/app';
+    import type { MessageKey } from '#lib/i18n';
+    import { useI18n } from '#lib/i18n/context';
+    import { appStore } from '#lib/stores/app';
     import { afterNavigate, goto } from '$app/navigation';
-    import { navigating } from '$app/stores';
-    import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
-    import TelegramCoin from '$lib/components/telegram/TelegramCoin.svelte';
-    import TelegramParentReturn from '$lib/components/telegram/TelegramParentReturn.svelte';
-    import DashboardPeriodControl from '$lib/features/telegram/dashboard/DashboardPeriodControl.svelte';
-    import DashboardTabNavigation from '$lib/features/telegram/dashboard/DashboardTabNavigation.svelte';
-    import DashboardTooltip from '$lib/features/telegram/dashboard/DashboardTooltip.svelte';
+    import { navigating } from '$app/state';
+    import TelegramIcon from '#lib/components/telegram/TelegramIcon.svelte';
+    import TelegramCoin from '#lib/components/telegram/TelegramCoin.svelte';
+    import TelegramParentReturn from '#lib/components/telegram/TelegramParentReturn.svelte';
+    import DashboardPeriodControl from '#lib/features/telegram/dashboard/DashboardPeriodControl.svelte';
+    import DashboardTabNavigation from '#lib/features/telegram/dashboard/DashboardTabNavigation.svelte';
+    import DashboardTooltip from '#lib/features/telegram/dashboard/DashboardTooltip.svelte';
     import type { PageData } from './$types';
 
     const i18n = useI18n();
@@ -385,7 +385,7 @@
         <p>{t('redirecting')}</p>
     </div>
 {:else}
-    <main class="dashboard-container" aria-busy={periodLoading || loadingSections.length > 0 || $navigating !== null}>
+    <main class="dashboard-container" aria-busy={periodLoading || loadingSections.length > 0 || navigating !== null}>
         <TelegramParentReturn href="/telegram" />
         <header class="dashboard-header">
             <h1>{t('title')}</h1>
@@ -403,7 +403,7 @@
                     {/snippet}
         </DashboardPeriodControl>
 
-        {#if periodLoading || $navigating !== null}
+        {#if periodLoading || navigating !== null}
             <div class="period-loading" role="status" aria-live="polite">
                 <span class="spinner" aria-hidden="true"></span>
                 <span>{t('loading')}</span>

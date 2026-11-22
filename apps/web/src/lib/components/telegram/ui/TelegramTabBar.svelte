@@ -1,6 +1,6 @@
 <script lang="ts">
     import TelegramIcon from '../TelegramIcon.svelte';
-    import WorkspaceSessionActions from '$lib/features/workspace/WorkspaceSessionActions.svelte';
+    import WorkspaceSessionActions from '#lib/features/workspace/WorkspaceSessionActions.svelte';
     import type { TelegramTab } from './telegramTabBar';
     interface Props {
         tabs?: readonly TelegramTab[];

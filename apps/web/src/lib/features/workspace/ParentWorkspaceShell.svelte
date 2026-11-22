@@ -1,7 +1,7 @@
 <script lang="ts">
-    import TelegramParentShell from '$lib/components/telegram/TelegramParentShell.svelte';
+    import TelegramParentShell from '#lib/components/telegram/TelegramParentShell.svelte';
     import ParentAccessPanel from './family/ParentAccessPanel.svelte';
-    import type { MembershipPermission } from '$lib/types/auth';
+    import type { MembershipPermission } from '#lib/types/auth';
 
     interface Props {
         publicOrigin?: string;

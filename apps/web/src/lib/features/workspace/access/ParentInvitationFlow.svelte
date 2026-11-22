@@ -13,10 +13,10 @@
         declineAdminTransfer,
         cancelAdminTransfer,
         type ApiActionResult,
-    } from '$lib/services/api';
-    import type { MembershipPermission, ParentMembership } from '$lib/types/auth';
-    import { useI18n } from '$lib/i18n/context';
-    import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
+    } from '#lib/services/api';
+    import type { MembershipPermission, ParentMembership } from '#lib/types/auth';
+    import { useI18n } from '#lib/i18n/context';
+    import TelegramIcon from '#lib/components/telegram/TelegramIcon.svelte';
     import ParentMembershipList from './ParentMembershipList.svelte';
 
     interface Props {

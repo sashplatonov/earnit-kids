@@ -1,11 +1,11 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { useI18n } from '$lib/i18n/context';
-    import { appStore, type CatalogTaskTemplate } from '$lib/stores/app';
-    import type { CatalogRewardTemplate } from '$lib/telegram/stores/types';
-    import { shopItems } from '$lib/telegram/stores/shopItems';
-    import { catalogRewards } from '$lib/telegram/stores/rewards';
-    import { scheduleSave } from '$lib/services/save';
+    import { useI18n } from '#lib/i18n/context';
+    import { appStore, type CatalogTaskTemplate } from '#lib/stores/app';
+    import type { CatalogRewardTemplate } from '#lib/telegram/stores/types';
+    import { shopItems } from '#lib/telegram/stores/shopItems';
+    import { catalogRewards } from '#lib/telegram/stores/rewards';
+    import { scheduleSave } from '#lib/services/save';
     import {
         EMPTY_FILTERS,
         catalogGroups,
@@ -15,9 +15,9 @@
         nonAgeFilterCount,
         stripEmoji,
         type CatalogFilters,
-    } from '$lib/telegram/services/catalogFilter';
+    } from '#lib/telegram/services/catalogFilter';
     import { getTelegramEntityIcon } from './telegramEntityIcons';
-    import { recordReadyCatalogEvent } from '$lib/telegram/services/readyCatalogTelemetry';
+    import { recordReadyCatalogEvent } from '#lib/telegram/services/readyCatalogTelemetry';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramGroupSubnav from './TelegramGroupSubnav.svelte';

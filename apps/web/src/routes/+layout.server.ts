@@ -1,5 +1,5 @@
 import type { LayoutServerLoad } from './$types';
-import { getI18nPayloadForPath } from '$lib/i18n';
+import { getI18nPayloadForPath } from '#lib/i18n';
 
 export const load: LayoutServerLoad = async ({ locals, url }) => {
     return {

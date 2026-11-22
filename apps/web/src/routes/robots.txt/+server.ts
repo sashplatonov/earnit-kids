@@ -1,4 +1,4 @@
-import { loadAppConfig } from '$lib/server/config';
+import { loadAppConfig } from '#lib/server/config';
 import type { RequestHandler } from './$types';
 
 // EXPLAIN: Production serves an allow-all robots + sitemap pointer. Non

@@ -3,11 +3,11 @@
  * Loads server data into the app store after mount.
  */
 import { get } from 'svelte/store';
-import { appStore } from '$lib/stores/app';
-import { shopItems } from '$lib/telegram/stores/shopItems';
-import { catalogRewards } from '$lib/telegram/stores/rewards';
-import type { AppState } from '$lib/stores/app';
-import { showToast } from '$lib/stores/toasts';
+import { appStore } from '#lib/stores/app';
+import { shopItems } from '#lib/telegram/stores/shopItems';
+import { catalogRewards } from '#lib/telegram/stores/rewards';
+import type { AppState } from '#lib/stores/app';
+import { showToast } from '#lib/stores/toasts';
 import { loadDataDetailsFromServer, loadDataFromServer, loadBaseData } from './api';
 import { buildInitialState, normalizeServerData, normalizeTask, normalizeHistoryEntry, normalizeRequest } from './serverContract';
 

@@ -1,4 +1,4 @@
-import type { Task } from '$lib/stores/app';
+import type { Task } from '#lib/stores/app';
 
 export interface TodayTaskSummary {
     trackedCount: number;

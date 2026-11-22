@@ -1,4 +1,4 @@
-import type { MembershipPermission } from '$lib/types/auth';
+import type { MembershipPermission } from '#lib/types/auth';
 
 export interface SessionSnapshot {
     authenticated: boolean;

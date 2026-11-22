@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { applyDataSnapshot, refreshData } from '$lib/services/bootstrap';
-    import { appStore } from '$lib/stores/app';
-    import type { ShopItem } from '$lib/telegram/stores/types';
-    import { shopItems } from '$lib/telegram/stores/shopItems';
-    import { useI18n } from '$lib/i18n/context';
+    import { applyDataSnapshot, refreshData } from '#lib/services/bootstrap';
+    import { appStore } from '#lib/stores/app';
+    import type { ShopItem } from '#lib/telegram/stores/types';
+    import { shopItems } from '#lib/telegram/stores/shopItems';
+    import { useI18n } from '#lib/i18n/context';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramRequestSheet from './TelegramRequestSheet.svelte';
@@ -14,9 +14,9 @@
     import TelegramListSurface from './ui/TelegramListSurface.svelte';
     import TelegramEntityRow from './ui/TelegramEntityRow.svelte';
     import TelegramCatalogToolbar from './TelegramCatalogToolbar.svelte';
-    import { sortCatalogItems, type CatalogSortMode } from '$lib/telegram/services/catalogSort';
-    import { getEffectiveGroupOrder, orderGroups } from '$lib/telegram/services/groupOrder';
-    import { useRewardRequestActions } from '$lib/telegram/services/rewardRequestActions';
+    import { sortCatalogItems, type CatalogSortMode } from '#lib/telegram/services/catalogSort';
+    import { getEffectiveGroupOrder, orderGroups } from '#lib/telegram/services/groupOrder';
+    import { useRewardRequestActions } from '#lib/telegram/services/rewardRequestActions';
 
     const i18n = useI18n();
     const rewardRequestActions = useRewardRequestActions();

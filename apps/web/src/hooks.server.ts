@@ -1,4 +1,4 @@
-import type { Handle, HandleServerError } from '@sveltejs/kit';
+import type { Handle, HandleServerError } from '@sveltejs/kit/hooks';
 import { redirect } from '@sveltejs/kit';
 import {
     DEFAULT_LOCALE,
@@ -9,10 +9,10 @@ import {
     shouldCanonicalizePath,
     splitLocaleFromPath,
     stripLocaleFromPath,
-} from '$lib/i18n';
-import { loadAppConfig } from '$lib/server/config';
-import { resolveSessionSnapshot } from '$lib/server/session';
-import { emitDiagnostic } from '$lib/server/diagnostics';
+} from '#lib/i18n';
+import { loadAppConfig } from '#lib/server/config';
+import { resolveSessionSnapshot } from '#lib/server/session';
+import { emitDiagnostic } from '#lib/server/diagnostics';
 
 const SECURITY_HEADERS = {
     'cross-origin-resource-policy': 'same-site',
@@ -95,13 +95,16 @@ export const handle: Handle = async ({ event, resolve }) => {
     return response;
 };
 
-export const handleError: HandleServerError = ({ error, event, message, status }) => {
+export const handleError: HandleServerError = ({ error, event }) => {
     // EXPLAIN: Unknown public URLs are expected on an internet-facing edge
     // (for example, automated probes for WordPress or Tomcat endpoints). They
     // are already rendered by +error.svelte, so logging their stack traces as
     // server errors creates false alerts without adding diagnostic value.
+    const status = typeof error === 'object' && error !== null && 'status' in error
+        ? Number(error.status)
+        : 500;
     if (status === 404) {
-        return { message };
+        return { status, message: 'Not Found' };
     }
 
     emitDiagnostic({
@@ -113,6 +116,4 @@ export const handleError: HandleServerError = ({ error, event, message, status }
         traceId: event.request.headers.get('x-trace-id') ?? 'missing',
         errorClass: error instanceof Error ? error.name : 'UnknownError',
     });
-
-    return { message };
 };

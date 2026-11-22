@@ -1,4 +1,4 @@
-import type { Child } from '$lib/stores/app';
+import type { Child } from '#lib/stores/app';
 
 export const UNGROUPED_LABEL = 'Без группы';
 

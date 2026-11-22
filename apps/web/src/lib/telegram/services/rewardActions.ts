@@ -1,10 +1,10 @@
 import { getContext, setContext } from 'svelte';
-import { buyItem, saveChildGroupOrder } from '$lib/telegram/services/shopApi';
-import { applyDataSnapshot, refreshData } from '$lib/services/bootstrap';
-import { scheduleSave } from '$lib/services/save';
-import type { ApiActionResult } from '$lib/services/api';
-import { shopItems } from '$lib/telegram/stores/shopItems';
-import type { ShopItem } from '$lib/telegram/stores/types';
+import { buyItem, saveChildGroupOrder } from '#lib/telegram/services/shopApi';
+import { applyDataSnapshot, refreshData } from '#lib/services/bootstrap';
+import { scheduleSave } from '#lib/services/save';
+import type { ApiActionResult } from '#lib/services/api';
+import { shopItems } from '#lib/telegram/stores/shopItems';
+import type { ShopItem } from '#lib/telegram/stores/types';
 export type RewardActionInput = { itemId?: string | number; id?: string | number; childId?: string | number; [key: string]: unknown };
 export type RewardActions = { buy: (input: RewardActionInput) => Promise<unknown | null>; saveGroups: (childId: unknown, groups: string[], hiddenGroups: string[]) => Promise<ApiActionResult>; persist: () => Promise<boolean>; applySnapshot: (snapshot: Record<string, unknown>) => void; refresh: (showSuccess?: boolean) => Promise<boolean>; saveReward: (item: ShopItem | null, payload: Partial<ShopItem>) => Promise<ApiActionResult>; archiveReward: (item: ShopItem) => Promise<ApiActionResult>; deleteReward: (item: ShopItem) => Promise<ApiActionResult>; addCatalogReward: (id: string | number) => Promise<ApiActionResult>; setGroupVisibility: (groupName: string, hidden: boolean) => Promise<ApiActionResult>; deleteGroup: (groupName: string, moveTo: string | null) => Promise<ApiActionResult> };
 const KEY = Symbol('earnit-kids-reward-actions');

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { HistoryEntry } from '$lib/stores/app';
-    import { useI18n } from '$lib/i18n/context';
+    import type { HistoryEntry } from '#lib/stores/app';
+    import { useI18n } from '#lib/i18n/context';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramListSurface from './ui/TelegramListSurface.svelte';

@@ -1,4 +1,4 @@
-import type { Request } from '$lib/stores/app';
+import type { Request } from '#lib/stores/app';
 import { getTelegramEntityIcon } from './telegramEntityIcons';
 import type { TelegramIconName } from './telegramIconMap';
 import { requestKind, type RequestKind } from './telegramRequestKind';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sanitizeCatalogTelemetry } from '$lib/services/catalogTelemetry';
+import { sanitizeCatalogTelemetry } from '#lib/services/catalogTelemetry';
 
 describe('catalog telemetry privacy boundary', () => {
     it('keeps only aggregate allowlisted fields', () => {

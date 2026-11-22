@@ -1,12 +1,12 @@
 <script lang="ts">
     import { run } from 'svelte/legacy';
 
-    import { useI18n } from '$lib/i18n/context';
-    import type { MessageKey } from '$lib/i18n';
-    import type { ShopItem } from '$lib/telegram/stores/types';
-    import { shopItems } from '$lib/telegram/stores/shopItems';
-    import { useRewardActions } from '$lib/telegram/services/rewardActions';
-    import { buildShopPayload } from '$lib/telegram/services/shopPayload';
+    import { useI18n } from '#lib/i18n/context';
+    import type { MessageKey } from '#lib/i18n';
+    import type { ShopItem } from '#lib/telegram/stores/types';
+    import { shopItems } from '#lib/telegram/stores/shopItems';
+    import { useRewardActions } from '#lib/telegram/services/rewardActions';
+    import { buildShopPayload } from '#lib/telegram/services/shopPayload';
     import { getSemanticGraphic } from './semanticGraphics';
     import { getTelegramEntityIcon } from './telegramEntityIcons';
     import TelegramIcon from './TelegramIcon.svelte';

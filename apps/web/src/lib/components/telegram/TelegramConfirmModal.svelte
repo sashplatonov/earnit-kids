@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { modalStore } from '$lib/stores/modal';
-    import { useI18n } from '$lib/i18n/context';
-    import type { ConfirmTone } from '$lib/services/confirm';
+    import { modalStore } from '#lib/stores/modal';
+    import { useI18n } from '#lib/i18n/context';
+    import type { ConfirmTone } from '#lib/services/confirm';
 
     type ConfirmModalData = {
         title?: string;

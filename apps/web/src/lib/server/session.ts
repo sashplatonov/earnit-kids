@@ -1,7 +1,7 @@
 import type { RequestEvent } from '@sveltejs/kit';
-import { DEFAULT_LOCALE } from '$lib/i18n';
-import type { SessionSnapshot } from '$lib/types/session';
-import { loadAppConfig } from '$lib/server/config';
+import { DEFAULT_LOCALE } from '#lib/i18n';
+import type { SessionSnapshot } from '#lib/types/session';
+import { loadAppConfig } from '#lib/server/config';
 import { emitDiagnostic, requestTraceId, safeErrorClass } from './diagnostics';
 
 const GUEST_SESSION: SessionSnapshot = { authenticated: false };

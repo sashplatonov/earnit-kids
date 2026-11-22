@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { useTaskActions } from '$lib/telegram/services/taskActions';
-    import { appStore } from '$lib/stores/app';
-    import { useI18n } from '$lib/i18n/context';
-    import { buildTodayTaskSummary } from '$lib/services/todayTaskViewModel';
+    import { useTaskActions } from '#lib/telegram/services/taskActions';
+    import { appStore } from '#lib/stores/app';
+    import { useI18n } from '#lib/i18n/context';
+    import { buildTodayTaskSummary } from '#lib/services/todayTaskViewModel';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
     import TelegramRequestSheet from './TelegramRequestSheet.svelte';
@@ -13,8 +13,8 @@
     import TelegramListSurface from './ui/TelegramListSurface.svelte';
     import TelegramEntityRow from './ui/TelegramEntityRow.svelte';
     import TelegramCatalogToolbar from './TelegramCatalogToolbar.svelte';
-    import { sortCatalogItems, type CatalogSortMode } from '$lib/telegram/services/catalogSort';
-    import { getEffectiveGroupOrder, orderGroups } from '$lib/telegram/services/groupOrder';
+    import { sortCatalogItems, type CatalogSortMode } from '#lib/telegram/services/catalogSort';
+    import { getEffectiveGroupOrder, orderGroups } from '#lib/telegram/services/groupOrder';
 
     const i18n = useI18n();
     const taskActions = useTaskActions();

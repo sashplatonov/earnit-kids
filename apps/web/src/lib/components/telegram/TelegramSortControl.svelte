@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { useI18n } from '$lib/i18n/context';
+    import { useI18n } from '#lib/i18n/context';
     import TelegramCoin from './TelegramCoin.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
-    import type { CatalogSortMode } from '$lib/telegram/services/catalogSort';
+    import type { CatalogSortMode } from '#lib/telegram/services/catalogSort';
 
     interface Props {
         mode?: CatalogSortMode;

@@ -1,6 +1,6 @@
 /** Svelte store replacing legacy state.js singleton */
 import { writable, derived } from 'svelte/store';
-import type { MembershipPermission } from '$lib/types/auth';
+import type { MembershipPermission } from '#lib/types/auth';
 
 export interface Task {
     id: number | string;

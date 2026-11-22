@@ -1,4 +1,4 @@
-import type { AppState } from '$lib/stores/app';
+import type { AppState } from '#lib/stores/app';
 
 export type TelegramParentView = 'requests' | 'tasks' | 'rewards' | 'child';
 

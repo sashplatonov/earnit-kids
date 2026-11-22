@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
-import { getI18nPayloadForPath } from '$lib/i18n';
+import { getI18nPayloadForPath } from '#lib/i18n';
 
 export const load: PageServerLoad = async ({ fetch, locals }) => {
     const response = await fetch('/api/select-family', {

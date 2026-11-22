@@ -1,20 +1,20 @@
 <script lang="ts">
     import { run } from 'svelte/legacy';
 
-    import { appStore } from '$lib/stores/app';
-    import { useI18n } from '$lib/i18n/context';
-    import { importTasks } from '$lib/services/api';
-import { importShopItems } from '$lib/telegram/services/shopApi';
-    import { useTaskActions } from '$lib/telegram/services/taskActions';
-    import { useRewardActions } from '$lib/telegram/services/rewardActions';
-    import { applyDataSnapshot } from '$lib/services/bootstrap';
+    import { appStore } from '#lib/stores/app';
+    import { useI18n } from '#lib/i18n/context';
+    import { importTasks } from '#lib/services/api';
+import { importShopItems } from '#lib/telegram/services/shopApi';
+    import { useTaskActions } from '#lib/telegram/services/taskActions';
+    import { useRewardActions } from '#lib/telegram/services/rewardActions';
+    import { applyDataSnapshot } from '#lib/services/bootstrap';
     import {
         CSV_IMPORT_SCHEMAS,
         buildCsvTemplate,
         parseCsvImport,
         type CsvImportKind,
         type CsvImportValidationError,
-    } from '$lib/telegram/services/csvImport';
+    } from '#lib/telegram/services/csvImport';
     import TelegramIcon from './TelegramIcon.svelte';
 
     interface Props {

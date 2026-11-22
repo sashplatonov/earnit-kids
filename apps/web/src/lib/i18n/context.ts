@@ -1,4 +1,4 @@
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import { getContext, setContext } from 'svelte';
 import { writable, type Writable } from 'svelte/store';
 import { FALLBACK_I18N_PAYLOAD, createTranslationRuntime, type I18nPayload, type TranslationRuntime } from './index';

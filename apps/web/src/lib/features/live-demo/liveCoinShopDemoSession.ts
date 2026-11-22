@@ -1,10 +1,10 @@
-import { appStore, type AppState, type HistoryEntry, type Request, type Task } from '$lib/stores/app';
-import { catalogRewards } from '$lib/telegram/stores/rewards';
-import { shopItems } from '$lib/telegram/stores/shopItems';
-import type { ShopItem, CatalogRewardTemplate } from '$lib/telegram/stores/types';
-import type { ApiActionResult } from '$lib/services/api';
-import type { RewardRequestActionInput, RewardRequestActions } from '$lib/telegram/services/rewardRequestActions';
-import type { Locale } from '$lib/i18n';
+import { appStore, type AppState, type HistoryEntry, type Request, type Task } from '#lib/stores/app';
+import { catalogRewards } from '#lib/telegram/stores/rewards';
+import { shopItems } from '#lib/telegram/stores/shopItems';
+import type { ShopItem, CatalogRewardTemplate } from '#lib/telegram/stores/types';
+import type { ApiActionResult } from '#lib/services/api';
+import type { RewardRequestActionInput, RewardRequestActions } from '#lib/telegram/services/rewardRequestActions';
+import type { Locale } from '#lib/i18n';
 
 export const DEMO_FAMILY_ID = 'live-demo-family';
 export const DEMO_PARENT_ID = 'live-demo-parent';

@@ -1,7 +1,7 @@
 <script lang="ts">
-    import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
-    import { useI18n } from '$lib/i18n/context';
-    import { logout } from '$lib/services/api';
+    import TelegramIcon from '#lib/components/telegram/TelegramIcon.svelte';
+    import { useI18n } from '#lib/i18n/context';
+    import { logout } from '#lib/services/api';
 
     const i18n = useI18n();
     interface Props {

@@ -1,9 +1,9 @@
 
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { requestGoogleLoginUrl } from '$lib/auth/googleOAuth';
+    import { requestGoogleLoginUrl } from '#lib/auth/googleOAuth';
     import type { PageData } from './$types';
-    import { useI18n } from '$lib/i18n/context';
+    import { useI18n } from '#lib/i18n/context';
 
     export let data: PageData;
     const i18n = useI18n();

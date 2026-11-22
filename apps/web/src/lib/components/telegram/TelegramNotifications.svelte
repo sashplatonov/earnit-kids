@@ -1,18 +1,18 @@
 <script lang="ts">
     import { run } from 'svelte/legacy';
 
-import { useI18n } from '$lib/i18n/context';
-    import { appStore } from '$lib/stores/app';
+import { useI18n } from '#lib/i18n/context';
+    import { appStore } from '#lib/stores/app';
     import {
         getFamilyNotificationSettings,
         setFamilyNotificationPreference,
         type FamilyNotificationSettings,
         type NotificationPreference,
-    } from '$lib/services/api';
+    } from '#lib/services/api';
     import TelegramIcon from './TelegramIcon.svelte';
     import type { TelegramIconName } from './telegramIconMap';
-    import BrowserPushControls from '$lib/features/workspace/notifications/BrowserPushControls.svelte';
-    import { isTelegramMiniApp } from '$lib/services/telegram';
+    import BrowserPushControls from '#lib/features/workspace/notifications/BrowserPushControls.svelte';
+    import { isTelegramMiniApp } from '#lib/services/telegram';
 
     interface Props {
         open?: boolean;

@@ -10,6 +10,7 @@ describe('hooks.server handleError', () => {
     it('logs request context for server-side route failures', () => {
         const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
         const result = handleError({
+            kind: 'unknown',
             error: new Error('Boom'),
             event: {
                 request: {
@@ -23,11 +24,9 @@ describe('hooks.server handleError', () => {
                 route: { id: '/public/index.html' },
                 url: new URL('https://example.com/public/index.html'),
             },
-            message: 'Server exploded',
-            status: 500,
         } as never);
 
-        expect(result).toEqual({ message: 'Server exploded' });
+        expect(result).toBeUndefined();
         expect(consoleError).toHaveBeenCalledWith(JSON.stringify({
             severity: 'error',
             eventCode: 'web.server_error',
@@ -43,7 +42,8 @@ describe('hooks.server handleError', () => {
         const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
         const result = handleError({
-            error: new Error('Not found: /wp-login.php'),
+            kind: 'framework',
+            error: { status: 404, message: 'Not Found' },
             event: {
                 request: {
                     method: 'GET',
@@ -52,11 +52,9 @@ describe('hooks.server handleError', () => {
                 route: { id: null },
                 url: new URL('https://example.com/en/wp-login.php'),
             },
-            message: 'Not Found',
-            status: 404,
         } as never);
 
-        expect(result).toEqual({ message: 'Not Found' });
+        expect(result).toEqual({ status: 404, message: 'Not Found' });
         expect(consoleError).not.toHaveBeenCalled();
     });
 });

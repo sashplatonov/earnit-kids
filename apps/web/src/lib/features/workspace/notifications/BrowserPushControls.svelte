@@ -1,7 +1,7 @@
 
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { useI18n } from '$lib/i18n/context';
+    import { useI18n } from '#lib/i18n/context';
     import { disableBrowserPush, enableBrowserPush, readBrowserPushState, type BrowserPushState } from './browserPush';
     export let enabled = true;
     const i18n = useI18n();

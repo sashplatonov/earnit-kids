@@ -1,17 +1,17 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import TelegramParentShell from '$lib/components/telegram/TelegramParentShell.svelte';
-    import TelegramChildShell from '$lib/components/telegram/TelegramChildShell.svelte';
-    import TelegramIcon from '$lib/components/telegram/TelegramIcon.svelte';
-    import LocaleSwitcher from '$lib/components/LocaleSwitcher.svelte';
-    import { useI18n } from '$lib/i18n/context';
-    import { provideWorkspaceActions } from '$lib/features/workspace/workspaceActions';
-    import { provideTaskActions } from '$lib/telegram/services/taskActions';
-    import { provideRewardActions } from '$lib/telegram/services/rewardActions';
-    import { provideRequestActions } from '$lib/telegram/services/requestActions';
-    import { provideFamilyActions } from '$lib/telegram/services/familyActions';
-    import { provideHistoryActions } from '$lib/telegram/services/historyActions';
-    import { provideRewardRequestActions } from '$lib/telegram/services/rewardRequestActions';
+    import TelegramParentShell from '#lib/components/telegram/TelegramParentShell.svelte';
+    import TelegramChildShell from '#lib/components/telegram/TelegramChildShell.svelte';
+    import TelegramIcon from '#lib/components/telegram/TelegramIcon.svelte';
+    import LocaleSwitcher from '#lib/components/LocaleSwitcher.svelte';
+    import { useI18n } from '#lib/i18n/context';
+    import { provideWorkspaceActions } from '#lib/features/workspace/workspaceActions';
+    import { provideTaskActions } from '#lib/telegram/services/taskActions';
+    import { provideRewardActions } from '#lib/telegram/services/rewardActions';
+    import { provideRequestActions } from '#lib/telegram/services/requestActions';
+    import { provideFamilyActions } from '#lib/telegram/services/familyActions';
+    import { provideHistoryActions } from '#lib/telegram/services/historyActions';
+    import { provideRewardRequestActions } from '#lib/telegram/services/rewardRequestActions';
     import { createLiveCoinShopDemoSession } from './liveCoinShopDemoSession';
     import { createLiveCoinShopDemoWorkspace } from './liveCoinShopDemoWorkspace';
 

@@ -1,4 +1,4 @@
-import { loadBrowserPushPublicKey, registerBrowserPushSubscription, unregisterBrowserPushSubscription, type BrowserPushSubscription } from '$lib/services/api';
+import { loadBrowserPushPublicKey, registerBrowserPushSubscription, unregisterBrowserPushSubscription, type BrowserPushSubscription } from '#lib/services/api';
 
 export type BrowserPushState = 'unsupported' | 'default' | 'granted' | 'denied' | 'pending' | 'error' | 'subscribed' | 'unsubscribed';
 

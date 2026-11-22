@@ -1,5 +1,5 @@
-import type { CatalogRewardTemplate, ShopItem } from '$lib/telegram/stores/types';
-import type { AppState, HistoryEntry, Request, Task } from '$lib/stores/app';
+import type { CatalogRewardTemplate, ShopItem } from '#lib/telegram/stores/types';
+import type { AppState, HistoryEntry, Request, Task } from '#lib/stores/app';
 import { DEMO_FAMILY_ID, DEMO_CHILD_ID, DEMO_SECOND_CHILD_ID, type LiveCoinShopDemoSnapshot } from './liveCoinShopDemoSession';
 
 export type { LiveCoinShopDemoSnapshot };

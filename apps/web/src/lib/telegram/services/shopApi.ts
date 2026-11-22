@@ -1,5 +1,5 @@
-import { postJsonAfterPendingSave, postJsonResultAfterPendingSave, postJsonResultWithValidation, saveChildGroupOrder as _saveChildGroupOrder, earnCoins as _earnCoins } from '$lib/services/api';
-import { flushPendingSave } from '$lib/services/save';
+import { postJsonAfterPendingSave, postJsonResultAfterPendingSave, postJsonResultWithValidation, saveChildGroupOrder as _saveChildGroupOrder, earnCoins as _earnCoins } from '#lib/services/api';
+import { flushPendingSave } from '#lib/services/save';
 
 function buildChildQuery(childId: unknown): string {
     return childId != null ? `?childId=${encodeURIComponent(String(childId))}` : '';

@@ -1,7 +1,7 @@
 <script lang="ts">
-    import ParentAccessPanel from '$lib/features/workspace/family/ParentAccessPanel.svelte';
+    import ParentAccessPanel from '#lib/features/workspace/family/ParentAccessPanel.svelte';
     import TelegramIcon from './TelegramIcon.svelte';
-    import { useI18n } from '$lib/i18n/context';
+    import { useI18n } from '#lib/i18n/context';
 
     interface Props {
         open?: boolean;

@@ -1,6 +1,6 @@
 import type { RequestEvent } from '@sveltejs/kit';
-import { DEFAULT_LOCALE } from '$lib/i18n';
-import { loadAppConfig } from '$lib/server/config';
+import { DEFAULT_LOCALE } from '#lib/i18n';
+import { loadAppConfig } from '#lib/server/config';
 import { emitDiagnostic, requestTraceId, safeErrorClass } from './diagnostics';
 
 const BODYLESS_METHODS = new Set(['GET', 'HEAD']);

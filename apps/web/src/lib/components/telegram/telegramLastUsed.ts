@@ -4,7 +4,7 @@
  * Produces compact relative labels such as `сегодня, 08:32` or `12 авг., 19:40`
  * so screens never render raw ISO timestamps.
  */
-import { formatDate, formatRelativeTime, type Locale } from '$lib/i18n';
+import { formatDate, formatRelativeTime, type Locale } from '#lib/i18n';
 
 export function formatLastUsedTime(value: string | null | undefined, locale: Locale): string {
     if (!value) return '';

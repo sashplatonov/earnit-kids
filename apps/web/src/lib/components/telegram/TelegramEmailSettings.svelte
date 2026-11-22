@@ -1,14 +1,14 @@
 <script lang="ts">
     import { run } from 'svelte/legacy';
 
-    import { useI18n } from '$lib/i18n/context';
+    import { useI18n } from '#lib/i18n/context';
     import {
         changeAccountEmail,
         changePassword,
         getAccountConnection,
         unlinkAccountEmail,
         type AccountConnection,
-    } from '$lib/services/api';
+    } from '#lib/services/api';
     import TelegramIcon from './TelegramIcon.svelte';
 
     interface Props {

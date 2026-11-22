@@ -3,8 +3,8 @@
  * Debounces saves to /api/data to avoid flooding the backend.
  */
 import { get } from 'svelte/store';
-import { appStore } from '$lib/stores/app';
-import type { AppState } from '$lib/stores/app';
+import { appStore } from '#lib/stores/app';
+import type { AppState } from '#lib/stores/app';
 import { saveDataToServer } from './api';
 import { normalizeServerData } from './serverContract';
 

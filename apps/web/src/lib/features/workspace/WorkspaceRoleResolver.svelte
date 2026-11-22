@@ -3,7 +3,7 @@
     import ChildWorkspaceShell from './ChildWorkspaceShell.svelte';
     import { resolveWorkspaceRole } from './workspaceRoleResolver';
     import BrowserPushControls from './notifications/BrowserPushControls.svelte';
-    import type { MembershipPermission } from '$lib/types/auth';
+    import type { MembershipPermission } from '#lib/types/auth';
 
     interface Props {
         role?: string;

@@ -1,5 +1,5 @@
 import { fetchWithCsrf } from './api';
-import type { HistoryEntry, Request } from '$lib/stores/app';
+import type { HistoryEntry, Request } from '#lib/stores/app';
 
 export type TelegramPage<T> = { items: T[]; total: number; page: number; limit: number };
 

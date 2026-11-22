@@ -89,12 +89,13 @@ services:
       - /var/run/postgresql
     profiles:
       - db
-    image: postgres:18.6-alpine3.24
+    image: postgres:19-alpine
     environment:
       # Database
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: /var/lib/postgresql/19/docker
     volumes:
       - earnit_kids_postgres_data:/var/lib/postgresql
     # Host port mapping for Postgres is controlled via .env variables:

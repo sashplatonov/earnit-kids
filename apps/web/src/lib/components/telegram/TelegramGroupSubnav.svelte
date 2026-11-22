@@ -2,7 +2,7 @@
     import { run } from 'svelte/legacy';
 
     import TelegramIcon from './TelegramIcon.svelte';
-    import { useI18n } from '$lib/i18n/context';
+    import { useI18n } from '#lib/i18n/context';
     import { loadGroupUsage, rankGroups, recordGroupUsage, type GroupUsageKind } from './telegramGroupUsage';
 
     interface Props {
