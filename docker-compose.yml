@@ -21,10 +21,8 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    ports:
-      - "${WEB_PORT}:3000"
     expose:
-      - "3000"
+      - "${WEB_PORT}"
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/healthz || exit 1"]
       interval: 30s
